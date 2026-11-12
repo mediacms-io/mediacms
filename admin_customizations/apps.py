@@ -1,6 +1,6 @@
 from django.apps import AppConfig
-from django.conf import settings
 from django.contrib import admin
+from django.urls import path
 
 
 class AdminCustomizationsConfig(AppConfig):
@@ -12,6 +12,8 @@ class AdminCustomizationsConfig(AppConfig):
         from .action_choices import patch_model_admin_action_choices
         from .admin import calculate_statistics
         from .object_actions import patch_model_admin_object_actions
+        from .sidebar import build_workflow_app_list
+        from .views import dashboard_section
 
         patch_model_admin_action_choices()
         patch_model_admin_object_actions()
@@ -37,78 +39,34 @@ class AdminCustomizationsConfig(AppConfig):
         # Set custom index template
         admin.site.index_template = 'admin/index.html'
 
+        original_get_urls = admin.AdminSite.get_urls
+
+        def get_urls(self):
+            custom = [
+                path(
+                    "dashboard/<slug:section>/",
+                    self.admin_view(dashboard_section),
+                    name="dashboard_section",
+                ),
+            ]
+            return custom + original_get_urls(self)
+
+        admin.AdminSite.get_urls = get_urls
+
         original_get_app_list = admin.AdminSite.get_app_list
 
         def get_app_list(self, request, app_label=None):
-            """Custom get_app_list"""
-            app_list = original_get_app_list(self, request, app_label)
-            # To see the list:
-            # print([a.get('app_label') for a in app_list])
+            """Group admin navigation by workflow instead of Django app labels."""
+            # Always build from the full permitted list so models can move across groups.
+            raw_app_list = original_get_app_list(self, request, None)
+            app_list = build_workflow_app_list(raw_app_list)
 
-            email_model = None
-            rbac_group_model = None
-            identity_providers_user_log_model = None
-            identity_providers_login_option = None
-            auth_app = None
-            rbac_app = None
-            socialaccount_app = None
-
-            for app in app_list:
-                if app['app_label'] == 'users':
-                    auth_app = app
-
-                elif app['app_label'] == 'account':
-                    for model in app['models']:
-                        if model['object_name'] == 'EmailAddress':
-                            email_model = model
-                elif app['app_label'] == 'rbac':
-                    if not getattr(settings, 'USE_RBAC', False):
-                        continue
-                    rbac_app = app
-                    for model in app['models']:
-                        if model['object_name'] == 'RBACGroup':
-                            rbac_group_model = model
-                elif app['app_label'] == 'identity_providers':
-                    if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
-                        continue
-
-                    models_to_check = list(app['models'])
-
-                    for model in models_to_check:
-                        if model['object_name'] == 'IdentityProviderUserLog':
-                            identity_providers_user_log_model = model
-                        if model['object_name'] == 'LoginOption':
-                            identity_providers_login_option = model
-                elif app['app_label'] == 'socialaccount':
-                    socialaccount_app = app
-
-            if email_model and auth_app:
-                auth_app['models'].append(email_model)
-            if rbac_group_model and rbac_app and auth_app:
-                auth_app['models'].append(rbac_group_model)
-            if identity_providers_login_option and socialaccount_app:
-                socialaccount_app['models'].append(identity_providers_login_option)
-            if identity_providers_user_log_model and socialaccount_app:
-                socialaccount_app['models'].append(identity_providers_user_log_model)
-
-            # 2. don't include the following apps
-            apps_to_hide = ['authtoken', 'auth', 'account', 'saml_auth', 'rbac']
-            if not getattr(settings, 'USE_RBAC', False):
-                apps_to_hide.append('rbac')
-            if not getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
-                apps_to_hide.append('socialaccount')
-
-            app_list = [app for app in app_list if app['app_label'] not in apps_to_hide]
-
-            # 3. change the ordering
-            app_order = {
-                'files': 1,
-                'users': 2,
-                'socialaccount': 3,
-                'rbac': 5,
-            }
-
-            app_list.sort(key=lambda x: app_order.get(x['app_label'], 999))
+            if app_label:
+                matching = [app for app in app_list if app["app_label"] == app_label]
+                if matching:
+                    return matching
+                # Preserve /admin/<real-app>/ indexes (e.g. files) for bookmarks and tests.
+                return original_get_app_list(self, request, app_label)
 
             return app_list
 

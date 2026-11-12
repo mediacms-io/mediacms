@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -14,6 +15,8 @@ from admin_customizations.admin import (
     calculate_statistics,
     get_media_statistics,
     get_moderation_statistics,
+    get_site_health_checks,
+    get_system_statistics,
     get_user_statistics,
     invalidate_dashboard_stats_cache,
 )
@@ -113,6 +116,60 @@ class DashboardStatisticsTest(TestCase):
         self.assertIn("users", stats)
         self.assertIn("engagement", stats)
         self.assertIn("system", stats)
+        self.assertIn("object_totals", stats["system"])
+        self.assertIn("health_checks", stats["system"])
+        self.assertIn("configuration", stats["system"])
+        self.assertIn("health_counts", stats["system"])
+
+    @override_settings(PORTAL_NAME="Health Portal", FRONTEND_HOST="https://health.example.com")
+    def test_site_health_checks_compare_site_and_portal_settings(self):
+        from django.contrib.sites.models import Site
+
+        site = Site.objects.get_current()
+        site.name = "Wrong Name"
+        site.domain = "other.example.com"
+        site.save(update_fields=["name", "domain"])
+
+        checks = {check["id"]: check for check in get_site_health_checks()}
+        self.assertEqual(checks["site_name"]["status"], "warn")
+        self.assertIn("Wrong Name", checks["site_name"]["detail"])
+        self.assertIn("Health Portal", checks["site_name"]["detail"])
+        self.assertEqual(checks["site_domain"]["status"], "warn")
+        self.assertIn("health.example.com", checks["site_domain"]["detail"])
+
+        site.name = "Health Portal"
+        site.domain = "health.example.com"
+        site.save(update_fields=["name", "domain"])
+        checks = {check["id"]: check for check in get_site_health_checks()}
+        self.assertEqual(checks["site_name"]["status"], "ok")
+        self.assertEqual(checks["site_domain"]["status"], "ok")
+
+        system = get_system_statistics()
+        labels = [item["label"] for item in system["object_totals"]]
+        for expected in ("Media", "Users", "Comments", "Categories", "Channels", "Encode profiles"):
+            self.assertIn(expected, labels)
+        self.assertGreaterEqual(len(system["configuration"]), 10)
+
+    @override_settings(EMAIL_USE_TLS=True, EMAIL_USE_SSL=True)
+    def test_site_health_fails_when_email_tls_and_ssl_both_enabled(self):
+        checks = {check["id"]: check for check in get_site_health_checks()}
+        self.assertEqual(checks["email_tls_ssl"]["status"], "fail")
+        self.assertIn("both True", checks["email_tls_ssl"]["detail"])
+
+    @override_settings(EMAIL_USE_TLS=False, EMAIL_USE_SSL=True)
+    def test_site_health_ok_when_only_email_ssl_enabled(self):
+        checks = {check["id"]: check for check in get_site_health_checks()}
+        self.assertEqual(checks["email_tls_ssl"]["status"], "ok")
+        self.assertIn("EMAIL_USE_SSL is True", checks["email_tls_ssl"]["detail"])
+
+    @override_settings(EMAIL_USE_TLS=True, EMAIL_USE_SSL=True, DEBUG=True)
+    def test_site_health_checks_sorted_by_severity(self):
+        statuses = [check["status"] for check in get_site_health_checks()]
+        severity_order = {"fail": 0, "warn": 1, "info": 2, "ok": 3}
+        ranked = [severity_order[status] for status in statuses]
+        self.assertEqual(ranked, sorted(ranked))
+        self.assertIn("fail", statuses)
+        self.assertIn("warn", statuses)
 
     def test_calculate_statistics_caches_payload_and_skips_db_on_hit(self):
         first = calculate_statistics(force_refresh=True)
@@ -157,21 +214,47 @@ class DashboardStatisticsTest(TestCase):
         self.media.save(update_fields=["likes", "dislikes", "views"])
         self.client.force_login(self.admin)
 
-        response = self.client.get(reverse("admin:index"))
-        self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
+        index = self.client.get(reverse("admin:index"))
+        self.assertEqual(index.status_code, 200)
+        index_content = index.content.decode()
+        self.assertIn(reverse("admin:dashboard_section", args=["moderation"]), index_content)
+        self.assertIn(reverse("admin:dashboard_section", args=["people"]), index_content)
+        self.assertIn(reverse("admin:dashboard_section", args=["library"]), index_content)
+        self.assertIn(reverse("admin:dashboard_section", args=["processing"]), index_content)
+        self.assertIn(reverse("admin:dashboard_section", args=["engagement"]), index_content)
+        self.assertIn(reverse("admin:dashboard_section", args=["site"]), index_content)
+        self.assertNotIn("Top uploaders by count", index_content)
+        self.assertNotIn("Most liked media", index_content)
+
+        moderation = self.client.get(reverse("admin:dashboard_section", args=["moderation"]))
+        people = self.client.get(reverse("admin:dashboard_section", args=["people"]))
+        library = self.client.get(reverse("admin:dashboard_section", args=["library"]))
+        processing = self.client.get(reverse("admin:dashboard_section", args=["processing"]))
+        engagement = self.client.get(reverse("admin:dashboard_section", args=["engagement"]))
+        for response in (moderation, people, library, processing, engagement):
+            self.assertEqual(response.status_code, 200)
+
+        content = moderation.content.decode() + people.content.decode() + library.content.decode() + processing.content.decode() + engagement.content.decode()
         self.assertNotIn('class="btn btn-xs btn-primary"', content)
         self.assertNotIn('class="btn btn-sm btn-outline-info"', content)
         self.assertIn("Open on site", content)
 
         media_change = reverse("admin:files_media_change", args=[self.media.pk])
-        self.assertIn(f'<a href="{media_change}">{self.media.title}</a>', content)
         self.assertIn(f"{media_change}#reports-tab", content)
+        self.assertIn("Open reported media", content)
+        self.assertIn("Open above report limit", content)
+        actions = reverse("admin:actions_mediaaction_changelist")
+        self.assertIn(f"{actions}?action__exact=report", content)
+        self.assertIn(f"{actions}?action__exact=media_reviewed", content)
+        moderation_html = moderation.content.decode()
+        self.assertIn(f'href="{actions}?action__exact=report"', moderation_html)
+        self.assertIn(f'href="{actions}?action__exact=media_reviewed"', moderation_html)
+        self.assertRegex(moderation_html, rf'href="{re.escape(media_change)}#reports-tab"[^>]*>\s*{re.escape(self.media.title)}')
         self.assertIn(reverse("admin:users_user_change", args=[self.admin.pk]), content)
 
         media_list = reverse("admin:files_media_changelist")
         for status in ("pending", "running", "success", "fail"):
-            self.assertIn(f"{media_list}?encoding_status__exact={status}", content)
+            self.assertIn(f"{media_list}?encoding_status__exact={status}", processing.content.decode())
 
         actions = reverse("admin:actions_mediaaction_changelist")
         comments = reverse("admin:files_comment_changelist")
@@ -194,21 +277,23 @@ class DashboardStatisticsTest(TestCase):
         self.assertNotIn(self.media.title, pending_titles)
 
         users_list = reverse("admin:users_user_changelist")
-        self.assertIn(f"{users_list}?joined=7d", content)
-        self.assertIn(f"{users_list}?activity=30d", content)
-        self.assertIn(f"{users_list}?is_active__exact=0", content)
-        self.assertIn(f"{users_list}?is_superuser__exact=1", content)
-        self.assertIn(f"{users_list}?is_staff__exact=1", content)
-        self.assertIn(f"{users_list}?is_editor__exact=1", content)
-        self.assertIn(f"{users_list}?is_manager__exact=1", content)
-        self.assertIn(f"{users_list}?role=regular", content)
-        self.assertIn("Top uploaders by count", content)
-        self.assertIn("Top uploaders by size", content)
-        self.assertIn("Recently registered", content)
-        self.assertIn("User activity", content)
-        self.assertIn(f'{actions}?action__exact=like"', content)
-        self.assertIn(f'{actions}?action__exact=dislike"', content)
-        self.assertIn(f'{actions}?action__exact=watch"', content)
+        people_content = people.content.decode()
+        self.assertIn(f"{users_list}?joined=7d", people_content)
+        self.assertIn(f"{users_list}?activity=30d", people_content)
+        self.assertIn(f"{users_list}?is_active__exact=0", people_content)
+        self.assertIn(f"{users_list}?is_superuser__exact=1", people_content)
+        self.assertIn(f"{users_list}?is_staff__exact=1", people_content)
+        self.assertIn(f"{users_list}?is_editor__exact=1", people_content)
+        self.assertIn(f"{users_list}?is_manager__exact=1", people_content)
+        self.assertIn(f"{users_list}?role=regular", people_content)
+        self.assertIn("Top uploaders by count", people_content)
+        self.assertIn("Top uploaders by size", people_content)
+        self.assertIn("Recently registered", people_content)
+        self.assertIn("User activity", people_content)
+        engagement_content = engagement.content.decode()
+        self.assertIn(f'{actions}?action__exact=like"', engagement_content)
+        self.assertIn(f'{actions}?action__exact=dislike"', engagement_content)
+        self.assertIn(f'{actions}?action__exact=watch"', engagement_content)
 
     def test_top_uploaders_by_size_ranks_parsed_megabytes(self):
         larger = create_account(username="dash_size_user")
@@ -295,47 +380,85 @@ class DashboardIndexOrderTest(TestCase):
         invalidate_dashboard_stats_cache()
         self.client.force_login(self.admin)
 
-    def test_admin_index_section_order(self):
+    def test_admin_index_is_slim_health_overview(self):
         response = self.client.get(reverse("admin:index"))
         self.assertEqual(response.status_code, 200)
-        content = response.content.decode()
-        moderation = content.find("Reported media")
-        users = content.find("New users (7 days)")
-        media = content.find("Media by type")
-        engagement = content.find("Most liked media")
-        encoding_status = content.find("Encoding status")
-        system = content.find("Channels", engagement)
-        self.assertGreater(moderation, -1)
-        self.assertGreater(users, moderation)
-        self.assertGreater(media, users)
-        self.assertGreater(encoding_status, media)
-        self.assertGreater(engagement, encoding_status)
-        self.assertGreater(system, engagement)
-        self.assertNotEqual(system, -1)
-        self.assertContains(response, "Reports cleared (7 days)")
-        self.assertContains(response, "Reports confirmed (7 days)")
-        self.assertContains(response, "Media approved (7 days)")
+        self.assertContains(response, "fa-heartbeat")
+        self.assertContains(response, "fa-chart-bar")
+        self.assertContains(response, "Reported media")
         self.assertContains(response, "Failed encodings")
         self.assertContains(response, "Encoding queue")
+        self.assertContains(response, "Site check warnings")
+        self.assertContains(response, reverse("admin:dashboard_section", args=["site"]))
+        self.assertContains(response, reverse("admin:dashboard_section", args=["moderation"]))
+        self.assertContains(response, reverse("admin:dashboard_section", args=["people"]))
+        self.assertContains(response, reverse("admin:dashboard_section", args=["library"]))
+        self.assertContains(response, reverse("admin:dashboard_section", args=["processing"]))
+        self.assertContains(response, reverse("admin:dashboard_section", args=["engagement"]))
+        self.assertContains(response, reverse("admin:dashboard_section", args=["site"]))
+        self.assertNotContains(response, "Recent video uploads")
+        self.assertNotContains(response, "Most liked media")
+        self.assertNotContains(response, "Top uploaders by count")
         self.assertNotContains(response, "Encoding failures")
-        self.assertContains(response, "Recent video uploads")
-        self.assertContains(response, "Recent audio uploads")
-        self.assertContains(response, "Recent image uploads")
-        self.assertContains(response, "Recent PDF uploads")
-        self.assertContains(response, "Recent reports")
-        self.assertContains(response, "Recent report audit actions")
-        self.assertContains(response, "Recent pending review")
-        self.assertContains(response, "Recently approved")
-        self.assertNotContains(response, "Recent confirmed reports")
-        self.assertNotContains(response, "Recent cleared reports")
-        self.assertNotContains(response, "Recent media reviews")
-        reports = content.find("Recent reports")
-        audits = content.find("Recent report audit actions")
-        pending = content.find("Recent pending review")
-        approved = content.find("Recently approved")
+        self.assertNotContains(response, "Needs Review")
+
+    def test_dashboard_section_pages_keep_detailed_tables(self):
+        moderation = self.client.get(reverse("admin:dashboard_section", args=["moderation"]))
+        people = self.client.get(reverse("admin:dashboard_section", args=["people"]))
+        library = self.client.get(reverse("admin:dashboard_section", args=["library"]))
+        processing = self.client.get(reverse("admin:dashboard_section", args=["processing"]))
+        engagement = self.client.get(reverse("admin:dashboard_section", args=["engagement"]))
+        site = self.client.get(reverse("admin:dashboard_section", args=["site"]))
+        for response in (moderation, people, library, processing, engagement, site):
+            self.assertEqual(response.status_code, 200)
+
+        self.assertContains(moderation, "Reports cleared (7 days)")
+        self.assertContains(moderation, "Reports confirmed (7 days)")
+        self.assertContains(moderation, "Media approved (7 days)")
+        self.assertContains(moderation, "Recent reports")
+        self.assertContains(moderation, "Recent report audit actions")
+        self.assertContains(moderation, "Recent pending review")
+        self.assertContains(moderation, "Recently approved")
+        self.assertNotContains(moderation, "Recent confirmed reports")
+        self.assertNotContains(moderation, "Recent cleared reports")
+        self.assertNotContains(moderation, "Recent media reviews")
+        self.assertNotContains(moderation, "Top reviewers")
+
+        moderation_content = moderation.content.decode()
+        reports = moderation_content.find("Recent reports")
+        audits = moderation_content.find("Recent report audit actions")
+        pending = moderation_content.find("Recent pending review")
+        approved = moderation_content.find("Recently approved")
         self.assertGreater(audits, reports)
         self.assertGreater(pending, audits)
         self.assertGreater(approved, pending)
-        self.assertNotContains(response, "Top reviewers")
-        self.assertNotContains(response, "Top Videos by Duration")
-        self.assertNotContains(response, "Needs Review")
+
+        self.assertContains(people, "New users (7 days)")
+        self.assertContains(library, "Total media")
+        self.assertContains(library, "Categories")
+        self.assertContains(library, "Tags")
+        self.assertContains(library, "Playlists")
+        self.assertContains(library, "Channels")
+        self.assertContains(library, "Featured")
+        self.assertContains(library, "New media (7 days)")
+        self.assertContains(library, "Media by type")
+        self.assertContains(library, "Recent video uploads")
+        self.assertContains(library, "Recent audio uploads")
+        self.assertContains(library, "Recent image uploads")
+        self.assertContains(library, "Recent PDF uploads")
+        self.assertNotContains(library, "Encoding status")
+        self.assertIn("added_last_7_days", calculate_statistics()["media"])
+        self.assertIn("total_tags", calculate_statistics()["system"])
+        self.assertContains(processing, "Encoding status")
+        self.assertContains(processing, "Failed encodings")
+        self.assertContains(processing, "Encoding queue")
+        self.assertNotContains(processing, "Recent video uploads")
+        self.assertContains(engagement, "Most liked media")
+        self.assertContains(site, "Object totals")
+        self.assertContains(site, "Health checks")
+        self.assertContains(site, "Configuration")
+        self.assertContains(site, "Channels")
+        self.assertContains(site, "Site name matches PORTAL_NAME")
+        self.assertContains(site, "PORTAL_NAME")
+        self.assertNotContains(library, "Top Videos by Duration")
+        self.assertNotContains(moderation, "Needs Review")

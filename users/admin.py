@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.http import HttpResponseRedirect
 from django.utils import timezone
 
 from actions.models import MediaAction
@@ -10,11 +11,11 @@ from admin_customizations.action_choices import (
     build_grouped_action_choices,
 )
 from files.admin_helpers import (
-    ReadOnlyTabularInline,
     admin_change_link,
     admin_changelist_link,
     admin_text,
 )
+from files.frontend_translations import translate_string
 from files.models import Comment, Media, Playlist
 
 from .models import Channel, User
@@ -38,7 +39,7 @@ class ActiveUploaderFilter(admin.SimpleListFilter):
     parameter_name = "activity"
 
     def lookups(self, request, model_admin):
-        return (("30d", "Uploaded in the last 30 days"),)
+        return (("30d", "Activity in the last 30 days"),)
 
     def queryset(self, request, queryset):
         if self.value() == "30d":
@@ -65,131 +66,8 @@ class RegularUserFilter(admin.SimpleListFilter):
         return queryset
 
 
-class ChannelMediaInline(ReadOnlyTabularInline):
-    model = Media
-    fk_name = "channel"
-    fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
-    readonly_fields = ("link_title", "link_owner", "is_listable", "state", "media_type")
-    ordering = ("-add_date",)
-    classes = ["tab", "related-objects-tab"]
-    verbose_name = "Media"
-    verbose_name_plural = "Media"
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("user")
-
-    @admin.display(description="Media")
-    def link_title(self, obj):
-        if not obj or not obj.pk:
-            return "—"
-        return admin_change_link(obj, obj.title)
-
-    @admin.display(description="Owner")
-    def link_owner(self, obj):
-        if not obj or not obj.user_id:
-            return "—"
-        return admin_change_link(obj.user, obj.user.username)
-
-    @admin.display(description="Listable", boolean=True)
-    def is_listable(self, obj):
-        if not obj:
-            return None
-        return obj.listable
-
-
-class UserMediaInline(ReadOnlyTabularInline):
-    model = Media
-    fk_name = "user"
-    fields = ("link_title", "media_type", "state", "encoding_status", "add_date")
-    readonly_fields = ("link_title", "media_type", "state", "encoding_status", "add_date")
-    ordering = ("-add_date",)
-    classes = ["tab", "related-objects-tab"]
-    verbose_name = "Media"
-    verbose_name_plural = "Media"
-
-    @admin.display(description="Media")
-    def link_title(self, obj):
-        if not obj or not obj.pk:
-            return "—"
-        return admin_change_link(obj, obj.title)
-
-
-class UserPlaylistInline(ReadOnlyTabularInline):
-    model = Playlist
-    fk_name = "user"
-    fields = ("link_title", "add_date", "friendly_token")
-    readonly_fields = ("link_title", "add_date", "friendly_token")
-    ordering = ("-add_date",)
-    classes = ["tab", "related-objects-tab"]
-    verbose_name = "Playlist"
-    verbose_name_plural = "Playlists"
-
-    @admin.display(description="Playlist")
-    def link_title(self, obj):
-        if not obj or not obj.pk:
-            return "—"
-        return admin_change_link(obj, obj.title)
-
-
-class UserChannelInline(ReadOnlyTabularInline):
-    model = Channel
-    fk_name = "user"
-    fields = ("link_title", "add_date", "friendly_token")
-    readonly_fields = ("link_title", "add_date", "friendly_token")
-    ordering = ("-add_date",)
-    classes = ["tab", "related-objects-tab"]
-    verbose_name = "Channel"
-    verbose_name_plural = "Channels"
-
-    @admin.display(description="Channel")
-    def link_title(self, obj):
-        if not obj or not obj.pk:
-            return "—"
-        return admin_change_link(obj, obj.title)
-
-
-class UserCommentInline(ReadOnlyTabularInline):
-    model = Comment
-    fk_name = "user"
-    fields = ("link_media", "text", "add_date")
-    readonly_fields = ("link_media", "text", "add_date")
-    ordering = ("-add_date",)
-    can_delete = True
-    classes = ["tab", "related-objects-tab"]
-    verbose_name = "Comment"
-    verbose_name_plural = "Comments"
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("media")
-
-    @admin.display(description="Media")
-    def link_media(self, obj):
-        if not obj or not obj.media_id:
-            return "—"
-        return admin_change_link(obj.media, obj.media.title)
-
-
-class UserActivityInline(ReadOnlyTabularInline):
-    model = MediaAction
-    fk_name = "user"
-    fields = ("action", "link_media", "action_date", "remote_ip", "extra_info")
-    readonly_fields = ("action", "link_media", "action_date", "remote_ip", "extra_info")
-    ordering = ("-action_date",)
-    classes = ["tab", "related-objects-tab"]
-    verbose_name = "Activity"
-    verbose_name_plural = "Activity"
-
-    def get_queryset(self, request):
-        return super().get_queryset(request).select_related("media")
-
-    @admin.display(description="Media")
-    def link_media(self, obj):
-        if not obj or not obj.media_id:
-            return "—"
-        return admin_change_link(obj.media, obj.media.title)
-
-
 class UserAdmin(admin.ModelAdmin):
+    change_list_template = "admin/users/user/change_list.html"
     search_fields = ["email", "username", "name"]
     exclude = [
         "user_permissions",
@@ -205,17 +83,25 @@ class UserAdmin(admin.ModelAdmin):
         "media_count",
     ]
     list_display = [
+        "date_added",
+        "is_active",
         "username",
         "name",
         "email",
-        "logo",
-        "date_added",
-        "is_active",
         "is_superuser",
         "is_editor",
         "is_manager",
         "media_count",
     ]
+    list_display_links = ("username",)
+    # Hidden by default; shown via the column chooser and/or when a related filter is active.
+    optional_list_columns = (
+        ("is_superuser", "Superuser status", ("is_superuser__exact",)),
+        ("is_editor", "MediaCMS Editor", ("is_editor__exact",)),
+        ("is_manager", "MediaCMS Manager", ("is_manager__exact",)),
+        ("media_count", "Media count", ()),
+    )
+    optional_columns_session_key = "mediacms_user_admin_optional_columns"
     list_filter = ["is_active", "is_superuser", "is_staff", "is_editor", "is_manager", RegularUserFilter, JoinedRecentlyFilter, ActiveUploaderFilter]
     list_editable = []
     ordering = ("-date_added",)
@@ -232,13 +118,79 @@ class UserAdmin(admin.ModelAdmin):
         "related_reports",
         "related_actions",
     )
-    inlines = [UserMediaInline, UserPlaylistInline, UserChannelInline, UserCommentInline, UserActivityInline]
     action_form = GroupedActionForm
     action_groups = [
         ["approve_users", "unapprove_users"],
         ["deactivate_users", "reactivate_users"],
         ["delete_selected"],
     ]
+
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        """Optional columns forced visible because a related list filter is active."""
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        return [column for column in self.list_display if column not in optional or column in visible_optional]
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and (
+            request.GET.get("reset_user_columns") == "1" or request.GET.get("set_user_columns") == "1"
+        ):
+            if request.GET.get("reset_user_columns") == "1":
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("user_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_user_columns", None)
+            params.pop("reset_user_columns", None)
+            params.pop("user_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["user_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_user_columns", None)
+        preserved.pop("reset_user_columns", None)
+        preserved.pop("user_col", None)
+        extra_context["user_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
 
     def get_action_choices(self, request, default_choices=None):
         return build_grouped_action_choices(
@@ -308,7 +260,7 @@ class UserAdmin(admin.ModelAdmin):
                         "related_actions",
                     ),
                     "classes": ("tab", "related-links-tab"),
-                    "description": "Links to filtered admin lists for this user's content and engagement.",
+                    "description": "Links to filtered admin lists for related one-to-many records.",
                 },
             ),
         )
@@ -408,14 +360,14 @@ class UserAdmin(admin.ModelAdmin):
 
 class ChannelAdmin(admin.ModelAdmin):
     search_fields = ["title", "friendly_token", "user__username"]
-    list_display = ["title", "link_user", "add_date", "friendly_token", "related_media_count"]
+    list_display = ["add_date", "title", "link_user", "friendly_token", "related_media_count"]
+    list_display_links = ("title",)
     list_select_related = ("user",)
     list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
     readonly_fields = ("friendly_token", "link_user", "related_media")
     exclude = ("user",)
-    inlines = [ChannelMediaInline]
     fieldsets = (
         (
             "Channel",
@@ -436,7 +388,7 @@ class ChannelAdmin(admin.ModelAdmin):
             {
                 "fields": ("related_media",),
                 "classes": ("tab", "related-links-tab"),
-                "description": "Links to filtered admin lists for related records. Media items are listed on the following tab.",
+                "description": "Links to filtered admin lists for related one-to-many records.",
             },
         ),
     )

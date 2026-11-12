@@ -1,0 +1,59 @@
+{% load i18n static admin_list jazzmin admin_filters custom_filters %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+{% get_current_language as LANGUAGE_CODE %}
+{% changelist_active_filters cl as active_filters %}
+{% changelist_clear_filters_query cl as clear_filters_query %}
+{% changelist_search_hint cl LANGUAGE_CODE as search_hint %}
+
+<div id="change-list-filters">
+    <form id="changelist-search" method="GET">
+        {% if cl.search_fields or cl.has_filters %}
+            <div class="changelist-search-row">
+                {% if cl.search_fields %}
+                    <label class="sr-only" for="searchbar">{{ "Search"|custom_translate:LANGUAGE_CODE }}</label>
+                    <input class="form-control" type="text" name="{{ search_var }}" value="{{ cl.query }}" id="searchbar"
+                           {% if search_hint %}placeholder="{{ search_hint }}" title="{{ search_hint }}" aria-label="{{ search_hint }}"{% endif %}>
+                {% endif %}
+                <button type="submit" class="btn {{ jazzmin_ui.button_classes.primary }} changelist-search-submit">{% trans 'Search' %}</button>
+            </div>
+        {% endif %}
+
+        {% if show_result_count %}
+            <p class="changelist-result-count">
+                {% blocktrans count counter=cl.result_count %}{{ counter }} result{% plural %}{{ counter }} results{% endblocktrans %}
+                (<a href="?{% if cl.is_popup %}{{ is_popup_var }}=1{% endif %}">
+                    {% if cl.show_full_result_count %}
+                        {% blocktrans with full_result_count=cl.full_result_count %}{{ full_result_count }} total{% endblocktrans %}
+                    {% else %}
+                        {% trans "Show all" %}
+                    {% endif %}
+                </a>)
+            </p>
+        {% endif %}
+
+        {% if cl.has_filters %}
+            <details class="changelist-filter-card">
+                <summary>
+                    <i class="fas fa-chevron-right changelist-filter-chevron" aria-hidden="true"></i>
+                    <span class="changelist-filter-summary-label">{{ "Filters"|custom_translate:LANGUAGE_CODE }}</span>
+                    {% for chip in active_filters %}
+                        <span class="changelist-filter-chip">{{ chip.title|custom_translate:LANGUAGE_CODE }}: {{ chip.value|custom_translate:LANGUAGE_CODE }}</span>
+                    {% endfor %}
+                    {% if active_filters %}
+                        <a href="?{{ clear_filters_query }}" class="changelist-filter-clear">{{ "Clear filters"|custom_translate:LANGUAGE_CODE }}</a>
+                    {% endif %}
+                </summary>
+                <div class="changelist-filter-grid">
+                    {% for spec in cl.filter_specs %}
+                        {% changelist_filter cl spec %}
+                    {% endfor %}
+                </div>
+            </details>
+        {% endif %}
+
+        {% admin_extra_filters cl as extra_filters %}
+        {% for pair in extra_filters.items %}
+            {% if pair.0 != search_var %}<input type="hidden" name="{{ pair.0 }}" value="{{ pair.1 }}">{% endif %}
+        {% endfor %}
+    </form>
+</div>

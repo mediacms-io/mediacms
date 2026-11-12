@@ -12,7 +12,7 @@ from files.backends import FFmpegBackend, VideoEncodingError
 from files.context_processors import stuff
 from files.frontend_translations import el, translation_strings
 from files.permissions import IsMediacmsEditor
-from files.templatetags.custom_filters import custom_translate
+from files.templatetags.custom_filters import custom_translate, single_sort_url
 from files.tests import create_account, fixture_path
 
 
@@ -147,6 +147,18 @@ class CustomTranslateFilterTests(SimpleTestCase):
     def test_filter_is_usable_from_templates(self):
         rendered = Template("{% load custom_filters %}{{ 'Upload'|custom_translate:'fr' }}").render(Context())
         self.assertEqual(rendered, translation_strings["fr"]["Upload"])
+
+
+class SingleSortUrlFilterTests(SimpleTestCase):
+    def test_keeps_only_the_primary_ordering_field(self):
+        self.assertEqual(single_sort_url("/admin/actions/mediaaction/?o=2.-1"), "/admin/actions/mediaaction/?o=2")
+        self.assertEqual(single_sort_url("/admin/?o=-3.1.2&q=x"), "/admin/?o=-3&q=x")
+        self.assertEqual(single_sort_url("/admin/?q=x"), "/admin/?q=x")
+        self.assertEqual(single_sort_url(""), "")
+
+    def test_filter_is_usable_from_templates(self):
+        rendered = Template("{% load custom_filters %}{{ '/a/?o=2.-1'|single_sort_url }}").render(Context())
+        self.assertEqual(rendered, "/a/?o=2")
 
 
 class FFmpegBackendTests(SimpleTestCase):

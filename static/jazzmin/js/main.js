@@ -48,9 +48,69 @@
         $main_li_parent.addClass('menu-is-opening menu-open');
     };
 
+    function hideClippedTooltips() {
+        $('.changelist-clipped-text__full.is-open').removeClass('is-open').removeAttr('style');
+    }
+
+    function placeClippedTooltip(host) {
+        const $host = $(host);
+        const $tip = $host.children('.changelist-clipped-text__full');
+        const preview = $host.children('.changelist-clipped-text__preview')[0];
+        if (!$tip.length || !preview) {
+            return;
+        }
+        hideClippedTooltips();
+        $tip.addClass('is-open').css({
+            position: 'fixed',
+            pointerEvents: 'none',
+            width: 'auto',
+            maxWidth: 'none',
+            left: '0px',
+            top: '0px',
+        });
+        const anchor = preview.getBoundingClientRect();
+        const width = Math.min(Math.max(anchor.width, 160), window.innerWidth - 16);
+        $tip.css({ width: width + 'px', maxWidth: width + 'px' });
+        const tipHeight = $tip.outerHeight();
+        const tipWidth = $tip.outerWidth();
+        const gap = 6;
+        let top = anchor.top - tipHeight - gap;
+        if (top < 8) {
+            top = Math.min(anchor.bottom + gap, window.innerHeight - tipHeight - 8);
+        }
+        let left = anchor.left;
+        if (left + tipWidth > window.innerWidth - 8) {
+            left = Math.max(8, anchor.right - tipWidth);
+        }
+        if (left < 8) {
+            left = 8;
+        }
+        $tip.css({ top: top + 'px', left: left + 'px' });
+    }
+
     $(document).ready(function () {
         // Set active status on links
         setActiveLinks()
+
+        $(document).on('mouseenter', '.changelist-clipped-text', function () {
+            placeClippedTooltip(this);
+        });
+        $(document).on('mouseleave', '.changelist-clipped-text', function () {
+            hideClippedTooltips();
+        });
+        $(document).on('focusin', 'a, td', function () {
+            const host = this.querySelector('.changelist-clipped-text');
+            if (host) {
+                placeClippedTooltip(host);
+            }
+        });
+        $(document).on('focusout', 'a, td', function () {
+            if (this.querySelector('.changelist-clipped-text')) {
+                hideClippedTooltips();
+            }
+        });
+        document.addEventListener('scroll', hideClippedTooltips, true);
+        $(window).on('resize', hideClippedTooltips);
 
         // When we use the menu, store its state in a cookie to preserve it
         handleMenu();

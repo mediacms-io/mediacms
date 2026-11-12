@@ -1,14 +1,32 @@
 from collections import defaultdict
 from datetime import timedelta
+from urllib.parse import urlparse
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
+from django.urls import reverse
 from django.utils import timezone
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
-from files.models import Category, Comment, Media, Playlist
+from files.models import (
+    Category,
+    Comment,
+    EncodeProfile,
+    Encoding,
+    Language,
+    License,
+    Media,
+    MediaPermission,
+    Page,
+    Playlist,
+    Subtitle,
+    Tag,
+    TranscriptionRequest,
+    VideoTrimRequest,
+)
 from users.models import Channel, User
 
 # Report-related moderator audit events shown on the dashboard (excludes user "report"
@@ -16,7 +34,7 @@ from users.models import Channel, User
 REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in ("media_reviewed",))
 REPORT_AUDIT_ACTION_LABELS = dict(MODERATION_MEDIA_ACTIONS)
 
-DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v1"
+DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v4"
 DASHBOARD_STATS_CACHE_TTL = 60
 
 
@@ -58,6 +76,7 @@ def calculate_statistics(*, force_refresh=False):
 def get_media_statistics():
     """Calculate media-related statistics with a single aggregate query."""
     media_stats = {}
+    seven_days_ago = timezone.now() - timedelta(days=7)
     aggregates = Media.objects.aggregate(
         total=Count("id"),
         video=Count("id", filter=Q(media_type="video")),
@@ -78,6 +97,7 @@ def get_media_statistics():
             filter=Q(reported_times__gte=getattr(settings, "REPORTED_TIMES_THRESHOLD", 10)),
         ),
         unreviewed=Count("id", filter=Q(is_reviewed=False)),
+        added_last_7_days=Count("id", filter=Q(add_date__gte=seven_days_ago)),
         total_views=Coalesce(Sum("views"), 0),
         total_likes=Coalesce(Sum("likes"), 0),
         total_dislikes=Coalesce(Sum("dislikes"), 0),
@@ -104,6 +124,7 @@ def get_media_statistics():
     media_stats["failed"] = aggregates["fail"]
     media_stats["encoding_queue"] = aggregates["pending"] + aggregates["running"]
     media_stats["featured"] = aggregates["featured"]
+    media_stats["added_last_7_days"] = aggregates["added_last_7_days"]
     media_stats["total_views"] = aggregates["total_views"]
     media_stats["reported_media"] = aggregates["reported_media"]
     media_stats["reported_above_threshold"] = aggregates["reported_above_threshold"]
@@ -319,12 +340,365 @@ def get_user_statistics(seven_days_ago, thirty_days_ago):
     return user_stats
 
 
+def _frontend_host_parts():
+    """Return (scheme, hostname) for FRONTEND_HOST, ignoring path/port noise."""
+    raw = (getattr(settings, "FRONTEND_HOST", "") or "").strip()
+    if not raw:
+        return "", ""
+    parsed = urlparse(raw if "://" in raw else f"http://{raw}")
+    host = (parsed.hostname or parsed.path.split("/")[0] or "").rstrip(".")
+    return (parsed.scheme or "").lower(), host.lower()
+
+
+def _health_check(check_id, label, status, detail, link=None):
+    return {
+        "id": check_id,
+        "label": label,
+        "status": status,
+        "detail": detail,
+        "link": link,
+    }
+
+
+def get_site_health_checks(media_stats=None):
+    """Lightweight configuration and dependency checks for Site overview."""
+    checks = []
+    site = Site.objects.filter(id=getattr(settings, "SITE_ID", 1)).first() or Site.objects.first()
+    portal_name = getattr(settings, "PORTAL_NAME", "") or ""
+    frontend_scheme, frontend_host = _frontend_host_parts()
+    site_change_url = reverse("admin:sites_site_change", args=[site.pk]) if site else None
+
+    if site is None:
+        checks.append(_health_check("django_site", "Django site record", "fail", "No django.contrib.sites Site row exists."))
+    else:
+        if site.name == portal_name:
+            checks.append(
+                _health_check(
+                    "site_name",
+                    "Site name matches PORTAL_NAME",
+                    "ok",
+                    f'Site.name and PORTAL_NAME are both "{portal_name}".',
+                    link=site_change_url,
+                )
+            )
+        else:
+            checks.append(
+                _health_check(
+                    "site_name",
+                    "Site name matches PORTAL_NAME",
+                    "warn",
+                    f'Site.name is "{site.name}" but PORTAL_NAME is "{portal_name}".',
+                    link=site_change_url,
+                )
+            )
+
+        site_domain = (site.domain or "").split(":")[0].strip().lower().rstrip(".")
+        if not frontend_host:
+            checks.append(
+                _health_check(
+                    "site_domain",
+                    "Site domain matches FRONTEND_HOST",
+                    "warn",
+                    "FRONTEND_HOST is empty, so the Site domain cannot be validated.",
+                    link=site_change_url,
+                )
+            )
+        elif site_domain == frontend_host:
+            checks.append(
+                _health_check(
+                    "site_domain",
+                    "Site domain matches FRONTEND_HOST",
+                    "ok",
+                    f'Site.domain and FRONTEND_HOST both resolve to "{frontend_host}".',
+                    link=site_change_url,
+                )
+            )
+        else:
+            checks.append(
+                _health_check(
+                    "site_domain",
+                    "Site domain matches FRONTEND_HOST",
+                    "warn",
+                    f'Site.domain is "{site.domain}" but FRONTEND_HOST host is "{frontend_host}".',
+                    link=site_change_url,
+                )
+            )
+
+    if getattr(settings, "DEBUG", False):
+        checks.append(_health_check("debug", "DEBUG disabled", "warn", "DEBUG is True. Disable it for production deployments."))
+    else:
+        checks.append(_health_check("debug", "DEBUG disabled", "ok", "DEBUG is False."))
+
+    allowed_hosts = [str(host).strip().lower() for host in getattr(settings, "ALLOWED_HOSTS", [])]
+    if not frontend_host:
+        checks.append(_health_check("allowed_hosts", "ALLOWED_HOSTS includes FRONTEND_HOST", "warn", "FRONTEND_HOST host is empty."))
+    elif "*" in allowed_hosts:
+        checks.append(
+            _health_check(
+                "allowed_hosts",
+                "ALLOWED_HOSTS includes FRONTEND_HOST",
+                "warn",
+                'ALLOWED_HOSTS contains "*". Prefer an explicit host list in production.',
+            )
+        )
+    elif any(host.endswith("/") for host in allowed_hosts):
+        checks.append(
+            _health_check(
+                "allowed_hosts",
+                "ALLOWED_HOSTS includes FRONTEND_HOST",
+                "warn",
+                "ALLOWED_HOSTS has an entry with a trailing slash. Host values should not include paths.",
+            )
+        )
+    elif frontend_host in allowed_hosts:
+        checks.append(
+            _health_check(
+                "allowed_hosts",
+                "ALLOWED_HOSTS includes FRONTEND_HOST",
+                "ok",
+                f'ALLOWED_HOSTS includes "{frontend_host}".',
+            )
+        )
+    else:
+        checks.append(
+            _health_check(
+                "allowed_hosts",
+                "ALLOWED_HOSTS includes FRONTEND_HOST",
+                "fail",
+                f'FRONTEND_HOST host "{frontend_host}" is not present in ALLOWED_HOSTS.',
+            )
+        )
+
+    local_install = bool(getattr(settings, "LOCAL_INSTALL", False))
+    if frontend_scheme == "https":
+        checks.append(_health_check("frontend_https", "FRONTEND_HOST uses HTTPS", "ok", 'FRONTEND_HOST scheme is "https".'))
+    elif local_install or getattr(settings, "DEBUG", False):
+        checks.append(
+            _health_check(
+                "frontend_https",
+                "FRONTEND_HOST uses HTTPS",
+                "info",
+                f'FRONTEND_HOST scheme is "{frontend_scheme or "missing"}" (acceptable for local/debug).',
+            )
+        )
+    else:
+        checks.append(
+            _health_check(
+                "frontend_https",
+                "FRONTEND_HOST uses HTTPS",
+                "warn",
+                "FRONTEND_HOST is not HTTPS. Public deployments usually need HTTPS.",
+            )
+        )
+
+    try:
+        probe_key = "admin_dashboard_health_probe"
+        cache.set(probe_key, "ok", 5)
+        cache_ok = cache.get(probe_key) == "ok"
+    except Exception as exc:  # noqa: BLE001 - surface cache/broker misconfig to admins
+        cache_ok = False
+        cache_error = str(exc)
+    else:
+        cache_error = ""
+    if cache_ok:
+        checks.append(_health_check("cache", "Cache / Redis reachable", "ok", "Cache backend accepted a short probe write/read."))
+    else:
+        checks.append(
+            _health_check(
+                "cache",
+                "Cache / Redis reachable",
+                "fail",
+                cache_error or "Cache backend probe failed.",
+            )
+        )
+
+    active_profiles = EncodeProfile.objects.filter(active=True).count()
+    if active_profiles:
+        checks.append(
+            _health_check(
+                "encode_profiles",
+                "Active encode profiles",
+                "ok",
+                f"{active_profiles} active encode profile(s).",
+                link=reverse("admin:files_encodeprofile_changelist"),
+            )
+        )
+    else:
+        checks.append(
+            _health_check(
+                "encode_profiles",
+                "Active encode profiles",
+                "fail",
+                "No active encode profiles. Video transcoding will not run.",
+                link=reverse("admin:files_encodeprofile_changelist"),
+            )
+        )
+
+    superusers = User.objects.filter(is_superuser=True, is_active=True).count()
+    if superusers:
+        checks.append(
+            _health_check(
+                "superusers",
+                "Active superuser exists",
+                "ok",
+                f"{superusers} active superuser(s).",
+                link=reverse("admin:users_user_changelist") + "?is_superuser__exact=1",
+            )
+        )
+    else:
+        checks.append(
+            _health_check(
+                "superusers",
+                "Active superuser exists",
+                "fail",
+                "No active superuser accounts found.",
+                link=reverse("admin:users_user_changelist"),
+            )
+        )
+
+    default_from = (getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
+    if not default_from or default_from.endswith("@mediacms.io"):
+        checks.append(
+            _health_check(
+                "email_from",
+                "DEFAULT_FROM_EMAIL configured",
+                "warn",
+                f'DEFAULT_FROM_EMAIL is "{default_from or "(empty)"}". Update it for production mail.',
+            )
+        )
+    else:
+        checks.append(_health_check("email_from", "DEFAULT_FROM_EMAIL configured", "ok", f'DEFAULT_FROM_EMAIL is "{default_from}".'))
+
+    email_use_tls = bool(getattr(settings, "EMAIL_USE_TLS", False))
+    email_use_ssl = bool(getattr(settings, "EMAIL_USE_SSL", False))
+    if email_use_tls and email_use_ssl:
+        checks.append(
+            _health_check(
+                "email_tls_ssl",
+                "EMAIL_USE_TLS / EMAIL_USE_SSL exclusive",
+                "fail",
+                "EMAIL_USE_TLS and EMAIL_USE_SSL are both True. Only one may be True; set the other to False.",
+            )
+        )
+    elif email_use_ssl:
+        checks.append(
+            _health_check(
+                "email_tls_ssl",
+                "EMAIL_USE_TLS / EMAIL_USE_SSL exclusive",
+                "ok",
+                "EMAIL_USE_SSL is True and EMAIL_USE_TLS is False.",
+            )
+        )
+    elif email_use_tls:
+        checks.append(
+            _health_check(
+                "email_tls_ssl",
+                "EMAIL_USE_TLS / EMAIL_USE_SSL exclusive",
+                "ok",
+                "EMAIL_USE_TLS is True and EMAIL_USE_SSL is False.",
+            )
+        )
+    else:
+        checks.append(
+            _health_check(
+                "email_tls_ssl",
+                "EMAIL_USE_TLS / EMAIL_USE_SSL exclusive",
+                "info",
+                "Neither EMAIL_USE_TLS nor EMAIL_USE_SSL is enabled.",
+            )
+        )
+
+    failed = media_stats["failed"] if media_stats is not None else Media.objects.filter(encoding_status="fail").count()
+    queue = media_stats["encoding_queue"] if media_stats is not None else Media.objects.filter(encoding_status__in=["pending", "running"]).count()
+    if failed:
+        checks.append(
+            _health_check(
+                "encoding_failures",
+                "Encoding failures",
+                "warn",
+                f"{failed} media item(s) have failed encodings.",
+                link=reverse("admin:files_media_changelist") + "?encoding_queue=fail",
+            )
+        )
+    else:
+        checks.append(_health_check("encoding_failures", "Encoding failures", "ok", "No failed encodings."))
+    checks.append(
+        _health_check(
+            "encoding_queue",
+            "Encoding queue",
+            "info" if queue else "ok",
+            f"{queue} media item(s) pending or running.",
+            link=reverse("admin:files_media_changelist") + "?encoding_queue=yes",
+        )
+    )
+
+    severity_order = {"fail": 0, "warn": 1, "info": 2, "ok": 3}
+    checks.sort(key=lambda check: (severity_order.get(check["status"], 99), check["label"]))
+    return checks
+
+
+def get_site_configuration_status():
+    """Expose common portal settings for troubleshooting (informational)."""
+    return [
+        {"label": "PORTAL_NAME", "value": str(getattr(settings, "PORTAL_NAME", ""))},
+        {"label": "FRONTEND_HOST", "value": str(getattr(settings, "FRONTEND_HOST", ""))},
+        {"label": "PORTAL_WORKFLOW", "value": str(getattr(settings, "PORTAL_WORKFLOW", ""))},
+        {"label": "MEDIA_IS_REVIEWED", "value": str(getattr(settings, "MEDIA_IS_REVIEWED", True))},
+        {"label": "CAN_ADD_MEDIA", "value": str(getattr(settings, "CAN_ADD_MEDIA", ""))},
+        {"label": "CAN_COMMENT", "value": str(getattr(settings, "CAN_COMMENT", ""))},
+        {"label": "USERS_NEEDS_TO_BE_APPROVED", "value": str(getattr(settings, "USERS_NEEDS_TO_BE_APPROVED", False))},
+        {"label": "GLOBAL_LOGIN_REQUIRED", "value": str(getattr(settings, "GLOBAL_LOGIN_REQUIRED", False))},
+        {"label": "ACCOUNT_EMAIL_VERIFICATION", "value": str(getattr(settings, "ACCOUNT_EMAIL_VERIFICATION", ""))},
+        {"label": "EMAIL_USE_TLS", "value": str(getattr(settings, "EMAIL_USE_TLS", False))},
+        {"label": "EMAIL_USE_SSL", "value": str(getattr(settings, "EMAIL_USE_SSL", False))},
+        {"label": "USE_RBAC", "value": str(getattr(settings, "USE_RBAC", False))},
+        {"label": "USE_SAML", "value": str(getattr(settings, "USE_SAML", False))},
+        {"label": "USE_IDENTITY_PROVIDERS", "value": str(getattr(settings, "USE_IDENTITY_PROVIDERS", False))},
+        {"label": "USE_LTI", "value": str(getattr(settings, "USE_LTI", False))},
+        {"label": "USE_WHISPER_TRANSCRIBE", "value": str(getattr(settings, "USE_WHISPER_TRANSCRIBE", False))},
+        {"label": "LOCAL_INSTALL", "value": str(getattr(settings, "LOCAL_INSTALL", False))},
+        {"label": "DEBUG", "value": str(getattr(settings, "DEBUG", False))},
+    ]
+
+
 def get_system_statistics(media_stats=None):
-    """Calculate system/infrastructure statistics"""
+    """Calculate system/infrastructure statistics, object totals, and site health."""
+    object_totals = [
+        {"label": "Media", "count": Media.objects.count(), "url": reverse("admin:files_media_changelist")},
+        {"label": "Users", "count": User.objects.count(), "url": reverse("admin:users_user_changelist")},
+        {"label": "Comments", "count": Comment.objects.count(), "url": reverse("admin:files_comment_changelist")},
+        {"label": "Encodings", "count": Encoding.objects.count(), "url": reverse("admin:files_encoding_changelist")},
+        {"label": "Media actions", "count": MediaAction.objects.count(), "url": reverse("admin:actions_mediaaction_changelist")},
+        {"label": "Categories", "count": Category.objects.count(), "url": reverse("admin:files_category_changelist")},
+        {"label": "Tags", "count": Tag.objects.count(), "url": reverse("admin:files_tag_changelist")},
+        {"label": "Playlists", "count": Playlist.objects.count(), "url": reverse("admin:files_playlist_changelist")},
+        {"label": "Channels", "count": Channel.objects.count(), "url": reverse("admin:users_channel_changelist")},
+        {"label": "Pages", "count": Page.objects.count(), "url": reverse("admin:files_page_changelist")},
+        {"label": "Captions", "count": Subtitle.objects.count(), "url": reverse("admin:files_subtitle_changelist")},
+        {"label": "Caption Requests", "count": TranscriptionRequest.objects.count(), "url": reverse("admin:files_transcriptionrequest_changelist")},
+        {"label": "Trim Requests", "count": VideoTrimRequest.objects.count(), "url": reverse("admin:files_videotrimrequest_changelist")},
+        {"label": "Encode profiles", "count": EncodeProfile.objects.count(), "url": reverse("admin:files_encodeprofile_changelist")},
+        {"label": "Licenses", "count": License.objects.count(), "url": reverse("admin:files_license_changelist")},
+        {"label": "Languages", "count": Language.objects.count(), "url": reverse("admin:files_language_changelist")},
+        {"label": "Media permissions", "count": MediaPermission.objects.count(), "url": reverse("admin:files_mediapermission_changelist")},
+    ]
+
+    totals_by_label = {item["label"]: item["count"] for item in object_totals}
     system_stats = {
-        "total_channels": Channel.objects.count(),
-        "total_categories": Category.objects.count(),
-        "total_playlists": Playlist.objects.count(),
+        "total_channels": totals_by_label["Channels"],
+        "total_categories": totals_by_label["Categories"],
+        "total_playlists": totals_by_label["Playlists"],
+        "total_tags": totals_by_label["Tags"],
+        "total_pages": totals_by_label["Pages"],
+        "object_totals": object_totals,
+        "health_checks": get_site_health_checks(media_stats=media_stats),
+        "configuration": get_site_configuration_status(),
+    }
+    system_stats["health_counts"] = {
+        "ok": sum(1 for check in system_stats["health_checks"] if check["status"] == "ok"),
+        "warn": sum(1 for check in system_stats["health_checks"] if check["status"] == "warn"),
+        "fail": sum(1 for check in system_stats["health_checks"] if check["status"] == "fail"),
+        "info": sum(1 for check in system_stats["health_checks"] if check["status"] == "info"),
     }
 
     if media_stats is None:

@@ -1,0 +1,200 @@
+{% load i18n static admin_urls jazzmin custom_filters %}
+            <!-- Engagement Metrics Section -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-heart me-2"></i>{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.engagement.total_comments }}</h3>
+                                        <p>{{ "Total comments"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_comment_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.engagement.total_likes|floatformat:0 }}</h3>
+                                        <p>{{ "Total likes"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-thumbs-up"></i>
+                                    </div>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.engagement.total_dislikes|floatformat:0 }}</h3>
+                                        <p>{{ "Total dislikes"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-thumbs-down"></i>
+                                    </div>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.total_views|floatformat:0 }}</h3>
+                                        <p>{{ "Total views"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-eye"></i>
+                                    </div>
+                                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=watch" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Most liked media"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Likes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.engagement.most_liked %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like&amp;media__id__exact={{ media.id }}"><span class="badge badge-success">{{ media.likes }}</span></a></td>
+                                                        <td>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Most viewed media"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Views"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.engagement.most_viewed %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=watch&amp;media__id__exact={{ media.id }}"><span class="badge badge-primary">{{ media.views }}</span></a></td>
+                                                        <td>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Most commented media"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Comments"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.engagement.most_commented %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:files_comment_changelist' %}?media__id__exact={{ media.id }}"><span class="badge badge-info">{{ media.comment_count }}</span></a></td>
+                                                        <td>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Most disliked media"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Dislikes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Action"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.engagement.most_disliked %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:40 }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike&amp;media__id__exact={{ media.id }}"><span class="badge badge-danger">{{ media.dislikes }}</span></a></td>
+                                                        <td>
+                                                            <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="btn btn-xs btn-outline-secondary" target="_blank" rel="noopener noreferrer">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</a>
+                                                        </td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+

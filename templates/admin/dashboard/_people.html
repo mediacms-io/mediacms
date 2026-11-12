@@ -1,0 +1,448 @@
+{% load i18n static admin_urls jazzmin custom_filters %}
+            <!-- User Statistics Section -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-users me-2"></i>{{ "People"|custom_translate:LANGUAGE_CODE }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.total }}</h3>
+                                        <p>{{ "Total users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-users"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.registered_last_7_days }}</h3>
+                                        <p>{{ "New users (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?joined=7d" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% if stats.users.approval_workflow_enabled %}
+                            <div class="col-lg-2 col-6">
+                                <div class="small-box bg-danger">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.pending_approvals }}</h3>
+                                        <p>{{ "Users waiting for approval"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-clock"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=0" class="small-box-footer">
+                                        {{ "Open users waiting for approval"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-6">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.approved_users }}</h3>
+                                        <p>{{ "Approved users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=1" class="small-box-footer">
+                                        {{ "Open approved users"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-2 col-6">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.inactive_users }}</h3>
+                                        <p>{{ "Inactive users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-slash"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_active__exact=0" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.active_users }}</h3>
+                                        <p>{{ "Active users (30 days)"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-check"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?activity=30d" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.inactive_users }}</h3>
+                                        <p>{{ "Inactive users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-slash"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_active__exact=0" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-danger">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.superusers }}</h3>
+                                        <p>{{ "Superusers"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_superuser__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.staff_users }}</h3>
+                                        <p>{{ "Staff users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-id-badge"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_staff__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.editors }}</h3>
+                                        <p>{{ "Editors"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-edit"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_editor__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.managers }}</h3>
+                                        <p>{{ "Managers"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user-tie"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?is_manager__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-6 col-lg">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.users.regular_users }}</h3>
+                                        <p>{{ "Regular users"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_user_changelist' %}?role=regular" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% if stats.users.approval_workflow_enabled %}
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent users waiting for approval"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.recent_pending_users %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recently registered"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.recent_registered %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "User activity"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Last activity"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.recent_activity %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td>{{ user.last_activity|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top uploaders by count"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Media count"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_uploaders %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td><a href="{% url 'admin:files_media_changelist' %}?user__id__exact={{ user.id }}"><span class="badge badge-info">{{ user.media_count_annotated }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-secondary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top uploaders by size"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Upload size"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_uploaders_by_size %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
+                                                        <td><a href="{% url 'admin:files_media_changelist' %}?user__id__exact={{ user.id }}"><span class="badge badge-secondary">{{ user.upload_size_label }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top commenters"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Comments"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_commenters %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:files_comment_changelist' %}?user__id__exact={{ user.user_id }}"><span class="badge badge-primary">{{ user.comment_count }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-warning">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top reporters"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Reports"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_reporters %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-warning">{{ user.action_count }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top likers"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Likes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_likers %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-success">{{ user.action_count }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Top dislikers"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Dislikes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in stats.users.top_dislikers %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
+                                                        <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-danger">{{ user.action_count }}</span></a></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+

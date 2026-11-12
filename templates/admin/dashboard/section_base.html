@@ -1,0 +1,34 @@
+{% extends "admin/base.html" %}
+{% load i18n static admin_urls jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block content_title %}
+    {{ title|custom_translate:LANGUAGE_CODE }}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'admin:index' %}">{{ "Dashboard"|custom_translate:LANGUAGE_CODE }}</a></li>
+        <li class="breadcrumb-item active">{{ title|custom_translate:LANGUAGE_CODE }}</li>
+    </ol>
+{% endblock %}
+
+{% block content %}
+    <div class="mb-3 d-flex flex-wrap align-items-center justify-content-between">
+        <div class="btn-group flex-wrap" role="group" aria-label="{{ 'Dashboard'|custom_translate:LANGUAGE_CODE }}">
+            <a href="{% url 'admin:dashboard_section' 'moderation' %}" class="btn btn-sm {% if dashboard_section == 'moderation' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</a>
+            <a href="{% url 'admin:dashboard_section' 'people' %}" class="btn btn-sm {% if dashboard_section == 'people' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "People"|custom_translate:LANGUAGE_CODE }}</a>
+            <a href="{% url 'admin:dashboard_section' 'library' %}" class="btn btn-sm {% if dashboard_section == 'library' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Library"|custom_translate:LANGUAGE_CODE }}</a>
+            <a href="{% url 'admin:dashboard_section' 'processing' %}" class="btn btn-sm {% if dashboard_section == 'processing' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Processing"|custom_translate:LANGUAGE_CODE }}</a>
+            <a href="{% url 'admin:dashboard_section' 'engagement' %}" class="btn btn-sm {% if dashboard_section == 'engagement' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</a>
+            <a href="{% url 'admin:dashboard_section' 'site' %}" class="btn btn-sm {% if dashboard_section == 'site' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Site"|custom_translate:LANGUAGE_CODE }}</a>
+        </div>
+        <a class="btn btn-sm btn-outline-secondary" href="?refresh_stats=1">{{ "Refresh stats"|custom_translate:LANGUAGE_CODE }}</a>
+    </div>
+
+    {% if dashboard_stats %}
+        {% with stats=dashboard_stats %}
+            {% block dashboard_section_content %}{% endblock %}
+        {% endwith %}
+    {% endif %}
+{% endblock %}

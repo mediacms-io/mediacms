@@ -139,25 +139,31 @@ class FlaggedAppListTest(FlaggedAdminTestCase):
         app_list = self.site.get_app_list(self.admin_request())
         apps = {app["app_label"]: [model["object_name"] for model in app["models"]] for app in app_list}
         labels = [app["app_label"] for app in app_list]
-        self.assertEqual(labels[:3], ["files", "users", "socialaccount"])
+        self.assertEqual(labels[:5], ["moderation", "library", "processing", "people", "site"])
+        self.assertIn("integrations", labels)
         self.assertNotIn("rbac", labels)
         self.assertNotIn("saml_auth", labels)
-        self.assertIn("RBACGroup", apps["users"])
-        self.assertIn("EmailAddress", apps["users"])
-        self.assertIn("LoginOption", apps["socialaccount"])
-        self.assertIn("IdentityProviderUserLog", apps["socialaccount"])
+        self.assertNotIn("socialaccount", labels)
+        self.assertIn("RBACGroup", apps["people"])
+        self.assertIn("EmailAddress", apps["people"])
+        self.assertIn("LoginOption", apps["integrations"])
+        self.assertIn("IdentityProviderUserLog", apps["integrations"])
+        self.assertIn("SAMLConfiguration", apps["integrations"])
 
     def test_index_renders(self):
         response = self.client.get(reverse("admin:index"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "ID Providers")
 
-    @override_settings(USE_RBAC=False, USE_IDENTITY_PROVIDERS=False)
+    @override_settings(USE_RBAC=False, USE_IDENTITY_PROVIDERS=False, USE_SAML=False)
     def test_registered_models_are_still_hidden_when_flags_are_turned_off(self):
         app_list = self.site.get_app_list(self.admin_request())
         apps = {app["app_label"]: [model["object_name"] for model in app["models"]] for app in app_list}
         self.assertNotIn("socialaccount", apps)
-        self.assertNotIn("RBACGroup", apps["users"])
+        self.assertNotIn("RBACGroup", apps["people"])
+        integrations = apps.get("integrations", [])
+        self.assertNotIn("LoginOption", integrations)
+        self.assertNotIn("SAMLConfiguration", integrations)
 
 
 class RBACGroupAdminTest(FlaggedAdminTestCase):

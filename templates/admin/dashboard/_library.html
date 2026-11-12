@@ -1,0 +1,326 @@
+{% load i18n static admin_urls jazzmin custom_filters %}
+            <!-- Media Overview Section -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-photo-video me-2"></i>{{ "Library"|custom_translate:LANGUAGE_CODE }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-info">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.total }}</h3>
+                                        <p>{{ "Total media"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-file-video"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-success">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.total_categories }}</h3>
+                                        <p>{{ "Categories"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_category_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-primary">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.total_tags }}</h3>
+                                        <p>{{ "Tags"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-tags"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_tag_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-warning">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.total_playlists }}</h3>
+                                        <p>{{ "Playlists"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-list"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_playlist_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-secondary">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.total_channels }}</h3>
+                                        <p>{{ "Channels"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-broadcast-tower"></i>
+                                    </div>
+                                    <a href="{% url 'admin:users_channel_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-olive">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.featured }}</h3>
+                                        <p>{{ "Featured"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-star"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?featured__exact=1" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-teal">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.added_last_7_days }}</h3>
+                                        <p>{{ "New media (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box bg-maroon">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.by_state.public }}</h3>
+                                        <p>{{ "Public"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-globe"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?state__exact=public" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-primary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Media by type"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video"><i class="fas fa-video text-danger"></i> {{ "Video"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video"><strong>{{ stats.media.by_type.video }}</strong></a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio"><i class="fas fa-music text-info"></i> {{ "Audio"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=audio"><strong>{{ stats.media.by_type.audio }}</strong></a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image"><i class="fas fa-image text-success"></i> {{ "Image"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=image"><strong>{{ stats.media.by_type.image }}</strong></a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf"><i class="fas fa-file-pdf text-danger"></i> {{ "PDF"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=pdf"><strong>{{ stats.media.by_type.pdf }}</strong></a></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Media by state"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public"><i class="fas fa-globe text-success"></i> {{ "Public"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public"><strong>{{ stats.media.by_state.public }}</strong></a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private"><i class="fas fa-lock text-warning"></i> {{ "Private"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=private"><strong>{{ stats.media.by_state.private }}</strong></a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted"><i class="fas fa-eye-slash text-secondary"></i> {{ "Unlisted"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=unlisted"><strong>{{ stats.media.by_state.unlisted }}</strong></a></td>
+                                            </tr>
+                                            <tr>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1"><i class="fas fa-star text-primary"></i> {{ "Featured"|custom_translate:LANGUAGE_CODE }}</a></td>
+                                                <td><a href="{% url 'admin:files_media_changelist' %}?featured__exact=1"><strong>{{ stats.media.featured }}</strong></a></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card card-outline card-danger">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent video uploads"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.video %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
+                                                        <td>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent audio uploads"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.audio %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
+                                                        <td>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-success">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent image uploads"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.image %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
+                                                        <td>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card card-outline card-warning">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Recent PDF uploads"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for media in stats.media.recent_by_type.pdf %}
+                                                    <tr>
+                                                        <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30 }}</a></td>
+                                                        <td>
+                                                            {% if media.user_id %}
+                                                                <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                                            {% else %}
+                                                                {{ media.user__username|default:'-' }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+

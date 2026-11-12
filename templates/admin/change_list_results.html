@@ -15,21 +15,24 @@
                     <tr>
                         {% for header in result_headers %}
                         <th class="{% header_class header forloop %}" tabindex="0" rowspan="1" colspan="1">
-                            <div class="text">
+                            <div class="text changelist-header-label">
                                 {% if header.sortable %}
-                                    <a href="{{ header.url_primary }}">{{ header.text|custom_translate:LANGUAGE_CODE }}</a>
+                                    {# single_sort_url drops secondary o= fields so only one column stays sorted #}
+                                    <a class="changelist-header-label__title" href="{{ header.url_primary|single_sort_url }}">{{ header.text|custom_translate:LANGUAGE_CODE }}</a>
                                 {% else %}
-                                    <span>{{ header.text|custom_translate:LANGUAGE_CODE }}</span>
+                                    <span class="changelist-header-label__title">{{ header.text|custom_translate:LANGUAGE_CODE }}</span>
                                 {% endif %}
                                 {% if header.sorted %}
-                                    <a href="{{ header.url_remove }}">
-                                        <div style="margin-top: .2em;" class="fa fa-times float-right"> </div>
-                                    </a>
+                                <span class="changelist-sort-controls">
                                     {% if header.ascending %}
-                                        <i style="margin-top: .2em;" class="fa fa-sort-alpha-down"> </i>
+                                        <i class="fa fa-sort-alpha-down" aria-hidden="true"></i>
                                     {% else %}
-                                        <i style="margin-top: .2em;" class="fa fa-sort-alpha-up"> </i>
+                                        <i class="fa fa-sort-alpha-up" aria-hidden="true"></i>
                                     {% endif %}
+                                    <a class="changelist-sort-clear" href="{{ header.url_remove }}" title="Clear sorting" aria-label="Clear sorting">
+                                        <i class="fa fa-times" aria-hidden="true"></i>
+                                    </a>
+                                </span>
                                 {% endif %}
                             </div>
                         </th>

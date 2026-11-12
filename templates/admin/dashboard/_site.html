@@ -1,0 +1,149 @@
+{% load i18n static admin_urls jazzmin custom_filters %}
+            <!-- Site Overview Section -->
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-sliders-h me-2"></i>{{ "Site"|custom_translate:LANGUAGE_CODE }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-3 col-6">
+                                <div class="small-box {% if stats.system.health_counts.ok %}bg-success{% else %}bg-secondary{% endif %}">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.health_counts.ok }}</h3>
+                                        <p>{{ "Passing checks"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-check-circle"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="small-box {% if stats.system.health_counts.warn %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.health_counts.warn }}</h3>
+                                        <p>{{ "Warnings"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="small-box {% if stats.system.health_counts.fail %}bg-danger{% else %}bg-secondary{% endif %}">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.health_counts.fail }}</h3>
+                                        <p>{{ "Failures"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-times-circle"></i></div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6">
+                                <div class="small-box {% if stats.system.health_counts.info %}bg-info{% else %}bg-secondary{% endif %}">
+                                    <div class="inner">
+                                        <h3>{{ stats.system.health_counts.info }}</h3>
+                                        <p>{{ "Info checks"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon"><i class="fas fa-info-circle"></i></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-lg-7">
+                                <div class="card card-outline {% if stats.system.health_counts.fail %}card-danger{% elif stats.system.health_counts.warn %}card-warning{% else %}card-secondary{% endif %}">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Health checks"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Status"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Check"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Detail"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for check in stats.system.health_checks %}
+                                                    <tr>
+                                                        <td>
+                                                            {% if check.status == "ok" %}
+                                                                <span class="badge badge-success">{{ "OK"|custom_translate:LANGUAGE_CODE }}</span>
+                                                            {% elif check.status == "warn" %}
+                                                                <span class="badge badge-warning">{{ "Warning"|custom_translate:LANGUAGE_CODE }}</span>
+                                                            {% elif check.status == "fail" %}
+                                                                <span class="badge badge-danger">{{ "Fail"|custom_translate:LANGUAGE_CODE }}</span>
+                                                            {% else %}
+                                                                <span class="badge badge-info">{{ "Info"|custom_translate:LANGUAGE_CODE }}</span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if check.link %}
+                                                                <a href="{{ check.link }}">{{ check.label|custom_translate:LANGUAGE_CODE }}</a>
+                                                            {% else %}
+                                                                {{ check.label|custom_translate:LANGUAGE_CODE }}
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{ check.detail }}</td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-5">
+                                <div class="card card-outline card-info">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body p-0">
+                                        <table class="table table-sm mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>{{ "Setting"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th>{{ "Value"|custom_translate:LANGUAGE_CODE }}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in stats.system.configuration %}
+                                                    <tr>
+                                                        <td><code>{{ item.label }}</code></td>
+                                                        <td><code>{{ item.value }}</code></td>
+                                                    </tr>
+                                                {% empty %}
+                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="card card-outline card-secondary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Object totals"|custom_translate:LANGUAGE_CODE }}</h3>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            {% for item in stats.system.object_totals %}
+                                                <div class="col-6 col-md-4 col-lg-3 mb-3">
+                                                    <a href="{{ item.url }}" class="info-box mb-0">
+                                                        <span class="info-box-icon bg-light"><i class="fas fa-database"></i></span>
+                                                        <div class="info-box-content">
+                                                            <span class="info-box-text">{{ item.label|custom_translate:LANGUAGE_CODE }}</span>
+                                                            <span class="info-box-number">{{ item.count }}</span>
+                                                        </div>
+                                                    </a>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>

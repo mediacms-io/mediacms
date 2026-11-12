@@ -21,10 +21,11 @@ from saml_auth.models import SAMLConfiguration
 
 class IdentityProviderUserLogAdmin(admin.ModelAdmin):
     list_display = [
+        'created_at',
         'identity_provider',
         'user',
-        'created_at',
     ]
+    list_display_links = ('identity_provider',)
 
     list_filter = ['identity_provider', 'created_at']
 

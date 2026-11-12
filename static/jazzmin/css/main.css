@@ -72,6 +72,141 @@ div.inline-related {
     border-bottom: 0;
 }
 
+/* Icon-only Media status cells; full label stays in title/aria-label (+ change-form text). */
+.changelist-status-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1;
+    color: #64748b;
+}
+
+.changelist-status-icon .fa,
+.changelist-status-icon .fas {
+    font-size: 1rem;
+}
+
+.changelist-status-icon--success,
+.changelist-status-icon--public,
+.changelist-status-icon--listable {
+    color: #28a745;
+}
+
+.changelist-status-icon--fail,
+.changelist-status-icon--warning {
+    color: #dc3545;
+}
+
+.changelist-status-icon--private,
+.changelist-status-icon--pending,
+.changelist-status-icon--not-listable {
+    color: #6c757d;
+}
+
+.changelist-status-icon--running,
+.changelist-status-icon--unlisted {
+    color: #17a2b8;
+}
+
+.changelist-status-icon--video {
+    color: #0d6efd;
+}
+
+.changelist-status-icon--audio {
+    color: #6f42c1;
+}
+
+.changelist-status-icon--image {
+    color: #fd7e14;
+}
+
+.changelist-status-icon--pdf {
+    color: #dc3545;
+}
+
+#result_list .changelist-status-icon__text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+#result_list .changelist-status-icon--with-count .changelist-status-icon__text {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+#result_list td.field-display_media_type,
+#result_list td.field-display_state,
+#result_list td.field-display_encoding_status,
+#result_list td.field-display_listable,
+#result_list td.field-display_reported_times,
+#result_list th.column-display_media_type,
+#result_list th.column-display_state,
+#result_list th.column-display_encoding_status,
+#result_list th.column-display_listable,
+#result_list th.column-display_reported_times {
+    text-align: center;
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.change-form .changelist-status-icon__text {
+    margin: 0;
+}
+
+/* Keep sort direction + clear-X grouped beside the label (no float-right drift). */
+#result_list thead th .changelist-header-label {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+#result_list thead th .changelist-header-label__title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#result_list thead th .changelist-sort-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: 0 0 auto;
+    line-height: 1;
+}
+
+#result_list thead th .changelist-sort-controls .fa {
+    margin: 0;
+}
+
+#result_list thead th .changelist-sort-clear {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    text-decoration: none;
+}
+
+#result_list thead th .changelist-sort-clear:hover {
+    color: #dc3545;
+}
+
 .empty-form {
     display: none !important;
 }
@@ -1115,6 +1250,18 @@ body.jazzmin-login-page {
 #jazzy-sidebar .nav-sidebar > .nav-item {
     width: 100%;
 }
+
+/* Closed groups point right; open groups rotate down (AdminLTE default is angle-left). */
+#jazzy-sidebar .nav-sidebar .menu-is-opening > .nav-link i.right,
+#jazzy-sidebar .nav-sidebar .menu-open > .nav-link i.right {
+    -webkit-transform: rotate(90deg);
+    transform: rotate(90deg);
+}
+
+/* Indent treeview children under their workflow group. */
+#jazzy-sidebar .nav-sidebar .nav-treeview {
+    margin-left: 16px;
+}
 /* tweeks for django-filer*/
 .navigator-top-nav + #content-main {
     float: left;
@@ -1124,6 +1271,168 @@ body.jazzmin-login-page {
 /* Changelist zones: search, filters, and bulk Actions */
 #changelist-search {
     margin-block-end: 0.75rem;
+}
+
+#change-list-filters {
+    width: 100%;
+}
+
+.changelist-search-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.changelist-search-row #searchbar {
+    flex: 1 1 16rem;
+    max-width: 36rem;
+}
+
+.changelist-search-row #searchbar::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+.changelist-result-count {
+    margin-block: 0.85rem 0;
+    margin-inline: 0.15rem 0;
+    font-size: 1rem;
+    line-height: 1.45;
+}
+
+.changelist-filter-card {
+    width: 100%;
+    margin-block-start: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #fff;
+}
+
+.changelist-filter-card > summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.changelist-filter-card > summary::-webkit-details-marker {
+    display: none;
+}
+
+.changelist-filter-card[open] > summary {
+    border-block-end: 1px solid #dee2e6;
+}
+
+.changelist-filter-chevron {
+    transition: transform 0.15s ease;
+}
+
+.changelist-filter-card[open] .changelist-filter-chevron {
+    transform: rotate(90deg);
+}
+
+.changelist-filter-summary-label {
+    font-weight: 700;
+}
+
+.changelist-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.55rem;
+    border: 1px solid #b6d4fe;
+    border-radius: 999px;
+    background-color: #e7f1ff;
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.changelist-filter-clear {
+    margin-inline-start: auto;
+    font-weight: 600;
+}
+
+.changelist-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+    gap: 0.85rem 1rem;
+    padding: 1rem;
+}
+
+.changelist-filter-label {
+    display: block;
+    margin-block-end: 0.35rem;
+    font-weight: 600;
+}
+
+.changelist-filter-field.is-active .changelist-filter-label {
+    color: #0056b3;
+}
+
+.changelist-filter-field .form-control,
+.changelist-filter-field .select2-container {
+    width: 100% !important;
+}
+
+.changelist-segmented {
+    display: flex;
+    flex-wrap: wrap;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    overflow: hidden;
+}
+
+.changelist-filter-field.is-active .changelist-segmented,
+.changelist-filter-field.is-active select.form-control {
+    border-color: #007bff;
+}
+
+.changelist-segmented label {
+    position: relative;
+    flex: 1 1 auto;
+    margin: 0;
+    padding: 0.4rem 0.55rem;
+    text-align: center;
+    cursor: pointer;
+    font-weight: 400;
+}
+
+.changelist-segmented label + label {
+    border-inline-start: 1px solid #ced4da;
+}
+
+.changelist-segmented input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+}
+
+.changelist-segmented label:has(input:checked) {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.changelist-segmented label:focus-within {
+    outline: 2px solid #80bdff;
+    outline-offset: -2px;
+}
+
+.changelist-filter-check {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    margin: 0;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+.changelist-filter-field.is-active .changelist-filter-check {
+    font-weight: 600;
 }
 
 #changelist .actions {
@@ -1193,14 +1502,8 @@ body.jazzmin-login-page {
 /*
  * Change-form tab groups:
  * - default object tabs keep theme styling
- * - Related (links/counts) uses teal
- * - related-object inlines use warm slate
+ * - Related (one-to-many links/counts) uses teal
  */
-#jazzy-tabs.nav-tabs .nav-item:has(> .related-links-tab),
-#jazzy-tabs.nav-tabs .nav-item:has(> .related-objects-tab) {
-    margin-inline-start: 0.15rem;
-}
-
 #jazzy-tabs.nav-tabs .nav-item:has(> .related-links-tab) {
     margin-inline-start: 0.85rem;
     padding-inline-start: 0.85rem;
@@ -1225,26 +1528,6 @@ body.jazzmin-login-page {
     color: #fff;
     background-color: #146c7a;
     border-color: #146c7a;
-}
-
-#jazzy-tabs.nav-tabs .nav-link.related-objects-tab,
-#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab {
-    color: #5b5348;
-    background-color: rgba(91, 83, 72, 0.1);
-    border-color: rgba(91, 83, 72, 0.18);
-}
-
-#jazzy-tabs.nav-tabs .nav-link.related-objects-tab:hover,
-#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab:hover {
-    color: #433d35;
-    background-color: rgba(91, 83, 72, 0.18);
-}
-
-#jazzy-tabs.nav-tabs .nav-link.related-objects-tab.active,
-#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab.active {
-    color: #fff;
-    background-color: #5b5348;
-    border-color: #5b5348;
 }
 
 #changelist-filter {
@@ -1288,6 +1571,232 @@ code.media-id {
     margin-block: 0.35rem;
 }
 
+/* Django marks Date/DateTime cells with .nowrap; Jazzmin omits Django's admin base CSS. */
+#result_list td.nowrap,
+#result_list th.nowrap {
+    white-space: nowrap;
+}
+
+/*
+ * Media changelist: fixed layout keeps many optional columns on one line.
+ * Title takes leftover width with clipped-text hover; count/status cells stay narrow.
+ * list_display_links renders the title as tbody th.field-display_title.
+ */
+.model-media.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-media.change-list #result_list th:first-child,
+.model-media.change-list #result_list td.action-checkbox {
+    width: 2.75rem;
+}
+
+.model-media.change-list #result_list th.column-add_date,
+.model-media.change-list #result_list td.field-add_date {
+    width: 11.5rem;
+    white-space: nowrap;
+}
+
+.model-media.change-list #result_list th.column-display_title,
+.model-media.change-list #result_list th.field-display_title,
+.model-media.change-list #result_list td.field-display_title {
+    width: 28%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-media.change-list #result_list th.column-link_user,
+.model-media.change-list #result_list td.field-link_user {
+    width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-media.change-list #result_list th.column-duration,
+.model-media.change-list #result_list td.field-duration,
+.model-media.change-list #result_list th.column-get_comments_count,
+.model-media.change-list #result_list td.field-get_comments_count,
+.model-media.change-list #result_list th.column-get_encodings_count,
+.model-media.change-list #result_list td.field-get_encodings_count,
+.model-media.change-list #result_list th.column-is_reviewed,
+.model-media.change-list #result_list td.field-is_reviewed,
+.model-media.change-list #result_list th.column-featured,
+.model-media.change-list #result_list td.field-featured,
+.model-media.change-list #result_list th.column-allow_download,
+.model-media.change-list #result_list td.field-allow_download,
+.model-media.change-list #result_list th.column-enable_comments,
+.model-media.change-list #result_list td.field-enable_comments {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-media.change-list #result_list th.field-display_title a,
+.model-media.change-list #result_list td.field-display_title a,
+.model-media.change-list #result_list td.field-link_user a {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Comments changelist: date stays one line; media/user/text share the rest evenly.
+ * Jazzmin headers only get sorting classes, so widths use nth-child. list_display_links
+ * renders as tbody th. Full values stay on clipped-text hover tooltips.
+ */
+.model-comment.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-comment.change-list #result_list th:first-child,
+.model-comment.change-list #result_list td.action-checkbox {
+    width: 2.75rem;
+}
+
+.model-comment.change-list #result_list th:nth-child(2),
+.model-comment.change-list #result_list td.field-add_date {
+    width: 11.5rem;
+    white-space: nowrap;
+}
+
+.model-comment.change-list #result_list td.field-link_media,
+.model-comment.change-list #result_list td.field-link_user,
+.model-comment.change-list #result_list th.field-display_text,
+.model-comment.change-list #result_list td.field-display_text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-comment.change-list #result_list td.field-link_media a,
+.model-comment.change-list #result_list td.field-link_user a,
+.model-comment.change-list #result_list th.field-display_text a,
+.model-comment.change-list #result_list td.field-display_text a {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Media actions changelist: fixed layout keeps the table within the card.
+ * Columns: checkbox | date | Action | User | Media (flex) | optional Remote IP /
+ * Extra info (last). Optional cells use clipped-text hover tooltips.
+ */
+.model-mediaaction.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-mediaaction.change-list #result_list th:first-child,
+.model-mediaaction.change-list #result_list td.action-checkbox {
+    width: 2.75rem;
+}
+
+.model-mediaaction.change-list #result_list th:nth-child(2),
+.model-mediaaction.change-list #result_list td.field-action_date {
+    width: 11.5rem;
+    white-space: nowrap;
+}
+
+.model-mediaaction.change-list #result_list th:nth-child(3),
+.model-mediaaction.change-list #result_list th.field-display_action,
+.model-mediaaction.change-list #result_list td.field-display_action {
+    width: 7.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-mediaaction.change-list #result_list th:nth-child(4),
+.model-mediaaction.change-list #result_list td.field-link_user {
+    width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-mediaaction.change-list #result_list th:nth-child(5),
+.model-mediaaction.change-list #result_list td.field-link_media {
+    width: 35%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-mediaaction.change-list #result_list th:nth-child(n + 6),
+.model-mediaaction.change-list #result_list td.field-display_remote_ip,
+.model-mediaaction.change-list #result_list th.field-display_extra_info,
+.model-mediaaction.change-list #result_list td.field-display_extra_info {
+    width: 7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-mediaaction.change-list #result_list td.field-link_media a,
+.model-mediaaction.change-list #result_list th.field-display_action a,
+.model-mediaaction.change-list #result_list td.field-display_action a,
+.model-mediaaction.change-list #result_list td.field-link_user a {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* One-line admin text with the full value in a hover tooltip; size to the cell. */
+.changelist-clipped-text {
+    display: block;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.changelist-clipped-text__preview {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.changelist-clipped-text__full {
+    display: none;
+    z-index: 2000;
+    box-sizing: border-box;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    background: #fff;
+    color: #212529;
+    font-weight: 400;
+    line-height: 1.4;
+    text-align: start;
+    text-decoration: none;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.changelist-clipped-text__full.is-open {
+    display: block;
+}
+
+a .changelist-clipped-text__full {
+    color: #212529;
+    text-decoration: none;
+}
+
 .sr-only {
     position: absolute;
     width: 1px;
@@ -1298,4 +1807,24 @@ code.media-id {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+.admin-column-chooser-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.admin-column-chooser-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.25rem;
+}
+
+.admin-column-chooser-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
 }

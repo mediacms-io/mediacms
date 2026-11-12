@@ -5,7 +5,7 @@ from django.contrib.admin.utils import quote
 from django.contrib.auth.models import Group
 from django.contrib.sites.models import Site
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import Client, RequestFactory, TestCase
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from rest_framework.authtoken.models import Token, TokenProxy
 
@@ -205,20 +205,41 @@ class AdminAppListTest(TestCase):
 
     def test_internal_apps_are_hidden_when_features_are_off(self):
         labels = [app["app_label"] for app in self.app_list()]
-        for hidden in ("auth", "account", "authtoken", "socialaccount", "rbac", "saml_auth"):
+        for hidden in ("auth", "account", "authtoken", "socialaccount", "rbac", "saml_auth", "lti", "files", "users"):
             self.assertNotIn(hidden, labels)
 
-    def test_files_and_users_come_first(self):
+    def test_workflow_groups_come_first(self):
         labels = [app["app_label"] for app in self.app_list()]
-        self.assertEqual(labels[:2], ["files", "users"])
+        self.assertEqual(labels[:5], ["moderation", "library", "processing", "people", "site"])
 
-    def test_email_addresses_are_listed_under_users(self):
-        users_app = next(app for app in self.app_list() if app["app_label"] == "users")
-        self.assertIn("EmailAddress", [model["object_name"] for model in users_app["models"]])
+    def test_email_addresses_are_listed_under_people(self):
+        people_app = next(app for app in self.app_list() if app["app_label"] == "people")
+        self.assertIn("EmailAddress", [model["object_name"] for model in people_app["models"]])
+
+    @override_settings(MEDIA_IS_REVIEWED=False)
+    def test_moderation_and_processing_include_queue_links(self):
+        apps = {app["app_label"]: [model["object_name"] for model in app["models"]] for app in self.app_list()}
+        self.assertIn("ReportedMedia", apps["moderation"])
+        self.assertIn("AboveReportLimit", apps["moderation"])
+        self.assertIn("NeedsReview", apps["moderation"])
+        self.assertIn("EncodingQueue", apps["processing"])
+        self.assertIn("FailedEncodings", apps["processing"])
+        reported = next(
+            model for app in self.app_list() if app["app_label"] == "moderation" for model in app["models"] if model["object_name"] == "ReportedMedia"
+        )
+        self.assertEqual(reported["admin_url"], "/admin/files/media/?reported=yes")
 
     def test_single_app_index_still_works(self):
         response = self.client_for_superuser().get(reverse("admin:app_list", args=["files"]))
         self.assertEqual(response.status_code, 200)
+
+    def test_workflow_group_can_be_fetched_by_label(self):
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        app_list = admin.site.get_app_list(request, app_label="library")
+        self.assertEqual(len(app_list), 1)
+        self.assertEqual(app_list[0]["app_label"], "library")
+        self.assertIn("Media", [model["object_name"] for model in app_list[0]["models"]])
 
     def client_for_superuser(self):
         client = Client()
