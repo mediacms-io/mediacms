@@ -34,6 +34,11 @@ from files.admin_helpers import (
     translated_choice_display,
 )
 from files.frontend_translations import translate_string
+from files.integrity import (
+    INTEGRITY_CHECKS,
+    INTEGRITY_FILTER_PARAM,
+    get_integrity_check,
+)
 from files.methods import (
     can_delete_original_media_file,
     change_media_owner,
@@ -111,6 +116,21 @@ class EncodingQueueFilter(admin.SimpleListFilter):
         return queryset
 
 
+class IntegrityIssuesFilter(admin.SimpleListFilter):
+    title = "Integrity issues"
+    parameter_name = INTEGRITY_FILTER_PARAM
+
+    def lookups(self, request, model_admin):
+        return tuple((check.id, check.label) for check in INTEGRITY_CHECKS)
+
+    def queryset(self, request, queryset):
+        check = get_integrity_check(self.value()) if self.value() else None
+        if check is None:
+            return queryset
+        # Intersect with the canonical check queryset (avoids annotation clashes).
+        return queryset.filter(pk__in=check.queryset().values("pk"))
+
+
 class CommentAdmin(admin.ModelAdmin):
     search_fields = ["text", "user__username", "media__title"]
     list_display = ["add_date", "link_media", "link_user", "display_text"]
@@ -180,7 +200,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         ("is_reviewed", "Is reviewed", ("is_reviewed__exact",)),
         ("featured", "Featured", ("featured__exact",)),
         ("get_comments_count", "Comments", ()),
-        ("get_encodings_count", "Encodings", ("encoding_status__exact", "encoding_queue")),
+        ("get_encodings_count", "Encodings", ("encoding_status__exact", "encoding_queue", INTEGRITY_FILTER_PARAM)),
         ("display_reported_times", "Reported times", ("reported",)),
         ("allow_download", "Allow download", ("allow_download__exact",)),
         ("enable_comments", "Allow comments", ("enable_comments__exact",)),
@@ -192,6 +212,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         "is_reviewed",
         "encoding_status",
         EncodingQueueFilter,
+        IntegrityIssuesFilter,
         "featured",
         "listable",
         "media_type",

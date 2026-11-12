@@ -3,6 +3,7 @@ import random
 import string
 from datetime import timedelta
 
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
@@ -10,6 +11,7 @@ from django.db import models
 from django.utils import timezone
 
 from actions.models import MediaAction
+from files.integrity import inject_integrity_faults
 from files.management.commands.fake_media_locales import (
     CJK_LANGUAGE_CODES,
     FAKE_MEDIA_LOCALES,
@@ -91,6 +93,17 @@ class Command(BaseCommand):
             default=None,
             choices=list(SINGLE_LANGUAGE_CODES),
             help='Generate content in only one language (default: en when the flag is passed without a code)',
+        )
+        parser.add_argument(
+            '--inject-integrity-faults',
+            action='store_true',
+            help='Inject 1–2 intentional integrity faults per health check for verification',
+        )
+        parser.add_argument(
+            '--integrity-faults-per-check',
+            type=int,
+            default=1,
+            help='How many faults to inject per integrity check when --inject-integrity-faults is set (default: 1, max: 2)',
         )
 
     def handle(self, *args, **options):
@@ -205,14 +218,25 @@ class Command(BaseCommand):
         trim_request_count = self.create_trim_requests(created_media)
         self.stdout.write(self.style.SUCCESS(f'Created {trim_request_count} video trim requests'))
 
-        # Step 14: Create CMS pages
+        # Step 14: Optional integrity-fault injection for site health verification
+        integrity_injected = {}
+        if options['inject_integrity_faults']:
+            per_check = options['integrity_faults_per_check']
+            integrity_injected = inject_integrity_faults(created_media, per_check=per_check)
+            total_faults = sum(len(items) for items in integrity_injected.values())
+            self.stdout.write(self.style.WARNING(f'Injected {total_faults} integrity fault(s) across {len(integrity_injected)} check(s) ' f'(per-check={max(0, min(per_check, 2))})'))
+            for check_id, victims in integrity_injected.items():
+                tokens = ', '.join(m.friendly_token for m in victims)
+                self.stdout.write(f'  {check_id}: {tokens}')
+
+        # Step 15: Create CMS pages
         pages = self.create_pages()
         self.stdout.write(self.style.SUCCESS(f'Ensured {len(pages)} CMS pages'))
 
-        # Step 15: Post-processing
+        # Step 16: Post-processing
         self.post_process(created_media, tags, categories)
 
-        # Step 16: Display summary
+        # Step 17: Display summary
         self.display_summary(
             created_media,
             users,
@@ -229,6 +253,7 @@ class Command(BaseCommand):
             permission_count=permission_count,
             trim_request_count=trim_request_count,
             pages=pages,
+            integrity_injected=integrity_injected,
         )
 
         self.stdout.write(self.style.SUCCESS(f'\nSuccessfully populated {count} fake media records!'))
@@ -339,7 +364,12 @@ class Command(BaseCommand):
         return f"{username}@{random.choice(domains)}"
 
     def create_users(self, media_count=150):
-        """Create fake users scaled to ~15-20% of media count, dated over the last 12 months."""
+        """Create fake users scaled to ~15-20% of media count, dated over the last 12 months.
+
+        Most accounts are active + approved with a verified email so media ownership works.
+        A small subset is then flipped into useful admin/demo states (inactive, pending,
+        featured, advanced, unverified email), with extras added if the pool is tiny.
+        """
         num_users = self._scaled_related_count(media_count)
         users = []
 
@@ -348,42 +378,234 @@ class Command(BaseCommand):
             is_editor = random.random() < 0.2  # 20% chance
             is_manager = random.random() < 0.1  # 10% chance
 
-            locale = self._locale()
-            name = self.generate_name(locale=locale)
-            username = f"user_{self.generate_random_string(6)}"
-            email = self.generate_email(username)
-
-            # Ensure unique username
-            counter = 1
-            original_username = username
-            while User.objects.filter(username=username).exists():
-                username = f"{original_username}{counter}"
-                counter += 1
-
-            # Keep enough early joiners so media can fill the full 12-month window.
-            if i < max(3, num_users // 3):
-                join_end = self._horizon_start + timedelta(days=120)
-                date_joined = self._random_datetime_between(self._horizon_start, join_end)
-            else:
-                date_joined = self._random_datetime_between(self._horizon_start, self._now - timedelta(days=7))
-
-            user = User.objects.create(
-                username=username,
-                email=email,
-                name=name,
-                description=locale['user_description'].format(n=i + 1),
-                is_editor=is_editor,
-                is_manager=is_manager,
-                date_joined=date_joined,
+            users.append(
+                self._create_demo_user(
+                    index=i + 1,
+                    date_joined=self._user_join_datetime(i, num_users),
+                    is_editor=is_editor,
+                    is_manager=is_manager,
+                    is_active=True,
+                    is_approved=True,
+                    email_verified=True,
+                )
             )
-            user.set_password('testpass123')  # Simple password for all fake users
-            user.save()
-            # set_password/save can refresh timestamps; force the intended join date.
-            self._backdate(User, user.pk, 'date_joined', date_joined)
-            user.date_joined = date_joined
-            users.append(user)
 
+        state_counts = self._apply_user_account_states(users)
+        self.stdout.write(self.style.SUCCESS('User account states: ' + ', '.join(f'{key}={value}' for key, value in state_counts.items() if value)))
         return users
+
+    def _user_join_datetime(self, index, total):
+        """Spread date_joined / date_added across the 12-month horizon.
+
+        Admin User changelist orders and hierarchies by date_added (not date_joined),
+        so both fields must be backdated — otherwise every seeded user clusters on
+        the populate-run day.
+        """
+        total = max(1, int(total))
+        end = self._now - timedelta(days=1)
+        start = self._horizon_start
+        if total == 1 or end <= start:
+            return start
+
+        # Even slots across the window, then add day-level jitter so dates are not
+        # perfectly uniform but still cover the full year.
+        span_seconds = (end - start).total_seconds()
+        slot = span_seconds * (index / (total - 1))
+        jitter_seconds = random.randint(-3 * 24 * 3600, 3 * 24 * 3600)
+        when = start + timedelta(seconds=int(slot + jitter_seconds))
+        return self._clamp_dt(when, start=start, end=end)
+
+    def _unique_username(self, prefix='user'):
+        username = f"{prefix}_{self.generate_random_string(6)}"
+        original_username = username
+        counter = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{original_username}{counter}"
+            counter += 1
+        return username
+
+    def _create_demo_user(
+        self,
+        *,
+        index,
+        date_joined,
+        is_editor=False,
+        is_manager=False,
+        is_active=True,
+        is_approved=True,
+        is_featured=False,
+        advanced_user=False,
+        email_verified=True,
+        allow_contact=False,
+        username_prefix='user',
+        description=None,
+    ):
+        locale = self._locale()
+        name = self.generate_name(locale=locale)
+        username = self._unique_username(username_prefix)
+        email = self.generate_email(username)
+        if description is None:
+            description = locale['user_description'].format(n=index)
+
+        user = User(
+            username=username,
+            email=email,
+            name=name,
+            description=description,
+            is_editor=is_editor,
+            is_manager=is_manager,
+            is_active=is_active,
+            is_approved=is_approved,
+            is_featured=is_featured,
+            advancedUser=advanced_user,
+            allow_contact=allow_contact,
+            date_joined=date_joined,
+            date_added=date_joined,
+        )
+        # Avoid NEW_USER admin emails during bulk demo seeding.
+        user._skip_admin_notification = True
+        user.set_password('testpass123')
+        user.save()
+        # set_password/save can refresh timestamps; force the intended join date.
+        self._backdate(User, user.pk, 'date_joined', date_joined)
+        self._backdate(User, user.pk, 'date_added', date_joined)
+        user.date_joined = date_joined
+        user.date_added = date_joined
+
+        EmailAddress.objects.update_or_create(
+            user=user,
+            email=user.email,
+            defaults={"verified": bool(email_verified), "primary": True},
+        )
+
+        # Give most active users a recent last_login so People → activity has signal.
+        if is_active and random.random() < 0.75:
+            last_login = self._random_datetime_between(
+                max(date_joined, self._now - timedelta(days=45)),
+                self._now,
+                recent_bias=True,
+            )
+            self._backdate(User, user.pk, 'last_login', last_login)
+            user.last_login = last_login
+
+        return user
+
+    def _pick_user_subset(self, users, used_ids, count, prefer_regular=False):
+        """Pick up to `count` unused users from the pool."""
+        available = [u for u in users if u.pk not in used_ids]
+        if prefer_regular:
+            regular = [u for u in available if not u.is_editor and not u.is_manager and not u.is_superuser]
+            if len(regular) >= count:
+                available = regular
+        if not available or count <= 0:
+            return []
+        chosen = random.sample(available, min(count, len(available)))
+        used_ids.update(u.pk for u in chosen)
+        return chosen
+
+    def _state_variant_counts(self, pool_size):
+        """Small absolute counts so People dashboard tiles have something to show."""
+        # Scale gently: ~1 per 10 users, always at least 1 when the pool allows.
+        per = max(1, min(3, pool_size // 10 or 1))
+        return {
+            "inactive": per,
+            "pending": per,
+            "featured": max(1, min(2, per)),
+            "advanced": per,
+            "unverified_email": per,
+            "allow_contact": max(1, min(2, per)),
+        }
+
+    def _apply_user_account_states(self, users):
+        """Flip a sparse subset into inactive/pending/featured/etc., adding extras if needed."""
+        counts = {key: 0 for key in ("inactive", "pending", "featured", "advanced", "unverified_email", "allow_contact")}
+        if not users:
+            return counts
+
+        targets = self._state_variant_counts(len(users))
+        used_ids = set()
+
+        # Inactive: cannot sign in; keep approved so the signal is specifically is_active.
+        for user in self._pick_user_subset(users, used_ids, targets["inactive"], prefer_regular=True):
+            User.objects.filter(pk=user.pk).update(is_active=False, last_login=None)
+            user.is_active = False
+            user.last_login = None
+            counts["inactive"] += 1
+
+        # Pending approval: active but not approved (covers USERS_NEEDS_TO_BE_APPROVED demos).
+        for user in self._pick_user_subset(users, used_ids, targets["pending"], prefer_regular=True):
+            User.objects.filter(pk=user.pk).update(is_approved=False)
+            user.is_approved = False
+            counts["pending"] += 1
+
+        for user in self._pick_user_subset(users, used_ids, targets["featured"]):
+            User.objects.filter(pk=user.pk).update(is_featured=True)
+            user.is_featured = True
+            counts["featured"] += 1
+
+        for user in self._pick_user_subset(users, used_ids, targets["advanced"]):
+            User.objects.filter(pk=user.pk).update(advancedUser=True)
+            user.advancedUser = True
+            counts["advanced"] += 1
+
+        for user in self._pick_user_subset(users, used_ids, targets["allow_contact"]):
+            User.objects.filter(pk=user.pk).update(allow_contact=True)
+            user.allow_contact = True
+            counts["allow_contact"] += 1
+
+        for user in self._pick_user_subset(users, used_ids, targets["unverified_email"]):
+            EmailAddress.objects.filter(user=user, email=user.email).update(verified=False)
+            counts["unverified_email"] += 1
+
+        # Tiny pools may not cover every state after exclusivity — add dedicated extras.
+        extras = self._ensure_user_state_coverage(users, counts)
+        users.extend(extras)
+        return counts
+
+    def _ensure_user_state_coverage(self, users, counts):
+        """Create dedicated demo users for any missing critical account states."""
+        extras = []
+        needed = []
+        if counts.get("inactive", 0) < 1:
+            needed.append("inactive")
+        if counts.get("pending", 0) < 1:
+            needed.append("pending")
+        if counts.get("featured", 0) < 1:
+            needed.append("featured")
+        if counts.get("advanced", 0) < 1:
+            needed.append("advanced")
+        if counts.get("unverified_email", 0) < 1:
+            needed.append("unverified_email")
+
+        for i, state in enumerate(needed):
+            # Place coverage extras across the horizon too (not all "today").
+            date_joined = self._user_join_datetime(i, max(len(needed), 2))
+            kwargs = {
+                "index": len(users) + len(extras) + 1,
+                "date_joined": date_joined,
+                "username_prefix": f"state_{state[:6]}",
+                "description": f"Demo account for {state.replace('_', ' ')} state.",
+            }
+            if state == "inactive":
+                kwargs.update(is_active=False, is_approved=True, email_verified=True)
+            elif state == "pending":
+                kwargs.update(is_active=True, is_approved=False, email_verified=True)
+            elif state == "featured":
+                kwargs.update(is_featured=True, email_verified=True)
+            elif state == "advanced":
+                kwargs.update(advanced_user=True, email_verified=True)
+            elif state == "unverified_email":
+                kwargs.update(email_verified=False)
+
+            user = self._create_demo_user(**kwargs)
+            # _create_demo_user may set last_login for active users; clear for inactive extras.
+            if state == "inactive":
+                User.objects.filter(pk=user.pk).update(last_login=None)
+                user.last_login = None
+            extras.append(user)
+            counts[state] = counts.get(state, 0) + 1
+
+        return extras
 
     def setup_channels(self, users):
         """Enrich auto-created default channels, add extras, and wire subscribers."""
@@ -488,17 +710,25 @@ class Command(BaseCommand):
         # If no categories exist, create some from Greek + the selected RTL language
         if not categories:
             seen = set()
+            names = []
             for locale in self.content_locales:
                 for name in locale['category_names']:
                     if name in seen:
                         continue
                     seen.add(name)
-                    category = Category.objects.create(
-                        title=name,
-                        description=locale['category_description'].format(name=name),
-                        is_global=True,
-                    )
-                    categories.append(category)
+                    names.append((name, locale))
+
+            for i, (name, locale) in enumerate(names):
+                category = Category.objects.create(
+                    title=name,
+                    description=locale['category_description'].format(name=name),
+                    is_global=True,
+                )
+                # Category admin lists/sorts by add_date (auto_now_add) — spread it.
+                category_date = self._user_join_datetime(i, max(len(names), 2))
+                self._backdate(Category, category.pk, 'add_date', category_date)
+                category.add_date = category_date
+                categories.append(category)
 
         return categories
 
@@ -693,15 +923,20 @@ class Command(BaseCommand):
         else:
             state = 'private'
 
-        encoding_rand = random.random()
-        if encoding_rand < 0.70:
-            encoding_status = 'success'
-        elif encoding_rand < 0.85:
-            encoding_status = 'pending'
-        elif encoding_rand < 0.95:
-            encoding_status = 'running'
-        else:
-            encoding_status = 'fail'
+        # Only randomize encoding_status for video. Non-video types are forced to
+        # success by media_init; leave them alone so demo data stays pipeline-clean
+        # unless --inject-integrity-faults is used.
+        encoding_status = None
+        if media_type == 'video':
+            encoding_rand = random.random()
+            if encoding_rand < 0.70:
+                encoding_status = 'success'
+            elif encoding_rand < 0.85:
+                encoding_status = 'pending'
+            elif encoding_rand < 0.95:
+                encoding_status = 'running'
+            else:
+                encoding_status = 'fail'
 
         is_reviewed = random.random() < 0.8  # 80% True
         featured = random.random() < 0.1  # 10% True
@@ -755,14 +990,18 @@ class Command(BaseCommand):
                 video_height=video_height,
             )
 
-            # After media_init() runs, update state, encoding_status and listable
-            # The Media.save() method overrides state on creation, so we need to set it here
+            # After media_init() runs, update state (and video encoding_status) and listable.
+            # The Media.save() method overrides state on creation, so we need to set it here.
             media.state = state
-            media.encoding_status = encoding_status
+            media.is_reviewed = is_reviewed
             media.add_date = add_date
-            # Recalculate listable based on our desired encoding_status
-            media.listable = state == 'public' and encoding_status == 'success' and is_reviewed
-            media.save(update_fields=['state', 'encoding_status', 'listable', 'add_date'])
+            update_fields = ['state', 'is_reviewed', 'listable', 'add_date']
+            if encoding_status is not None:
+                media.encoding_status = encoding_status
+                update_fields.append('encoding_status')
+            # Media.save() recomputes listable from state/encoding_status/is_reviewed.
+            media.save(update_fields=update_fields)
+            # edit_date is aligned in post_process after any later saves.
 
         return media
 
@@ -1370,12 +1609,20 @@ class Command(BaseCommand):
                 page = Page.objects.create(slug=spec['slug'], title=spec['title'], description=description)
                 page_date = self._random_datetime_between(self._horizon_start, self._now)
                 self._backdate(Page, page.pk, 'add_date', page_date)
+                # edit_date is auto_now; keep it on/after add_date, not the populate-run instant.
+                edit_date = self._random_datetime_between(page_date, self._now, recent_bias=True)
+                self._backdate(Page, page.pk, 'edit_date', edit_date)
                 page.add_date = page_date
+                page.edit_date = edit_date
                 self.stdout.write(f"Created CMS page /{page.slug}")
             else:
                 page.title = spec['title']
                 page.description = description
                 page.save()
+                page_start = page.add_date or self._horizon_start
+                edit_date = self._random_datetime_between(page_start, self._now, recent_bias=True)
+                self._backdate(Page, page.pk, 'edit_date', edit_date)
+                page.edit_date = edit_date
                 self.stdout.write(f"Updated CMS page /{page.slug}")
             pages.append(page)
         return pages
@@ -1488,12 +1735,12 @@ class Command(BaseCommand):
 <h3>Is the media on this site real?</h3>
 <p>No. <code>populate_fake_media</code> copied sample files from <code>fixtures/</code> and invented the titles, descriptions, and authors. The same bytes are reused for many listings.</p>
 <h3>What does the generator create?</h3>
-<p>Users and channels, categories, tags, licenses, media (video, audio, image, and PDF), playlists, comments, likes, reports, subtitles, chapters, caption requests, share permissions, trim requests, and the About, FAQ, and Terms pages. Dates are spread over the previous 12 months.</p>
+<p>Users and channels (including a few inactive, pending-approval, featured, advanced, and email-unverified accounts for admin demos), categories, tags, licenses, media (video, audio, image, and PDF), playlists, comments, likes, reports, subtitles, chapters, caption requests, share permissions, trim requests, and the About, FAQ, and Terms pages. Dates are spread over the previous 12 months.</p>
 <h3>Which sample files does it use?</h3>
 <p>Whichever of these are present: <code>test_image.png</code>, <code>test_image2.jpg</code>, <code>small_video.mp4</code>, <code>medium_video.mp4</code>, <code>sample_audio.wav</code>, <code>sample_audio.mp3</code>, and <code>sample_document.pdf</code>.</p>
 {figure}
 <h3>How do I run it?</h3>
-<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones. Users and playlists scale to about 15–20% of that media count. By default, titles, names, and comments are about 40% English, with ~20% in one secondary language (<code>--secondary-language</code>: <code>de</code>, <code>es</code>, <code>el</code>, or <code>random</code>), ~20% in one RTL language (<code>--rtl-language</code>: <code>ar</code>, <code>he</code>, <code>ur</code>, or <code>random</code>), and ~20% in one CJK language (<code>--cjk-language</code>: <code>zh</code>, <code>ja</code>, <code>ko</code>, or <code>random</code>; CJK is LTR, not RTL). Pass <code>--single-language</code> (optionally with a code such as <code>en</code>, <code>de</code>, or <code>ja</code>) to generate only one language.</p>
+<p>With the dev stack up: <code>docker compose -f docker-compose-dev.yaml exec web python manage.py populate_fake_media</code>. <code>--count</code> sets how many media records to add (default 150). <code>--clear</code> deletes existing media before creating new ones. Users and playlists scale to about 15–20% of that media count. By default, titles, names, and comments are about 40% English, with ~20% in one secondary language (<code>--secondary-language</code>: <code>de</code>, <code>es</code>, <code>el</code>, or <code>random</code>), ~20% in one RTL language (<code>--rtl-language</code>: <code>ar</code>, <code>he</code>, <code>ur</code>, or <code>random</code>), and ~20% in one CJK language (<code>--cjk-language</code>: <code>zh</code>, <code>ja</code>, <code>ko</code>, or <code>random</code>; CJK is LTR, not RTL). Pass <code>--single-language</code> (optionally with a code such as <code>en</code>, <code>de</code>, or <code>ja</code>) to generate only one language. Pass <code>--inject-integrity-faults</code> (optionally with <code>--integrity-faults-per-check 1</code> or <code>2</code>) to create a few intentional integrity mismatches so Site health checks and the Media “Integrity issues” filter can be verified.</p>
 <h3>Will running it again duplicate these pages?</h3>
 <p>No. About, FAQ, and Terms are updated in place while they still contain the generator marker comment. Media, users, and comments are added again, so those counts grow unless you pass <code>--clear</code>, and that flag only removes media.</p>
 <h3>Why do some videos have captions, chapters, or trim requests?</h3>
@@ -1545,6 +1792,15 @@ class Command(BaseCommand):
         for category in categories:
             category.update_category_media()
 
+        # edit_date is auto_now; any create/save during populate would stamp "now".
+        # Align after all writes (including optional integrity-fault injection).
+        self.stdout.write('Aligning media edit_date with add_date...')
+        for media in created_media:
+            add_date = media.add_date or self._horizon_start
+            edit_date = self._random_datetime_between(add_date, self._now, recent_bias=True)
+            self._backdate(Media, media.pk, 'edit_date', edit_date)
+            media.edit_date = edit_date
+
     def display_summary(
         self,
         created_media,
@@ -1562,6 +1818,7 @@ class Command(BaseCommand):
         permission_count=0,
         trim_request_count=0,
         pages=None,
+        integrity_injected=None,
     ):
         """Display summary statistics"""
         if pages is None:
@@ -1570,6 +1827,8 @@ class Command(BaseCommand):
             channels = []
         if licenses is None:
             licenses = []
+        if integrity_injected is None:
+            integrity_injected = {}
 
         self.stdout.write(self.style.SUCCESS('\n' + '=' * 60))
         self.stdout.write(self.style.SUCCESS('SUMMARY STATISTICS'))
@@ -1581,6 +1840,14 @@ class Command(BaseCommand):
             self.stdout.write(f'\nContent languages: {locale_label}')
         self.stdout.write(f'\nTotal media created: {len(created_media)}')
         self.stdout.write(f'Total users: {len(users)}')
+        if users:
+            inactive = sum(1 for u in users if not u.is_active)
+            pending = sum(1 for u in users if u.is_approved is False or u.is_approved is None)
+            featured = sum(1 for u in users if u.is_featured)
+            advanced = sum(1 for u in users if u.advancedUser)
+            editors = sum(1 for u in users if u.is_editor)
+            managers = sum(1 for u in users if u.is_manager)
+            self.stdout.write(f'  Users by state: inactive={inactive}, pending={pending}, ' f'featured={featured}, advanced={advanced}, editors={editors}, managers={managers}')
         self.stdout.write(f'Total channels: {len(channels)}')
         self.stdout.write(f'Total tags: {len(tags)}')
         self.stdout.write(f'Total categories: {len(categories)}')
@@ -1656,6 +1923,11 @@ class Command(BaseCommand):
         self.stdout.write(f'  Featured: {featured_count} ({featured_count / len(created_media) * 100:.1f}%)')
         self.stdout.write(f'  Total views: {total_views:,}')
         self.stdout.write(f'  Total likes: {total_likes:,}')
+
+        if integrity_injected:
+            self.stdout.write('\nIntegrity faults injected:')
+            for check_id, victims in integrity_injected.items():
+                self.stdout.write(f'  {check_id}: {len(victims)}')
 
         # Playlist statistics
         if playlists:

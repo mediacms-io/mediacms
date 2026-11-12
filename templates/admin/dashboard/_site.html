@@ -46,7 +46,7 @@
                         </div>
 
                         <div class="row mt-3">
-                            <div class="col-lg-7">
+                            <div class="col-12">
                                 <div class="card card-outline {% if stats.system.health_counts.fail %}card-danger{% elif stats.system.health_counts.warn %}card-warning{% else %}card-secondary{% endif %}">
                                     <div class="card-header">
                                         <h3 class="card-title">{{ "Health checks"|custom_translate:LANGUAGE_CODE }}</h3>
@@ -91,7 +91,10 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-lg-5">
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-12">
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
                                         <h3 class="card-title">{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>

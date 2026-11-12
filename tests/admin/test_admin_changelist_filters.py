@@ -48,6 +48,7 @@ class ChangelistFilterWidgetTests(TestCase):
         self.assertEqual(widgets["media_type"], "segmented")
         self.assertEqual(widgets["encoding_status"], "segmented")
         self.assertEqual(widgets["encoding_queue"], "segmented")
+        self.assertEqual(widgets["integrity"], "select")
         self.assertEqual(widgets["reported"], "segmented")
 
     def test_related_filters_stay_labeled_selects(self):
@@ -77,6 +78,13 @@ class ChangelistFilterWidgetTests(TestCase):
         params = [choice["params"] for choice in prepared_filter_choices(spec, changelist)]
         self.assertIn({"encoding_queue": "yes"}, params)
         self.assertIn({"encoding_queue": "fail"}, params)
+
+    def test_integrity_filter_choices_keep_check_ids(self):
+        changelist = self._changelist(Media)
+        spec = next(spec for spec in changelist.filter_specs if filter_id(spec) == "integrity")
+        params = [choice["params"] for choice in prepared_filter_choices(spec, changelist)]
+        self.assertIn({"integrity": "video_success_no_encoding"}, params)
+        self.assertIn({"integrity": "listable_mismatch"}, params)
 
     def test_date_filters_stay_labeled_selects(self):
         changelist = self._changelist(Comment)

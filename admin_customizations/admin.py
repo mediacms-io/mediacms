@@ -632,6 +632,11 @@ def get_site_health_checks(media_stats=None):
         )
     )
 
+    from files.integrity import iter_integrity_health_checks
+
+    for payload in iter_integrity_health_checks():
+        checks.append(_health_check(**payload))
+
     severity_order = {"fail": 0, "warn": 1, "info": 2, "ok": 3}
     checks.sort(key=lambda check: (severity_order.get(check["status"], 99), check["label"]))
     return checks
