@@ -2,6 +2,7 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import admin, messages
+from django.db.models import Count
 from django.http import HttpResponseRedirect
 from django.utils import timezone
 
@@ -10,11 +11,7 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
-from files.admin_helpers import (
-    admin_change_link,
-    admin_changelist_link,
-    admin_text,
-)
+from files.admin_helpers import admin_change_link, admin_changelist_link, admin_text
 from files.frontend_translations import translate_string
 from files.models import Comment, Media, Playlist
 
@@ -152,9 +149,7 @@ class UserAdmin(admin.ModelAdmin):
         return [column for column in self.list_display if column not in optional or column in visible_optional]
 
     def changelist_view(self, request, extra_context=None):
-        if request.method == "GET" and (
-            request.GET.get("reset_user_columns") == "1" or request.GET.get("set_user_columns") == "1"
-        ):
+        if request.method == "GET" and (request.GET.get("reset_user_columns") == "1" or request.GET.get("set_user_columns") == "1"):
             if request.GET.get("reset_user_columns") == "1":
                 request.session.pop(self.optional_columns_session_key, None)
             else:
@@ -360,8 +355,15 @@ class UserAdmin(admin.ModelAdmin):
 
 class ChannelAdmin(admin.ModelAdmin):
     search_fields = ["title", "friendly_token", "user__username"]
+    change_list_template = "admin/users/channel/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in.
     list_display = ["add_date", "title", "link_user", "friendly_token", "related_media_count"]
     list_display_links = ("title",)
+    optional_list_columns = (
+        ("friendly_token", "Friendly token", ()),
+        ("related_media_count", "Media count", ()),
+    )
+    optional_columns_session_key = "mediacms_channel_admin_optional_columns"
     list_select_related = ("user",)
     list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
@@ -393,6 +395,76 @@ class ChannelAdmin(admin.ModelAdmin):
         ),
     )
 
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        return [column for column in self.list_display if column not in optional or column in visible_optional]
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and (request.GET.get("reset_channel_columns") == "1" or request.GET.get("set_channel_columns") == "1"):
+            if request.GET.get("reset_channel_columns") == "1":
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("channel_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_channel_columns", None)
+            params.pop("reset_channel_columns", None)
+            params.pop("channel_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["channel_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_channel_columns", None)
+        preserved.pop("reset_channel_columns", None)
+        preserved.pop("channel_col", None)
+        extra_context["channel_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if "related_media_count" in self.get_list_display(request):
+            qs = qs.annotate(_media_count=Count("media"))
+        return qs
+
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
@@ -401,12 +473,12 @@ class ChannelAdmin(admin.ModelAdmin):
     def related_media(self, obj):
         if not obj.pk:
             return "—"
-        count = Media.objects.filter(channel=obj).count()
+        count = getattr(obj, "_media_count", Media.objects.filter(channel=obj).count())
         return admin_changelist_link(Media, admin_text(None, "View {count} media item(s)", count=count), channel__id__exact=obj.pk)
 
-    @admin.display(description="Media count")
+    @admin.display(description="Media count", ordering="_media_count")
     def related_media_count(self, obj):
-        count = Media.objects.filter(channel=obj).count()
+        count = getattr(obj, "_media_count", Media.objects.filter(channel=obj).count())
         return admin_changelist_link(Media, str(count), channel__id__exact=obj.pk)
 
 

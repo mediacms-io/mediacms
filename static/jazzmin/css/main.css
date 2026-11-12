@@ -153,15 +153,29 @@ div.inline-related {
 #result_list td.field-display_encoding_status,
 #result_list td.field-display_listable,
 #result_list td.field-display_reported_times,
+#result_list td.field-display_status,
+#result_list td.field-display_chunk,
+#result_list td.field-has_file,
 #result_list th.column-display_media_type,
 #result_list th.column-display_state,
 #result_list th.column-display_encoding_status,
 #result_list th.column-display_listable,
-#result_list th.column-display_reported_times {
+#result_list th.column-display_reported_times,
+#result_list th.column-display_status,
+#result_list th.column-display_chunk,
+#result_list th.column-has_file {
     text-align: center;
-    width: 1%;
+    width: 2.25rem;
+    max-width: 2.75rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
     white-space: nowrap;
     vertical-align: middle;
+}
+
+.model-media.change-list #result_list .changelist-status-icon .fa,
+.model-media.change-list #result_list .changelist-status-icon .fas {
+    font-size: 0.9rem;
 }
 
 .change-form .changelist-status-icon__text {
@@ -1594,14 +1608,18 @@ code.media-id {
 
 .model-media.change-list #result_list th.column-add_date,
 .model-media.change-list #result_list td.field-add_date {
-    width: 11.5rem;
+    width: 9.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
 .model-media.change-list #result_list th.column-display_title,
 .model-media.change-list #result_list th.field-display_title,
 .model-media.change-list #result_list td.field-display_title {
-    width: 28%;
+    /* Take leftover width; min-width lets ellipsis win under table-layout: fixed. */
+    width: auto;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1610,7 +1628,8 @@ code.media-id {
 
 .model-media.change-list #result_list th.column-link_user,
 .model-media.change-list #result_list td.field-link_user {
-    width: 7rem;
+    width: 6rem;
+    max-width: 6.5rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1631,7 +1650,10 @@ code.media-id {
 .model-media.change-list #result_list td.field-allow_download,
 .model-media.change-list #result_list th.column-enable_comments,
 .model-media.change-list #result_list td.field-enable_comments {
-    width: 1%;
+    width: 2.5rem;
+    max-width: 3.25rem;
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -1640,6 +1662,198 @@ code.media-id {
 .model-media.change-list #result_list td.field-display_title a,
 .model-media.change-list #result_list td.field-link_user a {
     display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Categories changelist: keep add_date compact; title takes leftover width.
+ * list_display_links renders title as tbody th.field-title.
+ */
+.model-category.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-category.change-list #result_list th:first-child,
+.model-category.change-list #result_list td.action-checkbox {
+    width: 2.75rem;
+}
+
+.model-category.change-list #result_list th.column-add_date,
+.model-category.change-list #result_list td.field-add_date {
+    width: 9.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.model-category.change-list #result_list th.column-title,
+.model-category.change-list #result_list th.field-title,
+.model-category.change-list #result_list td.field-title {
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-category.change-list #result_list th.column-user,
+.model-category.change-list #result_list td.field-user {
+    width: 7rem;
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-category.change-list #result_list th.column-uid,
+.model-category.change-list #result_list td.field-uid,
+.model-category.change-list #result_list th.column-related_media_count,
+.model-category.change-list #result_list td.field-related_media_count,
+.model-category.change-list #result_list th.column-is_rbac_category,
+.model-category.change-list #result_list td.field-is_rbac_category,
+.model-category.change-list #result_list th.column-identity_provider,
+.model-category.change-list #result_list td.field-identity_provider,
+.model-category.change-list #result_list th.column-is_lms_course,
+.model-category.change-list #result_list td.field-is_lms_course {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-category.change-list #result_list th.field-title a,
+.model-category.change-list #result_list td.field-title a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Playlists changelist: keep add_date compact; title takes leftover width.
+ * list_display_links renders title as tbody th.field-title.
+ */
+.model-playlist.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-playlist.change-list #result_list th:first-child,
+.model-playlist.change-list #result_list td.action-checkbox {
+    width: 2.75rem;
+}
+
+.model-playlist.change-list #result_list th.column-add_date,
+.model-playlist.change-list #result_list td.field-add_date {
+    width: 9.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.model-playlist.change-list #result_list th.column-title,
+.model-playlist.change-list #result_list th.field-title,
+.model-playlist.change-list #result_list td.field-title {
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-playlist.change-list #result_list th.column-link_user,
+.model-playlist.change-list #result_list td.field-link_user {
+    width: 7rem;
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-playlist.change-list #result_list th.column-friendly_token,
+.model-playlist.change-list #result_list td.field-friendly_token,
+.model-playlist.change-list #result_list th.column-related_media_count,
+.model-playlist.change-list #result_list td.field-related_media_count {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-playlist.change-list #result_list th.field-title a,
+.model-playlist.change-list #result_list td.field-title a,
+.model-playlist.change-list #result_list td.field-link_user a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Channels changelist: keep add_date compact; title takes leftover width.
+ * list_display_links renders title as tbody th.field-title.
+ */
+.model-channel.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-channel.change-list #result_list th:first-child,
+.model-channel.change-list #result_list td.action-checkbox {
+    width: 2.75rem;
+}
+
+.model-channel.change-list #result_list th.column-add_date,
+.model-channel.change-list #result_list td.field-add_date {
+    width: 9.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.model-channel.change-list #result_list th.column-title,
+.model-channel.change-list #result_list th.field-title,
+.model-channel.change-list #result_list td.field-title {
+    width: auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-channel.change-list #result_list th.column-link_user,
+.model-channel.change-list #result_list td.field-link_user {
+    width: 7rem;
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-channel.change-list #result_list th.column-friendly_token,
+.model-channel.change-list #result_list td.field-friendly_token,
+.model-channel.change-list #result_list th.column-related_media_count,
+.model-channel.change-list #result_list td.field-related_media_count {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-channel.change-list #result_list th.field-title a,
+.model-channel.change-list #result_list td.field-title a,
+.model-channel.change-list #result_list td.field-link_user a {
+    display: block;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

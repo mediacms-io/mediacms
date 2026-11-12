@@ -175,6 +175,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
     ]
     # Hidden by default; shown via column chooser and/or when a related filter is active.
     optional_list_columns = (
+        ("link_user", "User", ()),
         ("duration", "Duration", ()),
         ("is_reviewed", "Is reviewed", ("is_reviewed__exact",)),
         ("featured", "Featured", ("featured__exact",)),
@@ -318,9 +319,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         )
 
     def changelist_view(self, request, extra_context=None):
-        if request.method == "GET" and (
-            request.GET.get("reset_media_columns") == "1" or request.GET.get("set_media_columns") == "1"
-        ):
+        if request.method == "GET" and (request.GET.get("reset_media_columns") == "1" or request.GET.get("set_media_columns") == "1"):
             if request.GET.get("reset_media_columns") == "1":
                 request.session.pop(self.optional_columns_session_key, None)
             else:
@@ -1234,12 +1233,40 @@ class CategoryAdmin(admin.ModelAdmin):
     form = CategoryAdminForm
 
     search_fields = ["title", "uid"]
-    list_display = ["add_date", "title", "user", "related_media_count"]
+    change_list_template = "admin/files/category/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in.
+    # Feature-flag columns (RBAC/IdP/LTI) are inserted dynamically when enabled.
+    list_display = ["add_date", "title", "user", "uid", "related_media_count"]
     list_display_links = ("title",)
+    optional_list_columns = (
+        ("uid", "Uid", ()),
+        ("related_media_count", "Media count", ()),
+    )
+    optional_columns_session_key = "mediacms_category_admin_optional_columns"
     list_filter = []
     ordering = ("-add_date",)
     readonly_fields = ("user", "related_media", "lti_platform", "lti_context_id")
     change_form_template = 'admin/files/category/change_form.html'
+
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
 
     def get_list_filter(self, request):
         list_filter = list(self.list_filter)
@@ -1254,15 +1281,61 @@ class CategoryAdmin(admin.ModelAdmin):
         return list_filter
 
     def get_list_display(self, request):
-        list_display = list(self.list_display)
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        list_display = [column for column in self.list_display if column not in optional or column in visible_optional]
+
+        insert_at = list_display.index("related_media_count") if "related_media_count" in list_display else len(list_display)
+        extras = []
         if getattr(settings, 'USE_RBAC', False):
-            list_display.insert(-1, "is_rbac_category")
+            extras.append("is_rbac_category")
         if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):
-            list_display.insert(-1, "identity_provider")
+            extras.append("identity_provider")
         if getattr(settings, 'USE_LTI', False):
-            list_display.insert(-1, "is_lms_course")
+            extras.append("is_lms_course")
+        for offset, column in enumerate(extras):
+            list_display.insert(insert_at + offset, column)
 
         return list_display
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and (request.GET.get("reset_category_columns") == "1" or request.GET.get("set_category_columns") == "1"):
+            if request.GET.get("reset_category_columns") == "1":
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("category_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_category_columns", None)
+            params.pop("reset_category_columns", None)
+            params.pop("category_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["category_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_category_columns", None)
+        preserved.pop("reset_category_columns", None)
+        preserved.pop("category_col", None)
+        extra_context["category_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
@@ -1339,7 +1412,12 @@ class CategoryAdmin(admin.ModelAdmin):
 
 class TagAdmin(admin.ModelAdmin):
     search_fields = ["title"]
+    change_list_template = "admin/files/tag/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in.
     list_display = ["title", "link_user", "related_media_count"]
+    list_display_links = ("title",)
+    optional_list_columns = (("related_media_count", "Media count", ()),)
+    optional_columns_session_key = "mediacms_tag_admin_optional_columns"
     list_select_related = ("user",)
     readonly_fields = ("link_user", "related_media")
     fieldsets = (
@@ -1360,9 +1438,76 @@ class TagAdmin(admin.ModelAdmin):
         ),
     )
 
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        return [column for column in self.list_display if column not in optional or column in visible_optional]
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and (request.GET.get("reset_tag_columns") == "1" or request.GET.get("set_tag_columns") == "1"):
+            if request.GET.get("reset_tag_columns") == "1":
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("tag_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_tag_columns", None)
+            params.pop("reset_tag_columns", None)
+            params.pop("tag_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["tag_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_tag_columns", None)
+        preserved.pop("reset_tag_columns", None)
+        preserved.pop("tag_col", None)
+        extra_context["tag_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
+
     def get_queryset(self, request):
+        qs = super().get_queryset(request)
         # Total tagged media (not the public/reviewed-only media_count field).
-        return super().get_queryset(request).annotate(_media_total=Count("media"))
+        if "related_media_count" in self.get_list_display(request):
+            qs = qs.annotate(_media_total=Count("media"))
+        return qs
 
     def _media_total(self, obj):
         if hasattr(obj, "_media_total"):
@@ -1521,7 +1666,16 @@ class VideoTrimRequestAdmin(admin.ModelAdmin):
 class EncodingAdmin(admin.ModelAdmin):
     """Encoding job rows are pipeline-owned. Inspect or retry/delete; do not hand-edit state."""
 
-    list_display = ["get_title", "link_media", "chunk", "profile", "progress", "display_status", "has_file"]
+    change_list_template = "admin/files/encoding/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
+    list_display = ["get_title", "link_media", "display_chunk", "profile", "progress", "display_status", "has_file"]
+    list_display_links = ("get_title",)
+    optional_list_columns = (
+        ("display_chunk", "Chunk", ("chunk__exact",)),
+        ("profile", "Profile", ("profile__id__exact",)),
+        ("progress", "Progress", ()),
+    )
+    optional_columns_session_key = "mediacms_encoding_admin_optional_columns"
     list_filter = ["chunk", "profile", "status"]
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
@@ -1543,6 +1697,70 @@ class EncodingAdmin(admin.ModelAdmin):
         ),
     )
 
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        return [column for column in self.list_display if column not in optional or column in visible_optional]
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and (request.GET.get("reset_encoding_columns") == "1" or request.GET.get("set_encoding_columns") == "1"):
+            if request.GET.get("reset_encoding_columns") == "1":
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("encoding_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_encoding_columns", None)
+            params.pop("reset_encoding_columns", None)
+            params.pop("encoding_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["encoding_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_encoding_columns", None)
+        preserved.pop("reset_encoding_columns", None)
+        preserved.pop("encoding_col", None)
+        extra_context["encoding_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
+
     def has_add_permission(self, request):
         return False
 
@@ -1560,15 +1778,33 @@ class EncodingAdmin(admin.ModelAdmin):
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
-        return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
+        if not obj.media_id:
+            return "—"
+        title = obj.media.title
+        return format_html(
+            '<a href="{}" title="{}">{}</a>',
+            admin_change_url(obj.media),
+            title,
+            clipped_admin_text(title, always_tooltip=True),
+        )
 
-    @admin.display(description="Has file", boolean=True)
+    @admin.display(description="Chunk", ordering="chunk")
+    def display_chunk(self, obj):
+        if obj.chunk:
+            return admin_status_icon("fas fa-th-large", admin_text(None, "Yes"), modifier="running")
+        return admin_status_icon("fas fa-file", admin_text(None, "No"), modifier="not-listable")
+
+    @admin.display(description="Has file")
     def has_file(self, obj):
-        return obj.media_encoding_url is not None
+        if obj.media_encoding_url is not None:
+            return admin_status_icon("fas fa-file", admin_text(None, "Yes"), modifier="success")
+        return admin_status_icon("fas fa-ban", admin_text(None, "No"), modifier="fail")
 
     @admin.display(description="status", ordering="status")
     def display_status(self, obj):
-        return translated_choice_display(obj, "status")
+        label = translated_choice_display(obj, "status")
+        icon, modifier = MEDIA_ENCODING_STATUS_ICONS.get(obj.status, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
     @admin.action(description="Retry failed encodings", permissions=["change"])
     def retry_failed_encodings(self, request, queryset):
@@ -1675,8 +1911,15 @@ class PageAdmin(admin.ModelAdmin):
 
 class PlaylistAdmin(admin.ModelAdmin):
     search_fields = ["title", "friendly_token", "user__username"]
+    change_list_template = "admin/files/playlist/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in.
     list_display = ["add_date", "title", "link_user", "friendly_token", "related_media_count"]
     list_display_links = ("title",)
+    optional_list_columns = (
+        ("friendly_token", "Friendly token", ()),
+        ("related_media_count", "Media count", ()),
+    )
+    optional_columns_session_key = "mediacms_playlist_admin_optional_columns"
     list_select_related = ("user",)
     list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
@@ -1701,8 +1944,75 @@ class PlaylistAdmin(admin.ModelAdmin):
         ),
     )
 
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        return [column for column in self.list_display if column not in optional or column in visible_optional]
+
+    def changelist_view(self, request, extra_context=None):
+        if request.method == "GET" and (request.GET.get("reset_playlist_columns") == "1" or request.GET.get("set_playlist_columns") == "1"):
+            if request.GET.get("reset_playlist_columns") == "1":
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("playlist_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_playlist_columns", None)
+            params.pop("reset_playlist_columns", None)
+            params.pop("playlist_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["playlist_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_playlist_columns", None)
+        preserved.pop("reset_playlist_columns", None)
+        preserved.pop("playlist_col", None)
+        extra_context["playlist_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
+
     def get_queryset(self, request):
-        return super().get_queryset(request).annotate(_media_count=Count("media"))
+        qs = super().get_queryset(request)
+        if "related_media_count" in self.get_list_display(request):
+            qs = qs.annotate(_media_count=Count("media"))
+        return qs
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):

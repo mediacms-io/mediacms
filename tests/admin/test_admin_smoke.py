@@ -224,9 +224,7 @@ class AdminAppListTest(TestCase):
         self.assertIn("NeedsReview", apps["moderation"])
         self.assertIn("EncodingQueue", apps["processing"])
         self.assertIn("FailedEncodings", apps["processing"])
-        reported = next(
-            model for app in self.app_list() if app["app_label"] == "moderation" for model in app["models"] if model["object_name"] == "ReportedMedia"
-        )
+        reported = next(model for app in self.app_list() if app["app_label"] == "moderation" for model in app["models"] if model["object_name"] == "ReportedMedia")
         self.assertEqual(reported["admin_url"], "/admin/files/media/?reported=yes")
 
     def test_single_app_index_still_works(self):

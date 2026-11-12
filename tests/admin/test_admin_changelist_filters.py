@@ -1,10 +1,10 @@
 import re
 
 from django.contrib import admin
-from django.core.exceptions import FieldDoesNotExist
-from django.db import models
 from django.contrib.admin import RelatedOnlyFieldListFilter
 from django.contrib.admin.filters import FieldListFilter
+from django.core.exceptions import FieldDoesNotExist
+from django.db import models
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 

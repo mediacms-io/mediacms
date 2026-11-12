@@ -136,10 +136,7 @@ def admin_status_icon(icon_class, label, *, modifier=None, text=None):
     else:
         visible = label
     return format_html(
-        '<span class="{}" title="{}" aria-label="{}">'
-        '<i class="{}" aria-hidden="true"></i>'
-        '<span class="changelist-status-icon__text">{}</span>'
-        "</span>",
+        '<span class="{}" title="{}" aria-label="{}">' '<i class="{}" aria-hidden="true"></i>' '<span class="changelist-status-icon__text">{}</span>' "</span>",
         " ".join(classes),
         label,
         label,
@@ -162,10 +159,7 @@ def clipped_admin_text(value, limit=ADMIN_CLIPPED_TEXT_LENGTH, *, always_tooltip
         return preview
     clipped = preview if len(preview) <= limit else preview[: limit - 1].rstrip() + "…"
     return format_html(
-        '<span class="changelist-clipped-text">'
-        '<span class="changelist-clipped-text__preview">{}</span>'
-        '<span class="changelist-clipped-text__full" role="tooltip">{}</span>'
-        "</span>",
+        '<span class="changelist-clipped-text">' '<span class="changelist-clipped-text__preview">{}</span>' '<span class="changelist-clipped-text__full" role="tooltip">{}</span>' "</span>",
         clipped,
         full,
     )

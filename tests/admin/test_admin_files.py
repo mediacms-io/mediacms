@@ -251,6 +251,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         model_admin = admin.site._registry[Media]
         display = model_admin.get_list_display(self._media_admin_request())
         for column in (
+            "link_user",
             "duration",
             "is_reviewed",
             "featured",
@@ -263,8 +264,22 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
             self.assertNotIn(column, display)
         self.assertIn("display_listable", display)
         self.assertIn("display_title", display)
+        self.assertIn("add_date", display)
         editable = model_admin.get_list_editable(self._media_admin_request())
         self.assertEqual(editable, ())
+
+    def test_user_column_can_be_enabled_via_chooser(self):
+        url = reverse("admin:files_media_changelist")
+        response = self.client.get(url)
+        self.assertContains(response, 'value="link_user"')
+        self.assertNotContains(response, 'class="field-link_user"')
+
+        response = self.client.get(url, {"set_media_columns": "1", "media_col": ["link_user"]})
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url)
+        display = list(response.context["cl"].list_display)
+        self.assertIn("link_user", display)
+        self.assertContains(response, 'class="field-link_user"')
 
     def test_queryset_skips_count_annotations_when_optional_columns_hidden(self):
         model_admin = admin.site._registry[Media]
@@ -322,7 +337,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertContains(response, 'name="reset_media_columns"')
         # Column chooser must render outside the changelist POST form.
         html = response.content.decode()
-        chooser_pos = html.find('class="media-column-chooser')
+        chooser_pos = html.find("media-column-chooser")
         form_pos = html.find('id="changelist-form"')
         self.assertNotEqual(chooser_pos, -1)
         self.assertNotEqual(form_pos, -1)
@@ -789,9 +804,7 @@ class MediaActionAdminTest(TestCase):
     def test_extra_info_sort_puts_filled_values_before_blanks(self):
         MediaAction.objects.create(user=self.superuser, media=self.media, action="like", extra_info="")
         MediaAction.objects.create(user=self.superuser, media=self.media, action="like", extra_info=None)
-        filled = MediaAction.objects.create(
-            user=self.superuser, media=self.media, action="report", extra_info="zebra report detail"
-        )
+        filled = MediaAction.objects.create(user=self.superuser, media=self.media, action="report", extra_info="zebra report detail")
         url = reverse("admin:actions_mediaaction_changelist")
         self.client.get(url, {"set_mediaaction_columns": "1", "mediaaction_col": ["display_extra_info"]})
 
@@ -821,7 +834,99 @@ class EncodingAdminTest(TestCase):
         encoding = Encoding.objects.create(media=media, profile=EncodeProfile.objects.first(), status="pending")
         model_admin = admin.site._registry[Encoding]
         self.assertEqual(model_admin.get_title(encoding), str(encoding))
-        self.assertFalse(model_admin.has_file(encoding))
+        self.assertIsNone(encoding.media_encoding_url)
+        self.assertIn("changelist-status-icon", str(model_admin.has_file(encoding)))
+        self.assertIn("fa-ban", str(model_admin.has_file(encoding)))
+
+    def test_changelist_status_chunk_and_file_use_icons(self):
+        user = make_user("files_encoding_icons", is_superuser=True)
+        profile = EncodeProfile.objects.first()
+        media = create_media(user, title="encoding icons media")
+        # Keep status pending so Encoding post_save chunk completion hooks are skipped.
+        Encoding.objects.create(media=media, profile=profile, status="pending", chunk=True, progress=10)
+        self.client.force_login(user)
+        url = reverse("admin:files_encoding_changelist")
+        self.client.get(url, {"set_encoding_columns": "1", "encoding_col": ["display_chunk"]})
+        response = self.client.get(url, {"q": "encoding icons"})
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "changelist-status-icon")
+        self.assertContains(response, "fas fa-clock")
+        self.assertContains(response, 'title="Pending"')
+        self.assertContains(response, "fas fa-th-large")
+        self.assertContains(response, "fas fa-ban")
+
+    def test_optional_columns_hidden_by_default_and_column_chooser(self):
+        user = make_user("files_encoding_columns", is_superuser=True)
+        profile = EncodeProfile.objects.first()
+        media = create_media(user, title="encoding columns media")
+        Encoding.objects.create(media=media, profile=profile, status="pending", chunk=True, progress=42)
+        model_admin = admin.site._registry[Encoding]
+        request = RequestFactory().get("/admin/")
+        request.user = user
+        request.session = {}
+        self.assertEqual(model_admin.get_list_display(request), ["get_title", "link_media", "display_status", "has_file"])
+
+        self.client.force_login(user)
+        url = reverse("admin:files_encoding_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Apply columns")
+        self.assertContains(response, "Reset columns")
+        self.assertContains(response, 'name="encoding_col"')
+        for value in ("display_chunk", "profile", "progress"):
+            self.assertContains(response, f'value="{value}"')
+        html = response.content.decode()
+        self.assertLess(html.find("encoding-column-chooser"), html.find('id="changelist-form"'))
+        self.assertNotIn("field-display_chunk", html)
+        self.assertNotIn("field-profile", html)
+        self.assertNotIn("field-progress", html)
+
+        # Force columns via related filters without session opt-in.
+        filter_request = RequestFactory().get("/admin/", {"chunk__exact": "1"})
+        filter_request.user = user
+        filter_request.session = {}
+        self.assertIn("display_chunk", model_admin.get_list_display(filter_request))
+        profile_request = RequestFactory().get("/admin/", {"profile__id__exact": str(profile.pk)})
+        profile_request.user = user
+        profile_request.session = {}
+        self.assertIn("profile", model_admin.get_list_display(profile_request))
+
+        response = self.client.get(
+            url,
+            {
+                "set_encoding_columns": "1",
+                "encoding_col": ["display_chunk", "profile", "progress"],
+                "q": "encoding columns",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=encoding+columns", response["Location"])
+        self.assertNotIn("set_encoding_columns", response["Location"])
+
+        response = self.client.get(url, {"q": "encoding columns"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(
+            display,
+            ["get_title", "link_media", "display_chunk", "profile", "progress", "display_status", "has_file"],
+        )
+        html = response.content.decode()
+        self.assertIn("field-display_chunk", html)
+        self.assertIn("field-profile", html)
+        self.assertIn("field-progress", html)
+
+        response = self.client.get(
+            url,
+            {
+                "set_encoding_columns": "1",
+                "reset_encoding_columns": "1",
+                "encoding_col": ["display_chunk"],
+                "q": "encoding columns",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "encoding columns"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["get_title", "link_media", "display_status", "has_file"])
 
     def test_change_form_fields_are_read_only(self):
         user = make_user("files_encoding_readonly", is_superuser=True)
@@ -897,8 +1002,11 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
 
     def test_defaults_without_feature_flags(self):
         request = self.admin_request()
+        request.session = {}
         self.assertEqual(self.model_admin().get_list_filter(request), [])
-        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user", "related_media_count"])
+        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user"])
+        self.assertNotIn("uid", self.model_admin().get_list_display(request))
+        self.assertNotIn("related_media_count", self.model_admin().get_list_display(request))
         self.assertNotIn("is_rbac_category", self.fieldset_fields())
         self.assertNotIn("lti_platform", self.fieldset_fields())
         self.assertIn("related_media", self.fieldset_fields())
@@ -906,14 +1014,16 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
     @override_settings(USE_RBAC=True)
     def test_rbac_adds_filter_column_and_group_fieldsets(self):
         request = self.admin_request()
+        request.session = {}
         self.assertEqual(self.model_admin().get_list_filter(request), ["is_rbac_category"])
-        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user", "is_rbac_category", "related_media_count"])
+        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user", "is_rbac_category"])
         self.assertIn("rbac_groups", self.fieldset_fields())
         self.assertNotIn("identity_provider", self.fieldset_fields())
 
     @override_settings(USE_RBAC=True, USE_IDENTITY_PROVIDERS=True, USE_LTI=True)
     def test_all_flags_add_identity_provider_and_lti_options(self):
         request = self.admin_request()
+        request.session = {}
         self.assertEqual(self.model_admin().get_list_filter(request), ["identity_provider", "is_rbac_category", "is_lms_course"])
         self.assertIn("identity_provider", self.model_admin().get_list_display(request))
         self.assertIn("is_lms_course", self.model_admin().get_list_display(request))
@@ -929,6 +1039,58 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         self.assertEqual(self.client.get(reverse("admin:files_category_change", args=[category.pk])).status_code, 200)
         self.assertEqual(self.client.get(reverse("admin:files_category_add")).status_code, 200)
 
+    def test_optional_columns_hidden_by_default_and_column_chooser(self):
+        category = Category.objects.create(title="Chooser category", media_count=1)
+        create_media(self.superuser, title="category chooser media", category=[category])
+        category.update_category_media()
+        self.client.force_login(self.superuser)
+        url = reverse("admin:files_category_changelist")
+
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Apply columns")
+        self.assertContains(response, "Reset columns")
+        self.assertContains(response, 'name="category_col"')
+        self.assertContains(response, 'value="uid"')
+        self.assertContains(response, 'value="related_media_count"')
+        html = response.content.decode()
+        self.assertLess(html.find('class="category-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotContains(response, category.uid)
+        self.assertNotContains(response, f"category__id__exact={category.pk}")
+
+        response = self.client.get(
+            url,
+            {
+                "set_category_columns": "1",
+                "category_col": ["uid", "related_media_count"],
+                "q": "Chooser",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=Chooser", response["Location"])
+        self.assertNotIn("set_category_columns", response["Location"])
+
+        response = self.client.get(url, {"q": "Chooser"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["add_date", "title", "user", "uid", "related_media_count"])
+        self.assertContains(response, category.uid)
+        self.assertContains(response, f"category__id__exact={category.pk}")
+        self.assertContains(response, ">1<")
+
+        response = self.client.get(
+            url,
+            {
+                "set_category_columns": "1",
+                "reset_category_columns": "1",
+                "category_col": ["uid"],
+                "q": "Chooser",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "Chooser"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["add_date", "title", "user"])
+
     def test_media_count_links_and_change_lists_media(self):
         category = Category.objects.create(title="Linked media category", media_count=1)
         create_media(self.superuser, title="category listed media", category=[category])
@@ -936,7 +1098,9 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         self.client.force_login(self.superuser)
 
         filtered = reverse("admin:files_media_changelist") + f"?category__id__exact={category.pk}"
-        list_response = self.client.get(reverse("admin:files_category_changelist"))
+        url = reverse("admin:files_category_changelist")
+        self.client.get(url, {"set_category_columns": "1", "category_col": ["related_media_count"]})
+        list_response = self.client.get(url)
         self.assertEqual(list_response.status_code, 200)
         self.assertContains(list_response, filtered)
         self.assertContains(list_response, ">1<")
@@ -1229,8 +1393,65 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertLess(fields.index("title"), fields.index("description"))
         self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
 
+    def test_playlist_optional_columns_hidden_by_default_and_column_chooser(self):
+        model_admin = admin.site._registry[Playlist]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        request.session = {}
+        default_display = model_admin.get_list_display(request)
+        self.assertEqual(default_display, ["add_date", "title", "link_user"])
+        self.assertNotIn("friendly_token", default_display)
+        self.assertNotIn("related_media_count", default_display)
+
+        url = reverse("admin:files_playlist_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Apply columns")
+        self.assertContains(response, "Reset columns")
+        self.assertContains(response, 'name="playlist_col"')
+        self.assertContains(response, 'value="friendly_token"')
+        self.assertContains(response, 'value="related_media_count"')
+        html = response.content.decode()
+        self.assertLess(html.find('class="playlist-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotContains(response, self.playlist.friendly_token)
+        self.assertNotContains(response, f"playlist__id__exact={self.playlist.pk}")
+
+        response = self.client.get(
+            url,
+            {
+                "set_playlist_columns": "1",
+                "playlist_col": ["friendly_token", "related_media_count"],
+                "q": "Admin",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=Admin", response["Location"])
+        self.assertNotIn("set_playlist_columns", response["Location"])
+        self.assertNotIn("playlist_col", response["Location"])
+
+        response = self.client.get(url, {"q": "Admin"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["add_date", "title", "link_user", "friendly_token", "related_media_count"])
+        self.assertContains(response, self.playlist.friendly_token)
+
+        response = self.client.get(
+            url,
+            {
+                "set_playlist_columns": "1",
+                "reset_playlist_columns": "1",
+                "playlist_col": ["friendly_token"],
+                "q": "Admin",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "Admin"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["add_date", "title", "link_user"])
+
     def test_playlist_changelist_media_count_links_to_filtered_media(self):
-        response = self.client.get(reverse("admin:files_playlist_changelist"))
+        url = reverse("admin:files_playlist_changelist")
+        self.client.get(url, {"set_playlist_columns": "1", "playlist_col": ["related_media_count"]})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         filtered = reverse("admin:files_media_changelist") + f"?playlist__id__exact={self.playlist.pk}"
         self.assertContains(response, filtered)
@@ -1240,6 +1461,65 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertEqual(media_response.status_code, 200)
         titles = {m.title for m in media_response.context["cl"].result_list}
         self.assertEqual(titles, {"playlist member media"})
+
+    def test_channel_optional_columns_hidden_by_default_and_column_chooser(self):
+        channel = Channel.objects.get(user=self.superuser)
+        Media.objects.filter(pk=self.media.pk).update(channel=channel)
+        model_admin = admin.site._registry[Channel]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        request.session = {}
+        default_display = model_admin.get_list_display(request)
+        self.assertEqual(default_display, ["add_date", "title", "link_user"])
+        self.assertNotIn("friendly_token", default_display)
+        self.assertNotIn("related_media_count", default_display)
+
+        url = reverse("admin:users_channel_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Apply columns")
+        self.assertContains(response, "Reset columns")
+        self.assertContains(response, 'name="channel_col"')
+        self.assertContains(response, 'value="friendly_token"')
+        self.assertContains(response, 'value="related_media_count"')
+        html = response.content.decode()
+        self.assertLess(html.find('class="channel-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotContains(response, channel.friendly_token)
+        self.assertNotContains(response, f"channel__id__exact={channel.pk}")
+
+        response = self.client.get(
+            url,
+            {
+                "set_channel_columns": "1",
+                "channel_col": ["friendly_token", "related_media_count"],
+                "q": channel.title,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=", response["Location"])
+        self.assertNotIn("set_channel_columns", response["Location"])
+        self.assertNotIn("channel_col", response["Location"])
+
+        response = self.client.get(url, {"q": channel.title})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["add_date", "title", "link_user", "friendly_token", "related_media_count"])
+        self.assertContains(response, channel.friendly_token)
+        self.assertContains(response, f"channel__id__exact={channel.pk}")
+        self.assertContains(response, ">1<")
+
+        response = self.client.get(
+            url,
+            {
+                "set_channel_columns": "1",
+                "reset_channel_columns": "1",
+                "channel_col": ["friendly_token"],
+                "q": channel.title,
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": channel.title})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["add_date", "title", "link_user"])
 
 
 class TagAdminTest(TestCase):
@@ -1254,8 +1534,48 @@ class TagAdminTest(TestCase):
     def setUp(self):
         self.client.force_login(self.superuser)
 
+    def test_tag_optional_media_count_hidden_by_default_and_column_chooser(self):
+        model_admin = admin.site._registry[Tag]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        request.session = {}
+        self.assertEqual(model_admin.get_list_display(request), ["title", "link_user"])
+
+        url = reverse("admin:files_tag_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "admintag")
+        self.assertContains(response, "Apply columns")
+        self.assertContains(response, "Reset columns")
+        self.assertContains(response, 'name="tag_col"')
+        self.assertContains(response, 'value="related_media_count"')
+        html = response.content.decode()
+        self.assertLess(html.find('class="tag-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotContains(response, f"tags__id__exact={self.tag.pk}")
+
+        response = self.client.get(url, {"set_tag_columns": "1", "tag_col": ["related_media_count"], "q": "admintag"})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=admintag", response["Location"])
+
+        response = self.client.get(url, {"q": "admintag"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["title", "link_user", "related_media_count"])
+        filtered = reverse("admin:files_media_changelist") + f"?tags__id__exact={self.tag.pk}"
+        self.assertContains(response, filtered)
+
+        response = self.client.get(
+            url,
+            {"set_tag_columns": "1", "reset_tag_columns": "1", "tag_col": ["related_media_count"], "q": "admintag"},
+        )
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "admintag"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display, ["title", "link_user"])
+
     def test_tag_changelist_shows_media_count_link(self):
-        response = self.client.get(reverse("admin:files_tag_changelist"))
+        url = reverse("admin:files_tag_changelist")
+        self.client.get(url, {"set_tag_columns": "1", "tag_col": ["related_media_count"]})
+        response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "admintag")
         filtered = reverse("admin:files_media_changelist") + f"?tags__id__exact={self.tag.pk}"

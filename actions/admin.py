@@ -40,6 +40,7 @@ class MediaActionChangeList(ChangeList):
                 ordering.append(field)
         return ordering
 
+
 # Keep in sync with files.admin.MEDIA_REPORT_TAB_ACTIONS (avoid importing files.admin here).
 MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
 
@@ -115,9 +116,7 @@ class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
         return [column for column in self.list_display if column not in optional or column in visible_optional]
 
     def changelist_view(self, request, extra_context=None):
-        if request.method == "GET" and (
-            request.GET.get("reset_mediaaction_columns") == "1" or request.GET.get("set_mediaaction_columns") == "1"
-        ):
+        if request.method == "GET" and (request.GET.get("reset_mediaaction_columns") == "1" or request.GET.get("set_mediaaction_columns") == "1"):
             if request.GET.get("reset_mediaaction_columns") == "1":
                 request.session.pop(self.optional_columns_session_key, None)
             else:
@@ -161,9 +160,7 @@ class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         # NULL and "" both become NULL so Extra info sorting can push blanks last.
-        return qs.annotate(
-            **{_EXTRA_INFO_SORT: NullIf(F("extra_info"), Value("", output_field=TextField()))}
-        )
+        return qs.annotate(**{_EXTRA_INFO_SORT: NullIf(F("extra_info"), Value("", output_field=TextField()))})
 
     def has_add_permission(self, request):
         return False

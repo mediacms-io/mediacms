@@ -74,6 +74,7 @@ class AdminChangelistI18nTest(TestCase):
         response = self.client.get(reverse("admin:files_media_changelist"))
         self.assertEqual(response.status_code, 200)
         labels = {col["label"] for col in response.context["media_optional_columns"]}
+        self.assertIn(translate_string("el", "User"), labels)
         self.assertIn(translate_string("el", "Duration"), labels)
         self.assertIn(translate_string("el", "Comments"), labels)
         self.assertNotIn("Duration", labels)
