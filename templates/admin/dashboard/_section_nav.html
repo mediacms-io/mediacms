@@ -2,13 +2,13 @@
 {% get_current_language as LANGUAGE_CODE %}
 <div class="dashboard-switcher mb-3">
     <div class="btn-group flex-wrap" role="group" aria-label="{{ 'Dashboard'|custom_translate:LANGUAGE_CODE }}">
-        <a href="{% url 'admin:index' %}" class="btn btn-sm {% if not dashboard_section %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Dashboard"|custom_translate:LANGUAGE_CODE }}</a>
-        <a href="{% url 'admin:dashboard_section' 'moderation' %}" class="btn btn-sm {% if dashboard_section == 'moderation' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</a>
-        <a href="{% url 'admin:dashboard_section' 'people' %}" class="btn btn-sm {% if dashboard_section == 'people' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "People"|custom_translate:LANGUAGE_CODE }}</a>
-        <a href="{% url 'admin:dashboard_section' 'library' %}" class="btn btn-sm {% if dashboard_section == 'library' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Library"|custom_translate:LANGUAGE_CODE }}</a>
-        <a href="{% url 'admin:dashboard_section' 'processing' %}" class="btn btn-sm {% if dashboard_section == 'processing' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Processing"|custom_translate:LANGUAGE_CODE }}</a>
-        <a href="{% url 'admin:dashboard_section' 'engagement' %}" class="btn btn-sm {% if dashboard_section == 'engagement' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</a>
-        <a href="{% url 'admin:dashboard_section' 'site' %}" class="btn btn-sm {% if dashboard_section == 'site' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Site"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:index' %}" class="btn btn-sm {% if not dashboard_section %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-tachometer-alt mr-1" aria-hidden="true"></i>{{ "Dashboard"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'moderation' %}" class="btn btn-sm {% if dashboard_section == 'moderation' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-shield-alt mr-1" aria-hidden="true"></i>{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'library' %}" class="btn btn-sm {% if dashboard_section == 'library' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-photo-video mr-1" aria-hidden="true"></i>{{ "Library"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'engagement' %}" class="btn btn-sm {% if dashboard_section == 'engagement' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-heart mr-1" aria-hidden="true"></i>{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'processing' %}" class="btn btn-sm {% if dashboard_section == 'processing' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-cogs mr-1" aria-hidden="true"></i>{{ "Processing"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'people' %}" class="btn btn-sm {% if dashboard_section == 'people' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-users mr-1" aria-hidden="true"></i>{{ "People"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'site' %}" class="btn btn-sm {% if dashboard_section == 'site' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i>{{ "Site"|custom_translate:LANGUAGE_CODE }}</a>
     </div>
     <div class="dashboard-switcher-refresh">
         {% if dashboard_stats.generated_at %}
@@ -32,7 +32,7 @@
         gap: 0.75rem;
     }
     .dashboard-switcher-updated {
-        color: #6c757d;
+        color: var(--secondary);
         white-space: nowrap;
     }
 </style>

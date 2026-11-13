@@ -1,18 +1,19 @@
 {% load i18n jazzmin custom_filters %}
 {% get_current_language as LANGUAGE_CODE %}
-<th class="{% header_class header forloop %} {{ header.class_attrib|header_column_class }}" tabindex="0" rowspan="1" colspan="1"{% if header.text and "<" not in header.text %} title="{{ header.text|custom_translate:LANGUAGE_CODE }}"{% endif %}>
+{% with column_class=header.class_attrib|header_column_class header_icon=header.class_attrib|header_column_class|changelist_column_icon %}
+<th class="{% header_class header forloop %} {{ column_class }}{% if header_icon %} changelist-icon-header{% endif %}" tabindex="0" rowspan="1" colspan="1"{% if header.text and "<" not in header.text %} title="{{ header.text|custom_translate:LANGUAGE_CODE }}"{% elif header_icon and "open_on_site" in column_class %} title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"{% endif %}>
     <div class="text changelist-header-label">
         {% if suppress_toggle and "action-checkbox" in header.class_attrib or suppress_toggle and "action-toggle" in header.text %}
         {% elif header.sortable %}
             {# single_sort_url drops secondary o= fields so only one column stays sorted #}
             <a class="changelist-header-label__title" href="{{ header.url_primary|single_sort_url }}">
-                <span class="changelist-header-label__text">{{ header.text|custom_translate:LANGUAGE_CODE }}</span>
+                <span class="changelist-header-label__text">{% if header_icon %}<i class="{{ header_icon }}" aria-hidden="true"></i><span class="changelist-status-icon__text">{{ header.text|custom_translate:LANGUAGE_CODE }}</span>{% else %}{{ header.text|custom_translate:LANGUAGE_CODE }}{% endif %}</span>
                 {% if not header.sorted %}
                 <i class="fa fa-sort changelist-sort-hint" aria-hidden="true"></i>
                 {% endif %}
             </a>
         {% else %}
-            <span class="changelist-header-label__title"><span class="changelist-header-label__text">{{ header.text|custom_translate:LANGUAGE_CODE }}</span></span>
+            <span class="changelist-header-label__title"><span class="changelist-header-label__text">{% if header_icon %}<i class="{{ header_icon }}" aria-hidden="true"></i>{% if "open_on_site" in column_class %}<span class="changelist-status-icon__text">{{ "Open on site"|custom_translate:LANGUAGE_CODE }}</span>{% elif header.text %}<span class="changelist-status-icon__text">{{ header.text|custom_translate:LANGUAGE_CODE }}</span>{% endif %}{% else %}{{ header.text|custom_translate:LANGUAGE_CODE }}{% endif %}</span></span>
         {% endif %}
         {% if header.sorted %}
         <span class="changelist-sort-controls">
@@ -28,3 +29,4 @@
         {% endif %}
     </div>
 </th>
+{% endwith %}

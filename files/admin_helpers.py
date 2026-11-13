@@ -1,6 +1,7 @@
 from urllib.parse import urlencode
 
 from django.contrib import admin
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -180,6 +181,92 @@ def admin_open_on_site_link(url):
         label,
         label,
     )
+
+
+class OptionalColumnsMixin:
+    """Hide changelist columns until the session, or a related filter, turns them on.
+
+    Subclasses set ``optional_list_columns`` as ``(field, label, filter_params)``,
+    ``optional_columns_session_key``, and ``optional_columns_prefix`` (used for the
+    chooser query params and template context).
+    """
+
+    optional_list_columns = ()
+    optional_columns_session_key = ""
+    optional_columns_prefix = ""
+
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        if hasattr(self, "_append_open_on_site"):
+            return self._append_open_on_site(columns)
+        return columns
+
+    def changelist_view(self, request, extra_context=None):
+        prefix = self.optional_columns_prefix
+        set_param = f"set_{prefix}_columns"
+        reset_param = f"reset_{prefix}_columns"
+        col_param = f"{prefix}_col"
+        set_columns = request.GET.get(set_param) == "1"
+        reset_columns = request.GET.get(reset_param) == "1"
+        if request.method == "GET" and (set_columns or reset_columns):
+            if reset_columns:
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist(col_param) if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop(set_param, None)
+            params.pop(reset_param, None)
+            params.pop(col_param, None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context[f"{prefix}_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop(set_param, None)
+        preserved.pop(reset_param, None)
+        preserved.pop(col_param, None)
+        extra_context[f"{prefix}_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
 
 
 class OpenOnSiteMixin:

@@ -1,0 +1,14 @@
+{% load i18n admin_urls jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block object-tools-items %}
+    {% url opts|admin_urlname:'history' original.pk|admin_urlquote as history_url %}
+    <a class="btn btn-block {{ jazzmin_ui.button_classes.secondary }} btn-sm" href="{% add_preserved_filters history_url %}">
+        <i class="fas fa-history" aria-hidden="true"></i> {% trans 'History' %}
+    </a>
+    {% if has_absolute_url %}
+        <a href="{{ absolute_url }}" class="btn btn-block {{ jazzmin_ui.button_classes.secondary }} btn-sm">
+            <i class="fas fa-external-link-alt" aria-hidden="true"></i> {% trans "View on site" %}
+        </a>
+    {% endif %}
+{% endblock %}

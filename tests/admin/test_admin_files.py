@@ -1744,6 +1744,7 @@ class LicenseAdminTest(TestCase):
         self.assertNotIn(other.title, titles)
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class VideoTrimRequestAdminTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -1774,6 +1775,59 @@ class VideoTrimRequestAdminTest(TestCase):
         self.assertContains(response, "fas fa-exchange-alt")
         self.assertContains(response, "fas fa-bolt")
         self.assertContains(response, reverse("get_media") + f"?m={self.media.friendly_token}")
+
+    def test_add_date_is_optional_and_id_sorts_descending(self):
+        model_admin = admin.site._registry[VideoTrimRequest]
+        self.assertEqual(model_admin.ordering, ("-id",))
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        request.session = {}
+        self.assertEqual(
+            model_admin.get_list_display(request),
+            ["display_id", "link_media", "display_status", "display_video_action", "display_media_trim_style", "open_on_site"],
+        )
+
+        url = reverse("admin:files_videotrimrequest_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn("field-add_date", html)
+        self.assertLess(html.find('class="videotrimrequest-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotIn('videotrimrequest-column-chooser admin-column-chooser card card-outline card-secondary mb-3" open', html)
+        self.assertContains(response, 'value="add_date"')
+        self.assertContains(response, "Add date")
+        id_header = html.split("column-display_id", 1)[1].split("</th>", 1)[0]
+        self.assertIn("fa-sort-alpha-up", id_header)
+
+        newer = VideoTrimRequest.objects.create(
+            media=self.media,
+            status="success",
+            video_action="save_new",
+            timestamps=[{"startTime": "00:00:00.000", "endTime": "00:00:02.000"}],
+        )
+        response = self.client.get(url)
+        ids = [obj.pk for obj in response.context["cl"].result_list]
+        self.assertEqual(ids, sorted(ids, reverse=True))
+        self.assertEqual(ids[0], newer.pk)
+
+        response = self.client.get(url, {"set_videotrimrequest_columns": "1", "videotrimrequest_col": "add_date", "q": "trim"})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=trim", response["Location"])
+        self.assertNotIn("set_videotrimrequest_columns", response["Location"])
+
+        response = self.client.get(url, {"q": "trim"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display[0], "add_date")
+        self.assertIn("field-add_date", response.content.decode())
+
+        response = self.client.get(url, {"reset_videotrimrequest_columns": "1", "q": "trim"})
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "trim"})
+        self.assertNotIn("field-add_date", response.content.decode())
+
+        response = self.client.get(url, {"add_date__gte": "2000-01-01"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display[0], "add_date")
 
     def test_change_form_is_read_only(self):
         model_admin = admin.site._registry[VideoTrimRequest]
@@ -1818,6 +1872,7 @@ class VideoTrimRequestAdminTest(TestCase):
         self.assertNotContains(response, "related-objects-tab")
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class TranscriptionRequestAdminTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -1844,6 +1899,54 @@ class TranscriptionRequestAdminTest(TestCase):
         self.assertContains(response, "fas fa-clock")
         self.assertContains(response, "fas fa-minus")
         self.assertContains(response, reverse("get_media") + f"?m={self.media.friendly_token}")
+
+    def test_add_date_is_optional_and_id_sorts_descending(self):
+        model_admin = admin.site._registry[TranscriptionRequest]
+        self.assertEqual(model_admin.ordering, ("-id",))
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        request.session = {}
+        self.assertEqual(
+            model_admin.get_list_display(request),
+            ["display_id", "link_media", "display_status", "display_translate_to_english", "open_on_site"],
+        )
+
+        url = reverse("admin:files_transcriptionrequest_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn("field-add_date", html)
+        self.assertLess(html.find('class="transcriptionrequest-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotIn('transcriptionrequest-column-chooser admin-column-chooser card card-outline card-secondary mb-3" open', html)
+        self.assertContains(response, 'value="add_date"')
+        self.assertContains(response, "Add date")
+        id_header = html.split("column-display_id", 1)[1].split("</th>", 1)[0]
+        self.assertIn("fa-sort-alpha-up", id_header)
+
+        newer = TranscriptionRequest.objects.create(media=self.media, status="success", logs="done")
+        response = self.client.get(url)
+        ids = [obj.pk for obj in response.context["cl"].result_list]
+        self.assertEqual(ids, sorted(ids, reverse=True))
+        self.assertEqual(ids[0], newer.pk)
+
+        response = self.client.get(url, {"set_transcriptionrequest_columns": "1", "transcriptionrequest_col": "add_date", "q": "caption"})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=caption", response["Location"])
+        self.assertNotIn("set_transcriptionrequest_columns", response["Location"])
+
+        response = self.client.get(url, {"q": "caption"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display[0], "add_date")
+        self.assertIn("field-add_date", response.content.decode())
+
+        response = self.client.get(url, {"reset_transcriptionrequest_columns": "1", "q": "caption"})
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "caption"})
+        self.assertNotIn("field-add_date", response.content.decode())
+
+        response = self.client.get(url, {"add_date__gte": "2000-01-01"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display[0], "add_date")
 
     def test_change_form_is_read_only(self):
         model_admin = admin.site._registry[TranscriptionRequest]
@@ -1970,6 +2073,7 @@ class MediaPermissionAdminTest(TestCase):
         self.assertNotIn("field-created_at", response.content.decode())
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class LanguageAdminTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -2007,6 +2111,8 @@ class LanguageAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_language_change", args=[self.language.pk]))
         self.assertContains(response, "English")
+        self.assertContains(response, "changelist-id-link")
+        self.assertContains(response, "fa-search")
 
     def test_caption_change_shows_linked_media_and_user_once(self):
         subtitle = Subtitle.objects.get(media=self.media, language=self.language)

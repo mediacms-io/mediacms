@@ -1,0 +1,59 @@
+{% load i18n admin_urls static custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="js-inline-admin-formset inline-group" id="{{ inline_admin_formset.formset.prefix }}-group" data-inline-type="stacked" data-inline-formset="{{ inline_admin_formset.inline_formset_data }}">
+    <fieldset class="module {{ inline_admin_formset.classes }} card card-outline">
+        <div class="card-body">
+            {{ inline_admin_formset.formset.management_form }}
+            {{ inline_admin_formset.formset.non_form_errors }}
+
+            {% for inline_admin_form in inline_admin_formset %}
+                <div class="panel inline-related{% if inline_admin_form.original or inline_admin_form.show_url %} has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form last-related{% endif %}"
+                     id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
+                    <div class="card card-outline {% if not inline_admin_form.original %}new-stacked card-success{% else %}card-secondary{% endif %}">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <span class="card-tools text-sm">
+                                {% if inline_admin_form.original %}
+                                    {% if inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %}
+                                        <a
+                                            href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}"
+                                            class="{% if inline_admin_formset.has_change_permission %}inlinechangelink{% else %}inlineviewlink{% endif %}">
+                                        {% if inline_admin_formset.has_change_permission %}
+                                            <i class="fas fa-pencil-alt fa-sm" aria-hidden="true"></i> {{ "Change"|custom_translate:LANGUAGE_CODE }}
+                                        {% else %}
+                                            <i class="fas fa-eye fa-sm" aria-hidden="true"></i> {{ "View"|custom_translate:LANGUAGE_CODE }}
+                                        {% endif %}
+                                        </a>
+                                    {% endif %}
+                                {{ inline_admin_form.original }}
+                                {% else %}
+                                    <i class="fas fa-plus fa-sm text-success" aria-hidden="true"></i>
+                                    {{ "Add"|custom_translate:LANGUAGE_CODE }} {{ inline_admin_formset.opts.verbose_name|capfirst|custom_translate:LANGUAGE_CODE }}
+                                {% endif %}
+                                </span>
+                                {% if inline_admin_form.show_url %}
+                                    <a href="{{ inline_admin_form.absolute_url }}" title="{% trans "View on site" %}">
+                                        <i class="fas fa-eye fa-sm" aria-hidden="true"></i> {{ "View on site"|custom_translate:LANGUAGE_CODE }}
+                                    </a>
+                                {% endif %}
+                            </h3>
+                            {% if inline_admin_formset.formset.can_delete and inline_admin_formset.has_delete_permission and inline_admin_form.original %}
+                                <span class="card-tools delete">
+                                  {{ inline_admin_form.deletion_field.field }} {{ inline_admin_form.deletion_field.label_tag }}
+                                </span>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            {% if inline_admin_form.form.non_field_errors %}{{ inline_admin_form.form.non_field_errors }}{% endif %}
+                            {% for fieldset in inline_admin_form %}
+                                {% include "admin/includes/fieldset.html" %}
+                            {% endfor %}
+                            {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
+                            {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </fieldset>
+</div>

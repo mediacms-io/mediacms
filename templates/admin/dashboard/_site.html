@@ -134,7 +134,7 @@
                                             {% for item in stats.system.object_totals %}
                                                 <div class="col-6 col-md-4 col-lg-3 mb-3">
                                                     <a href="{{ item.url }}" class="info-box mb-0">
-                                                        <span class="info-box-icon bg-light"><i class="fas fa-database"></i></span>
+                                                        <span class="info-box-icon bg-light"><i class="{{ item.icon|default:'fas fa-database' }}"></i></span>
                                                         <div class="info-box-content">
                                                             <span class="info-box-text">{{ item.label|custom_translate:LANGUAGE_CODE }}</span>
                                                             <span class="info-box-number">{{ item.count }}</span>

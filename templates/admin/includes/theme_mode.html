@@ -1,0 +1,60 @@
+<script>
+(function () {
+    var storageKey = 'MediaCMS[mediacms][theme][mode]';
+
+    function resolvedMode(mode) {
+        return 'light' === mode || 'dark' === mode ? mode : '{{ DEFAULT_THEME }}';
+    }
+
+    function applyMode(mode) {
+        var dark = 'dark' === resolvedMode(mode);
+        var link = document.getElementById('jazzmin-dark-mode-theme');
+        var button = document.getElementById('admin-theme-switcher');
+        var icon = button ? button.querySelector('i') : null;
+
+        document.documentElement.classList.toggle('theme-darkly', dark);
+        if (link) {
+            link.media = dark ? 'all' : 'not all';
+        }
+        if (icon) {
+            icon.className = dark ? 'fas fa-moon' : 'fas fa-sun';
+        }
+        if (button) {
+            button.title = dark ? button.getAttribute('data-title-light') : button.getAttribute('data-title-dark');
+        }
+    }
+
+    function storedMode() {
+        try {
+            return localStorage.getItem(storageKey);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    window.applyMode = applyMode;
+    applyMode(storedMode());
+
+    window.addEventListener('storage', function (event) {
+        if (event.key === storageKey) {
+            applyMode(event.newValue);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var button = document.getElementById('admin-theme-switcher');
+        applyMode(storedMode());
+        if (!button) {
+            return;
+        }
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            var next = document.documentElement.classList.contains('theme-darkly') ? 'light' : 'dark';
+            try {
+                localStorage.setItem(storageKey, next);
+            } catch (error) {}
+            applyMode(next);
+        });
+    });
+})();
+</script>

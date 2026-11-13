@@ -11,13 +11,13 @@
     {{ block.super }}
     <style>
         .dashboard-section-box {
-            min-height: 120px;
             height: auto;
             align-items: stretch;
         }
         .dashboard-section-box .info-box-icon {
             width: 80px;
             height: auto !important;
+            align-self: stretch;
             font-size: 1.75rem;
             display: flex;
             align-items: center;
@@ -29,11 +29,14 @@
             justify-content: center;
             padding: 0.85rem 0.75rem;
             line-height: 1.35;
+            overflow: visible;
         }
         .dashboard-section-box .info-box-text {
             font-size: 1.05rem;
             font-weight: 600;
             white-space: normal;
+            overflow: visible;
+            text-overflow: unset;
             margin-bottom: 0.35rem;
         }
         .dashboard-section-box .dashboard-section-meta {
@@ -44,7 +47,7 @@
             overflow: visible;
             text-overflow: unset;
             font-size: 0.9rem;
-            color: #6c757d;
+            color: var(--secondary);
         }
         .dashboard-section-box .dashboard-section-meta span {
             display: block;
@@ -230,7 +233,11 @@
                                     <div class="info-box-content">
                                         <span class="info-box-text">{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</span>
                                         <div class="dashboard-section-meta">
+                                            <span>{{ "Reported media"|custom_translate:LANGUAGE_CODE }}: {{ stats.moderation.reported_media }}</span>
+                                            <span>{{ "Above report limit"|custom_translate:LANGUAGE_CODE }}: {{ stats.moderation.reported_above_threshold }}</span>
+                                            <span>{{ "Media not reviewed"|custom_translate:LANGUAGE_CODE }}: {{ stats.moderation.unreviewed }}</span>
                                             <span>{{ "Reports cleared (7 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.moderation.clears_last_7_days }}</span>
+                                            <span>{{ "Reports confirmed (7 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.moderation.confirms_last_7_days }}</span>
                                             <span>{{ "Media approved (7 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.moderation.approved_last_7_days }}</span>
                                         </div>
                                     </div>
@@ -242,7 +249,15 @@
                                     <div class="info-box-content">
                                         <span class="info-box-text">{{ "People"|custom_translate:LANGUAGE_CODE }}</span>
                                         <div class="dashboard-section-meta">
+                                            <span>{{ "Total users"|custom_translate:LANGUAGE_CODE }}: {{ stats.users.total }}</span>
                                             <span>{{ "New users (7 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.users.registered_last_7_days }}</span>
+                                            {% if stats.users.approval_workflow_enabled %}
+                                                <span>{{ "Users waiting for approval"|custom_translate:LANGUAGE_CODE }}: {{ stats.users.pending_approvals }}</span>
+                                                <span>{{ "Approved users"|custom_translate:LANGUAGE_CODE }}: {{ stats.users.approved_users }}</span>
+                                            {% else %}
+                                                <span>{{ "Active users (30 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.users.active_users }}</span>
+                                            {% endif %}
+                                            <span>{{ "Inactive users"|custom_translate:LANGUAGE_CODE }}: {{ stats.users.inactive_users }}</span>
                                         </div>
                                     </div>
                                 </a>
@@ -254,8 +269,11 @@
                                         <span class="info-box-text">{{ "Library"|custom_translate:LANGUAGE_CODE }}</span>
                                         <div class="dashboard-section-meta">
                                             <span>{{ "Total media"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.total }}</span>
-                                            <span>{{ "Categories"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_categories }} · {{ "Tags"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_tags }}</span>
-                                            <span>{{ "Playlists"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_playlists }} · {{ "Channels"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_channels }}</span>
+                                            <span>{{ "Categories"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_categories }}</span>
+                                            <span>{{ "Tags"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_tags }}</span>
+                                            <span>{{ "Playlists"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_playlists }}</span>
+                                            <span>{{ "Channels"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_channels }}</span>
+                                            <span>{{ "Featured"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.featured }}</span>
                                             <span>{{ "New media (7 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.added_last_7_days }}</span>
                                         </div>
                                     </div>
@@ -268,6 +286,9 @@
                                         <span class="info-box-text">{{ "Processing"|custom_translate:LANGUAGE_CODE }}</span>
                                         <div class="dashboard-section-meta">
                                             <span>{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.encoding_queue }}</span>
+                                            <span>{{ "Pending"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.by_encoding_status.pending }}</span>
+                                            <span>{{ "Running"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.by_encoding_status.running }}</span>
+                                            <span>{{ "Success"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.by_encoding_status.success }}</span>
                                             <span>{{ "Failed encodings"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.failed }}</span>
                                         </div>
                                     </div>
@@ -279,8 +300,10 @@
                                     <div class="info-box-content">
                                         <span class="info-box-text">{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</span>
                                         <div class="dashboard-section-meta">
+                                            <span>{{ "Total comments"|custom_translate:LANGUAGE_CODE }}: {{ stats.engagement.total_comments }}</span>
                                             <span>{{ "Total likes"|custom_translate:LANGUAGE_CODE }}: {{ stats.engagement.total_likes|floatformat:0 }}</span>
                                             <span>{{ "Total dislikes"|custom_translate:LANGUAGE_CODE }}: {{ stats.engagement.total_dislikes|floatformat:0 }}</span>
+                                            <span>{{ "Total views"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.total_views|floatformat:0 }}</span>
                                         </div>
                                     </div>
                                 </a>
@@ -294,6 +317,7 @@
                                             <span>{{ "Passing checks"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.health_counts.ok }}</span>
                                             <span>{{ "Warnings"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.health_counts.warn }}</span>
                                             <span>{{ "Failures"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.health_counts.fail }}</span>
+                                            <span>{{ "Info checks"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.health_counts.info }}</span>
                                         </div>
                                     </div>
                                 </a>
@@ -303,5 +327,31 @@
                 </div>
             </div>
         {% endwith %}
+        <script>
+            (function () {
+                function equalizeSectionTiles() {
+                    var tiles = document.querySelectorAll(".dashboard-section-box");
+                    if (!tiles.length) {
+                        return;
+                    }
+                    tiles.forEach(function (tile) {
+                        tile.style.minHeight = "0";
+                    });
+                    var tallest = 0;
+                    tiles.forEach(function (tile) {
+                        tallest = Math.max(tallest, tile.scrollHeight);
+                    });
+                    tiles.forEach(function (tile) {
+                        tile.style.minHeight = tallest + "px";
+                    });
+                }
+                if (document.readyState === "loading") {
+                    document.addEventListener("DOMContentLoaded", equalizeSectionTiles);
+                } else {
+                    equalizeSectionTiles();
+                }
+                window.addEventListener("resize", equalizeSectionTiles);
+            })();
+        </script>
     {% endif %}
 {% endblock %}

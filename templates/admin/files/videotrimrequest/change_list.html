@@ -1,0 +1,11 @@
+{% extends "admin/change_list.html" %}
+{% load i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{# Must sit outside #changelist-form — nested forms are ignored by browsers. #}
+{% block search %}
+{{ block.super }}
+{% if videotrimrequest_optional_columns %}
+{% include "admin/includes/column_chooser.html" with chooser_class="videotrimrequest-column-chooser" columns=videotrimrequest_optional_columns set_param="set_videotrimrequest_columns" reset_param="reset_videotrimrequest_columns" col_param="videotrimrequest_col" preserved=videotrimrequest_column_chooser_preserved_qsl %}
+{% endif %}
+{% endblock %}

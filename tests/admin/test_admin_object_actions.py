@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from django.contrib import admin
 from django.contrib.admin.utils import quote
-from django.test import Client, RequestFactory, TestCase
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from files.models import Comment, Encoding, Media
@@ -16,6 +16,7 @@ def make_user(username, **kwargs):
     return create_account(username=username, email=f"{username}@example.com", password=PASSWORD, **kwargs)
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ObjectActionsChangeFormTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -40,6 +41,11 @@ class ObjectActionsChangeFormTest(TestCase):
         self.assertNotContains(response, f'<form method="post" action="{action_url}"')
         self.assertContains(response, 'id="id_object_action"')
         self.assertContains(response, "object-tools-actions-go")
+        self.assertContains(response, "fa-pencil-alt")
+        self.assertContains(response, "fa-save")
+        self.assertContains(response, "fa-history")
+        self.assertNotContains(response, "icon-changelink.svg")
+        self.assertNotContains(response, "icon-addlink.svg")
         choice_values = [value for value, _label, _disabled in response.context["object_action_choices"]]
         self.assertIn("generate_missing_encodings", choice_values)
         self.assertNotIn("delete_selected", choice_values)

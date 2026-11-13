@@ -160,7 +160,31 @@
         const $collapsible = $('#content-main form #jazzy-collapsible');
 
         // Ensure all raw_id_fields have the search icon in them
-        $('.related-lookup').append('<i class="fa fa-search"></i>');
+        $('.related-lookup').each(function () {
+            const $link = $(this);
+            if ($link.find('.fa-search').length) {
+                return;
+            }
+            $link.append($('<i>', {'class': 'fas fa-search', 'aria-hidden': 'true'}));
+            $link.append(document.createTextNode(' ' + ($link.attr('title') || 'Lookup')));
+        });
+
+        function labelDateTimeIcons() {
+            document.querySelectorAll('.date-icon, .clock-icon').forEach(function (icon) {
+                const link = icon.closest('a');
+                if (!link || link.dataset.labeled) {
+                    return;
+                }
+                const label = icon.getAttribute('title');
+                if (!label) {
+                    return;
+                }
+                link.dataset.labeled = '1';
+                link.append(document.createTextNode(' ' + label));
+            });
+        }
+        labelDateTimeIcons();
+        $(window).on('load', labelDateTimeIcons);
 
         // Style the inline fieldset button
         $('.inline-related fieldset.module .add-row a').addClass('btn btn-sm btn-default float-right');

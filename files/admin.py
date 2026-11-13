@@ -27,6 +27,7 @@ from files.admin_helpers import (
     TRIM_STATUS_ICONS,
     TRIM_STYLE_ICONS,
     OpenOnSiteMixin,
+    OptionalColumnsMixin,
     TranslateChoiceLabelsMixin,
     TranslateManyToManyHelpMixin,
     admin_change_link,
@@ -1670,7 +1671,8 @@ class LanguageAdmin(admin.ModelAdmin):
 
 class SubtitleAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     open_on_site_uses_media = True
-    list_display = ["id", "link_language", "link_media", "link_user"]
+    list_display = ["display_id", "link_language", "link_media", "link_user"]
+    list_display_links = ("display_id",)
     list_filter = ["language"]
     search_fields = ["media__title", "user__username"]
     list_select_related = ("media", "user", "language")
@@ -1686,6 +1688,10 @@ class SubtitleAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="ID", ordering="id")
+    def display_id(self, obj):
+        return admin_inspect_id(obj.pk)
+
     @admin.display(description="Language", ordering="language__title")
     def link_language(self, obj):
         return admin_change_link(obj.language, obj.language.title if obj.language_id else None)
@@ -1699,18 +1705,23 @@ class SubtitleAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
 
-class VideoTrimRequestAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+class VideoTrimRequestAdmin(OptionalColumnsMixin, OpenOnSiteMixin, admin.ModelAdmin):
     open_on_site_uses_media = True
     """Pipeline request snapshot. Inspect or delete; do not rewrite request params or status."""
 
+    change_list_template = "admin/files/videotrimrequest/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
     list_display = ["add_date", "display_id", "link_media", "display_status", "display_video_action", "display_media_trim_style"]
     list_display_links = ("display_id", "display_status")
+    optional_list_columns = (("add_date", "Add date", ("add_date__gte", "add_date__lt")),)
+    optional_columns_session_key = "mediacms_videotrimrequest_admin_optional_columns"
+    optional_columns_prefix = "videotrimrequest"
     list_filter = ["status", "video_action", "media_trim_style", "add_date"]
     search_fields = ["media__title"]
     list_select_related = ("media",)
     readonly_fields = ("status", "video_action", "media_trim_style", "timestamps", "add_date", "link_media")
     exclude = ("media",)
-    ordering = ("-add_date",)
+    ordering = ("-id",)
     fieldsets = (
         (
             "Trim request",
@@ -1928,18 +1939,23 @@ class EncodingAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         )
 
 
-class TranscriptionRequestAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+class TranscriptionRequestAdmin(OptionalColumnsMixin, OpenOnSiteMixin, admin.ModelAdmin):
     open_on_site_uses_media = True
     """Whisper caption request snapshot. Inspect or delete; do not rewrite request params or logs."""
 
+    change_list_template = "admin/files/transcriptionrequest/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
     list_display = ["add_date", "display_id", "link_media", "display_status", "display_translate_to_english"]
     list_display_links = ("display_id",)
+    optional_list_columns = (("add_date", "Add date", ("add_date__gte", "add_date__lt")),)
+    optional_columns_session_key = "mediacms_transcriptionrequest_admin_optional_columns"
+    optional_columns_prefix = "transcriptionrequest"
     list_filter = ["status", "translate_to_english", "add_date"]
     search_fields = ["media__title", "logs"]
     list_select_related = ("media",)
     readonly_fields = ("status", "translate_to_english", "logs", "add_date", "link_media")
     exclude = ("media",)
-    ordering = ("-add_date",)
+    ordering = ("-id",)
     fieldsets = (
         (
             "Caption request",

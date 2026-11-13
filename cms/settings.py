@@ -654,7 +654,7 @@ JAZZMIN_SETTINGS = {
         "integrations.migrationrecord": "fas fa-database",
     },
 }
-JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
+JAZZMIN_UI_TWEAKS = {"theme": "flatly", "dark_mode_theme": "darkly"}
 
 USE_ROUNDED_CORNERS = True
 

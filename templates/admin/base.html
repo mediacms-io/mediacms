@@ -27,8 +27,10 @@
     {% endif %}
 
     {% if jazzmin_ui.dark_mode_theme %}
-        <link rel="stylesheet" href="{{ jazzmin_ui.dark_mode_theme.src }}" id="jazzmin-dark-mode-theme" media="(prefers-color-scheme: dark)"/>
+        <link rel="stylesheet" href="{{ jazzmin_ui.dark_mode_theme.src }}" id="jazzmin-dark-mode-theme" media="not all"/>
     {% endif %}
+
+    {% include "admin/includes/theme_mode.html" %}
 
     <!-- Custom fixes for django -->
     <link rel="stylesheet" href="{% static "jazzmin/css/main.css" %}">
@@ -50,7 +52,7 @@
     {% block extrastyle %} {% endblock %}
     {% block extrahead %} {% endblock %}
 </head>
-<body class="hold-transition{% if not jazzmin_settings.show_sidebar %} no-sidebar{% else %} sidebar-mini{% endif %} {% sidebar_status request %} {% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %} {{ jazzmin_ui.body_classes }} {% if jazzmin_ui.dark_mode_theme %}theme-dark{% endif %}" data-admin-utc-offset="{% now "Z" %}">
+<body class="hold-transition{% if not jazzmin_settings.show_sidebar %} no-sidebar{% else %} sidebar-mini{% endif %} {% sidebar_status request %} {% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %} {{ jazzmin_ui.body_classes }}" data-admin-utc-offset="{% now "Z" %}">
 
 <div class="wrapper">
 
@@ -120,6 +122,12 @@
                     </a>
                 </li>
                 {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link btn" href="#" id="admin-theme-switcher" role="button" title="{{ "Switch to dark theme"|custom_translate:LANGUAGE_CODE }}" data-title-dark="{{ "Switch to dark theme"|custom_translate:LANGUAGE_CODE }}" data-title-light="{{ "Switch to light theme"|custom_translate:LANGUAGE_CODE }}">
+                        <i class="fas fa-sun" aria-hidden="true"></i>
+                    </a>
+                </li>
 
                 {% if jazzmin_settings.language_chooser %}
                     {% get_available_languages as LANGUAGES %}

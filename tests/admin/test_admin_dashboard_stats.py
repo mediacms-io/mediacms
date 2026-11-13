@@ -151,9 +151,15 @@ class DashboardStatisticsTest(TestCase):
         self.assertEqual(checks["site_domain"]["status"], "ok")
 
         system = get_system_statistics()
-        labels = [item["label"] for item in system["object_totals"]]
+        totals = {item["label"]: item for item in system["object_totals"]}
         for expected in ("Media", "Users", "Comments", "Categories", "Channels", "Encode profiles"):
-            self.assertIn(expected, labels)
+            self.assertIn(expected, totals)
+        self.assertEqual(totals["Media"]["icon"], "fas fa-video")
+        self.assertEqual(totals["Users"]["icon"], "fas fa-users")
+        self.assertEqual(totals["Captions"]["icon"], "fas fa-closed-captioning")
+        self.assertEqual(totals["Trim Requests"]["icon"], "fas fa-cut")
+        self.assertEqual(totals["Media permissions"]["icon"], "fas fa-user-lock")
+        self.assertTrue(all(item.get("icon") for item in totals.values()))
         self.assertGreaterEqual(len(system["configuration"]), 10)
 
     @override_settings(EMAIL_USE_TLS=True, EMAIL_USE_SSL=True)
@@ -469,6 +475,10 @@ class DashboardIndexOrderTest(TestCase):
         self.assertNotContains(processing, "Recent video uploads")
         self.assertContains(engagement, "Most liked media")
         self.assertContains(site, "Object totals")
+        self.assertContains(site, "fas fa-video")
+        self.assertContains(site, "fas fa-closed-captioning")
+        self.assertContains(site, "fas fa-microphone")
+        self.assertContains(site, "fas fa-user-lock")
         self.assertContains(site, "Health checks")
         self.assertContains(site, "Configuration")
         self.assertContains(site, "Channels")

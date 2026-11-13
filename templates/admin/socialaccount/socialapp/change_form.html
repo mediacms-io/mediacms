@@ -25,25 +25,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
   const styleEl = document.createElement('style');
   styleEl.textContent = `
+    .csv-import-section {
+      border: 1px solid var(--gray);
+    }
     .csv-import-section label {
       font-weight: 600;
       display: block;
       margin-bottom: 8px;
     }
     .csv-import-section .help {
-      color: #666;
+      color: var(--secondary);
       font-style: italic;
       margin-top: 5px;
     }
     .csv-import-section input[type="file"] {
       padding: 8px;
-      border: 1px solid #ced4da;
+      border: 1px solid var(--gray);
       border-radius: 4px;
       width: 100%;
       max-width: 500px;
     }
     .csv-import-section input[type="file"]:focus {
-      border-color: #80bdff;
+      border-color: var(--info);
       outline: 0;
       box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
@@ -68,7 +71,6 @@ document.addEventListener('DOMContentLoaded', function() {
       groupsImportCsvField.style.padding = '15px';
       groupsImportCsvField.style.margin = '0 0 20px 0';
       groupsImportCsvField.style.borderRadius = '5px';
-      groupsImportCsvField.style.border = '1px solid #dee2e6';
 
       const groupFieldTitle = document.createElement('h3');
       groupFieldTitle.style.marginTop = '0';
@@ -89,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function() {
       categoriesImportCsvField.style.padding = '15px';
       categoriesImportCsvField.style.margin = '0 0 20px 0';
       categoriesImportCsvField.style.borderRadius = '5px';
-      categoriesImportCsvField.style.border = '1px solid #dee2e6';
 
       const categoryFieldTitle = document.createElement('h3');
       categoryFieldTitle.style.marginTop = '0';

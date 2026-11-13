@@ -69,11 +69,11 @@
         }
         .site-open-table .open-on-site {
             position: relative;
-            color: #6c757d;
+            color: var(--secondary);
         }
         .site-open-table .open-on-site:hover,
         .site-open-table .open-on-site:focus {
-            color: #007bff;
+            color: var(--primary);
         }
         .site-open-table .open-on-site:hover::after,
         .site-open-table .open-on-site:focus::after {
@@ -84,8 +84,8 @@
             z-index: 5;
             padding: 0.2rem 0.45rem;
             border-radius: 0.2rem;
-            background: #343a40;
-            color: #fff;
+            background: var(--dark);
+            color: var(--white);
             font-size: 0.75rem;
             line-height: 1.2;
             white-space: nowrap;
@@ -194,12 +194,12 @@
         .moderation-audit a.changelist-status-icon--success,
         .moderation-audit a.changelist-status-icon--success:hover,
         .moderation-audit a.changelist-status-icon--success:focus {
-            color: #28a745 !important;
+            color: var(--success) !important;
         }
         .moderation-audit a.changelist-status-icon--fail,
         .moderation-audit a.changelist-status-icon--fail:hover,
         .moderation-audit a.changelist-status-icon--fail:focus {
-            color: #dc3545 !important;
+            color: var(--danger) !important;
         }
         .moderation-audit a.changelist-status-icon--not-listable,
         .moderation-audit a.changelist-status-icon--not-listable:hover,
@@ -207,7 +207,7 @@
         .moderation-audit a.changelist-status-icon--pending,
         .moderation-audit a.changelist-status-icon--pending:hover,
         .moderation-audit a.changelist-status-icon--pending:focus {
-            color: #6c757d !important;
+            color: var(--secondary) !important;
         }
         .moderation-audit th:nth-child(3),
         .moderation-audit td:nth-child(3) {
@@ -359,6 +359,20 @@
             table-layout: auto;
             width: 100%;
         }
+        .dashboard-section-content .table thead th {
+            color: var(--mc-on-surface);
+            background-color: transparent;
+            border-bottom-color: var(--gray);
+        }
+        .dashboard-section-content .table tbody tr:nth-of-type(odd) {
+            background-color: var(--light);
+        }
+        .dashboard-section-content .table tbody tr:nth-of-type(even) {
+            background-color: transparent;
+        }
+        html.theme-darkly .dashboard-section-content .table tbody tr:nth-of-type(odd) {
+            background-color: var(--mc-canvas);
+        }
         .library-uploads th:first-child,
         .library-uploads td:first-child {
             width: 100%;
@@ -389,7 +403,9 @@
 
     {% if dashboard_stats %}
         {% with stats=dashboard_stats %}
-            {% block dashboard_section_content %}{% endblock %}
+            <div class="col-12 dashboard-section-content">
+                {% block dashboard_section_content %}{% endblock %}
+            </div>
         {% endwith %}
     {% endif %}
 {% endblock %}

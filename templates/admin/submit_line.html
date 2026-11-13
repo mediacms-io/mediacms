@@ -1,0 +1,53 @@
+{% load i18n admin_urls jazzmin %}
+{% get_jazzmin_ui_tweaks as jazzmin_ui %}
+
+{% block submit-row %}
+<div>
+    {% if show_save %}
+        <div class="form-group">
+            <button type="submit" name="_save" value="{% trans 'Save' %}" class="btn {{ jazzmin_ui.button_classes.success }} form-control">
+                <i class="fas fa-save" aria-hidden="true"></i> {% trans 'Save' %}
+            </button>
+        </div>
+    {% endif %}
+    {% if show_delete_link and original %}
+        <div class="form-group">
+            {% url opts|admin_urlname:'delete' original.pk|admin_urlquote as delete_url %}
+            <a href="{% add_preserved_filters delete_url %}" class="btn {{ jazzmin_ui.button_classes.danger }} form-control">
+                <i class="fas fa-trash" aria-hidden="true"></i> {% trans "Delete" %}
+            </a>
+        </div>
+    {% endif %}
+    {% if show_save_as_new %}
+        <div class="form-group">
+            <button type="submit" name="_saveasnew" value="{% trans 'Save as new' %}" class="btn {{ jazzmin_ui.button_classes.info }} form-control">
+                <i class="fas fa-copy" aria-hidden="true"></i> {% trans 'Save as new' %}
+            </button>
+        </div>
+    {% endif %}
+    {% if show_save_and_add_another %}
+        <div class="form-group">
+            <button type="submit" name="_addanother" value="{% trans 'Save and add another' %}" class="btn {{ jazzmin_ui.button_classes.info }} form-control">
+                <i class="fas fa-plus" aria-hidden="true"></i> {% trans 'Save and add another' %}
+            </button>
+        </div>
+    {% endif %}
+    {% if show_save_and_continue %}
+        <div class="form-group">
+            <button type="submit" name="_continue" value="{% if can_change %}{% trans 'Save and continue editing' %}{% else %}{% trans 'Save and view' %}{% endif %}" class="btn {{ jazzmin_ui.button_classes.info }} form-control">
+                <i class="fas fa-check" aria-hidden="true"></i> {% if can_change %}{% trans 'Save and continue editing' %}{% else %}{% trans 'Save and view' %}{% endif %}
+            </button>
+        </div>
+    {% endif %}
+    {% if show_close %}
+        <div class="form-group">
+            <a href="{% url opts|admin_urlname:'changelist' %}" class="btn {{ jazzmin_ui.button_classes.danger }} form-control">
+                <i class="fas fa-times" aria-hidden="true"></i> {% trans 'Close' %}
+            </a>
+        </div>
+    {% endif %}
+
+    {% block extra-actions %}{% endblock %}
+
+</div>
+{% endblock %}

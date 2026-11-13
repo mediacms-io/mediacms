@@ -2,7 +2,7 @@
 
 <style type="text/css">
 .help-text-inline {
-    color: #999;
+    color: var(--mc-muted);
     font-size: 12px;
     margin: 0;
     padding: 2px 0 0 0;
@@ -42,31 +42,7 @@
                     <tr class="form-row{% if inline_admin_form.original or inline_admin_form.show_url %} has_original{% endif %}{% if forloop.last and inline_admin_formset.has_add_permission %} empty-form{% endif %}"
                         id="{{ inline_admin_formset.formset.prefix }}-{% if not forloop.last %}{{ forloop.counter0 }}{% else %}empty{% endif %}">
                         <td class="original">
-                            {% if inline_admin_form.original or inline_admin_form.show_url %}
-                            <p>
-                                {% if inline_admin_form.original %}
-                                    {% if inline_admin_form.model_admin.show_change_link and inline_admin_form.model_admin.has_registered_model %}
-                                        <a
-                                            href="{% url inline_admin_form.model_admin.opts|admin_urlname:'change' inline_admin_form.original.pk|admin_urlquote %}"
-                                            class="{% if inline_admin_formset.has_change_permission %}inlinechangelink{% else %}inlineviewlink{% endif %}">
-                                            {% if inline_admin_formset.has_change_permission %}
-                                                <i class="fas fa-pencil-alt fa-sm"> </i>
-                                            {% else %}
-                                                <i class="fas fa-eye fa-sm"> </i>
-                                            {% endif %}
-                                        </a>
-                                    {% endif %}
-
-                                    {% if inline_admin_form.show_url %}
-                                        <a href="{{ inline_admin_form.absolute_url }}" title="{% trans "View on site" %}">
-                                            <i class="fas fa-eye fa-sm"> </i>
-                                        </a>
-                                    {% endif %}
-                                {% endif %}
-                            </p>
-                            {% else %}
-                            <i class="fas fa-plus fa-sm text-success"> </i>
-                            {% endif %}
+                            {% include "admin/includes/inline_original_tools.html" %}
                             {% if inline_admin_form.needs_explicit_pk_field %}{{ inline_admin_form.pk_field.field }}{% endif %}
                             {% if inline_admin_form.fk_field %}{{ inline_admin_form.fk_field.field }}{% endif %}
                             {% spaceless %}

@@ -145,6 +145,50 @@ def header_column_class(class_attrib):
     return match.group(1) if match else ""
 
 
+# Columns sized for a status glyph. The header shows the same kind of icon,
+# with the full column name kept in the tooltip.
+CHANGELIST_COLUMN_ICONS = {
+    "column-open_on_site": "fas fa-eye",
+    "column-display_media_type": "fas fa-photo-video",
+    "column-display_state": "fas fa-globe",
+    "column-display_encoding_status": "fas fa-cogs",
+    "column-display_listable": "fas fa-eye",
+    "column-display_reported_times": "fas fa-flag",
+    "column-is_reviewed": "fas fa-check-circle",
+    "column-featured": "fas fa-star",
+    "column-allow_download": "fas fa-download",
+    "column-enable_comments": "fas fa-comments",
+    "column-display_status": "fas fa-info-circle",
+    "column-display_chunk": "fas fa-puzzle-piece",
+    "column-has_file": "fas fa-file",
+    "column-display_video_action": "fas fa-cut",
+    "column-display_media_trim_style": "fas fa-crop-alt",
+    "column-display_translate_to_english": "fas fa-language",
+    "column-is_rbac_category": "fas fa-user-shield",
+    "column-is_lms_course": "fas fa-graduation-cap",
+    "column-is_active": "fas fa-user-check",
+    "column-is_superuser": "fas fa-user-shield",
+    "column-is_editor": "fas fa-user-edit",
+    "column-is_manager": "fas fa-user-tie",
+    "column-is_staff": "fas fa-user-cog",
+    "column-is_approved": "fas fa-user-check",
+    "column-display_permission": "fas fa-key",
+    "column-display_source": "fas fa-sign-in-alt",
+    "column-display_primary": "fas fa-star",
+    "column-display_verified": "fas fa-check-circle",
+}
+
+
+@register.filter
+def changelist_column_icon(class_name):
+    """Font Awesome classes for a narrow changelist column, or an empty string."""
+    classes = set(str(class_name or "").split())
+    for name, icon in CHANGELIST_COLUMN_ICONS.items():
+        if name in classes:
+            return icon
+    return ""
+
+
 @register.filter
 def tag_columns(results):
     """Split a tag page so the first half fills the start column before the other.
