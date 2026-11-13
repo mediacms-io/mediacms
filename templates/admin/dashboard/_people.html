@@ -188,24 +188,26 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Recent users waiting for approval"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:users_user_changelist' %}?is_approved__exact=0">{{ "Recent users waiting for approval"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table site-open-table people-when">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.recent_pending_users %}
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
-                                                        <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ user.date_added|relative_when }}</td>
+                                                        <td><a href="{% url 'get_user' user.username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -219,24 +221,26 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Recently registered"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:users_user_changelist' %}?joined=7d">{{ "Recently registered"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table site-open-table people-when">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Joined"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.recent_registered %}
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
-                                                        <td>{{ user.date_added|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ user.date_added|relative_when }}</td>
+                                                        <td><a href="{% url 'get_user' user.username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -246,24 +250,26 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-primary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "User activity"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:users_user_changelist' %}?activity=30d">{{ "User activity"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table site-open-table people-when">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Last activity"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {% for user in stats.users.recent_activity %}
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
-                                                        <td>{{ user.last_activity|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ user.last_activity|relative_when }}</td>
+                                                        <td><a href="{% url 'get_user' user.username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -276,14 +282,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-info">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top uploaders by count"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:files_media_changelist' %}">{{ "Top uploaders by count"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm site-open-table people-rank">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Media count"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -291,9 +298,10 @@
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
                                                         <td><a href="{% url 'admin:files_media_changelist' %}?user__id__exact={{ user.id }}"><span class="badge badge-info">{{ user.media_count_annotated }}</span></a></td>
+                                                        <td><a href="{% url 'get_user' user.username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -303,14 +311,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-secondary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top uploaders by size"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:files_media_changelist' %}">{{ "Top uploaders by size"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm site-open-table people-rank">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Upload size"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -318,9 +327,10 @@
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.id %}">{{ user.username }}</a></td>
                                                         <td><a href="{% url 'admin:files_media_changelist' %}?user__id__exact={{ user.id }}"><span class="badge badge-secondary">{{ user.upload_size_label }}</span></a></td>
+                                                        <td><a href="{% url 'get_user' user.username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -333,14 +343,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-primary">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top commenters"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:files_comment_changelist' %}">{{ "Top commenters"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm site-open-table people-rank">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Comments"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -348,9 +359,10 @@
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
                                                         <td><a href="{% url 'admin:files_comment_changelist' %}?user__id__exact={{ user.user_id }}"><span class="badge badge-primary">{{ user.comment_count }}</span></a></td>
+                                                        <td><a href="{% url 'get_user' user.user__username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -360,14 +372,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-warning">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top reporters"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report">{{ "Top reporters"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm site-open-table people-rank">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Reports"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -375,9 +388,10 @@
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
                                                         <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-warning">{{ user.action_count }}</span></a></td>
+                                                        <td><a href="{% url 'get_user' user.user__username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -390,14 +404,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-success">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top likers"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like">{{ "Top likers"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm site-open-table people-rank">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Likes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -405,9 +420,10 @@
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
                                                         <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=like&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-success">{{ user.action_count }}</span></a></td>
+                                                        <td><a href="{% url 'get_user' user.user__username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -417,14 +433,15 @@
                             <div class="col-md-6">
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
-                                        <h3 class="card-title">{{ "Top dislikers"|custom_translate:LANGUAGE_CODE }}</h3>
+                                        <h3 class="card-title"><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike">{{ "Top dislikers"|custom_translate:LANGUAGE_CODE }}</a></h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm site-open-table people-rank">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Username"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Dislikes"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -432,9 +449,10 @@
                                                     <tr>
                                                         <td><a href="{% url 'admin:users_user_change' user.user_id %}">{{ user.user__username }}</a></td>
                                                         <td><a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=dislike&amp;user__id__exact={{ user.user_id }}"><span class="badge badge-danger">{{ user.action_count }}</span></a></td>
+                                                        <td><a href="{% url 'get_user' user.user__username %}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>

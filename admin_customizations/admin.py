@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import timedelta
-from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -11,6 +10,15 @@ from django.urls import reverse
 from django.utils import timezone
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
+from admin_customizations.deployment_health import (
+    deployment_configuration_rows,
+    frontend_host_parts,
+    iter_deployment_health_checks,
+    iter_media_storage_health_checks,
+)
+from admin_customizations.processing_stats import get_processing_status_groups
+from admin_customizations.status_health import iter_status_health_checks
+from files.admin_helpers import MEDIA_ACTION_ICONS
 from files.models import (
     Category,
     Comment,
@@ -30,11 +38,12 @@ from files.models import (
 from users.models import Channel, User
 
 # Report-related moderator audit events shown on the dashboard (excludes user "report"
-# submissions and media approval reviews, which have their own tiles).
-REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in ("media_reviewed",))
+# submissions, media approval reviews, and filesystem integrity audits).
+_REPORT_AUDIT_EXCLUDED = ("media_reviewed", "metadata_refresh", "integrity_warning")
+REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in _REPORT_AUDIT_EXCLUDED)
 REPORT_AUDIT_ACTION_LABELS = dict(MODERATION_MEDIA_ACTIONS)
 
-DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v4"
+DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v10"
 DASHBOARD_STATS_CACHE_TTL = 60
 
 
@@ -63,11 +72,13 @@ def calculate_statistics(*, force_refresh=False):
 
     media_stats = get_media_statistics()
     stats = {
+        "generated_at": now,
         "media": media_stats,
         "moderation": get_moderation_statistics(seven_days_ago, media_stats=media_stats),
         "engagement": get_engagement_statistics(seven_days_ago, media_stats=media_stats),
         "users": get_user_statistics(seven_days_ago, thirty_days_ago),
         "system": get_system_statistics(media_stats=media_stats),
+        "processing": {"status_groups": get_processing_status_groups()},
     }
     cache.set(DASHBOARD_STATS_CACHE_KEY, stats, DASHBOARD_STATS_CACHE_TTL)
     return stats
@@ -180,9 +191,24 @@ def get_moderation_statistics(seven_days_ago, media_stats=None):
     )
 
     moderation_stats["recent_reports"] = list(MediaAction.objects.filter(action="report").order_by("-action_date")[:5].values(*recent_moderation_values))
+    report_media_ids = {row["media_id"] for row in moderation_stats["recent_reports"] if row["media_id"]}
+    latest_report_ids = {}
+    if report_media_ids:
+        seen_media = set()
+        latest_reports = MediaAction.objects.filter(action="report", media_id__in=report_media_ids).order_by("-action_date", "-id").values_list("id", "media_id")
+        for report_id, media_id in latest_reports:
+            if media_id in seen_media:
+                continue
+            seen_media.add(media_id)
+            latest_report_ids[media_id] = report_id
+    for row in moderation_stats["recent_reports"]:
+        row["latest_report_id"] = latest_report_ids.get(row["media_id"])
     recent_report_audits = list(MediaAction.objects.filter(action__in=REPORT_AUDIT_ACTIONS).order_by("-action_date")[:5].values(*recent_moderation_values))
     for row in recent_report_audits:
         row["action_label"] = REPORT_AUDIT_ACTION_LABELS.get(row["action"], row["action"])
+        icon, modifier = MEDIA_ACTION_ICONS.get(row["action"], ("fas fa-clipboard-list", "pending"))
+        row["action_icon"] = icon
+        row["action_modifier"] = modifier
     moderation_stats["recent_report_audits"] = recent_report_audits
     moderation_stats["recent_pending_review"] = list(Media.objects.filter(is_reviewed=False).order_by("-add_date")[:5].values("id", "title", "add_date", "user_id", "user__username", "friendly_token"))
     moderation_stats["recent_approved"] = list(MediaAction.objects.filter(action="media_reviewed").order_by("-action_date")[:5].values(*recent_moderation_values))
@@ -340,16 +366,6 @@ def get_user_statistics(seven_days_ago, thirty_days_ago):
     return user_stats
 
 
-def _frontend_host_parts():
-    """Return (scheme, hostname) for FRONTEND_HOST, ignoring path/port noise."""
-    raw = (getattr(settings, "FRONTEND_HOST", "") or "").strip()
-    if not raw:
-        return "", ""
-    parsed = urlparse(raw if "://" in raw else f"http://{raw}")
-    host = (parsed.hostname or parsed.path.split("/")[0] or "").rstrip(".")
-    return (parsed.scheme or "").lower(), host.lower()
-
-
 def _health_check(check_id, label, status, detail, link=None):
     return {
         "id": check_id,
@@ -365,7 +381,7 @@ def get_site_health_checks(media_stats=None):
     checks = []
     site = Site.objects.filter(id=getattr(settings, "SITE_ID", 1)).first() or Site.objects.first()
     portal_name = getattr(settings, "PORTAL_NAME", "") or ""
-    frontend_scheme, frontend_host = _frontend_host_parts()
+    frontend_scheme, frontend_host, _frontend_origin = frontend_host_parts()
     site_change_url = reverse("admin:sites_site_change", args=[site.pk]) if site else None
 
     if site is None:
@@ -633,8 +649,21 @@ def get_site_health_checks(media_stats=None):
     )
 
     from files.integrity import iter_integrity_health_checks
+    from files.metadata_integrity import iter_metadata_health_checks
+
+    for payload in iter_status_health_checks():
+        checks.append(_health_check(**payload))
 
     for payload in iter_integrity_health_checks():
+        checks.append(_health_check(**payload))
+
+    for payload in iter_metadata_health_checks():
+        checks.append(_health_check(**payload))
+
+    for payload in iter_deployment_health_checks():
+        checks.append(_health_check(**payload))
+
+    for payload in iter_media_storage_health_checks():
         checks.append(_health_check(**payload))
 
     severity_order = {"fail": 0, "warn": 1, "info": 2, "ok": 3}
@@ -663,6 +692,7 @@ def get_site_configuration_status():
         {"label": "USE_WHISPER_TRANSCRIBE", "value": str(getattr(settings, "USE_WHISPER_TRANSCRIBE", False))},
         {"label": "LOCAL_INSTALL", "value": str(getattr(settings, "LOCAL_INSTALL", False))},
         {"label": "DEBUG", "value": str(getattr(settings, "DEBUG", False))},
+        *deployment_configuration_rows(),
     ]
 
 

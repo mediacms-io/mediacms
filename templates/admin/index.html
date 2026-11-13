@@ -57,9 +57,7 @@
 {% block content %}
     {% if dashboard_stats %}
         {% with stats=dashboard_stats %}
-            <div class="mb-3 d-flex justify-content-end">
-                <a class="btn btn-sm btn-outline-secondary" href="?refresh_stats=1">{{ "Refresh stats"|custom_translate:LANGUAGE_CODE }}</a>
-            </div>
+            {% include "admin/dashboard/_section_nav.html" %}
 
             <div class="col-12">
                 <div class="card">

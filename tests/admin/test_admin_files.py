@@ -2,6 +2,7 @@ import importlib
 import os
 from unittest.mock import patch
 
+from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialApp
 from django.conf import settings
 from django.contrib import admin
@@ -98,6 +99,19 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertEqual(self.changelist_titles(state="private"), {"admin private media"})
         self.assertEqual(self.changelist_titles(category__id__exact=self.category.pk), {"admin private media"})
         self.assertEqual(self.changelist_titles(q="public"), {"admin public media"})
+
+    def test_changelist_eye_link_sort_hint_and_collapsed_column_chooser(self):
+        response = self.client.get(reverse("admin:files_media_changelist"))
+        html = response.content.decode()
+        self.assertContains(response, reverse("get_media") + f"?m={self.public.friendly_token}")
+        self.assertContains(response, "open-on-site")
+        self.assertContains(response, "changelist-sort-hint")
+        self.assertIn('<details class="media-column-chooser admin-column-chooser card card-outline card-secondary mb-3">', html)
+        self.assertNotIn('<details class="media-column-chooser admin-column-chooser card card-outline card-secondary mb-3" open>', html)
+
+        self.client.get(reverse("admin:files_media_changelist"), {"set_media_columns": "1", "media_col": ["link_user"]})
+        opened = self.client.get(reverse("admin:files_media_changelist"))
+        self.assertContains(opened, '<details class="media-column-chooser admin-column-chooser card card-outline card-secondary mb-3" open>')
 
     def test_comments_count_column_links_to_filtered_comments(self):
         model_admin = admin.site._registry[Media]
@@ -413,7 +427,17 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertIn("Media reviewed", html)
         self.assertIn("/admin/actions/mediaaction/", html)
         self.assertNotIn(">Like<", html)
-        self.assertTrue({"report", "report_cleared", "report_confirmed", "media_reviewed", "original_deleted"}.issubset(set(MEDIA_REPORT_TAB_ACTIONS)))
+        self.assertTrue(
+            {
+                "report",
+                "report_cleared",
+                "report_confirmed",
+                "media_reviewed",
+                "original_deleted",
+                "metadata_refresh",
+                "integrity_warning",
+            }.issubset(set(MEDIA_REPORT_TAB_ACTIONS))
+        )
 
         related = str(model_admin.related_reports(self.public))
         self.assertIn("3 report/moderation", related)
@@ -550,6 +574,16 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertEqual(response.status_code, 302)
         create_hls.assert_called_once_with(video.friendly_token)
 
+    def test_refresh_metadata_check_integrity_queues_task(self):
+        video = create_media(self.superuser, filename=SMALL_VIDEO, title="metadata refresh video")
+        with patch("files.tasks.refresh_media_metadata.delay") as refresh_task:
+            response = self.client.post(
+                reverse("admin:files_media_changelist"),
+                {"action": "refresh_metadata_check_integrity", "_selected_action": [video.pk]},
+            )
+        self.assertEqual(response.status_code, 302)
+        refresh_task.assert_called_once_with(video.friendly_token, self.superuser.pk)
+
 
 class DeleteOriginalMediaAdminTest(AdminRequestMixin, TestCase):
     fixtures = ["fixtures/encoding_profiles.json"]
@@ -636,6 +670,7 @@ class DeleteOriginalMediaAdminTest(AdminRequestMixin, TestCase):
         self.assertTrue(reason)
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class MediaActionAdminTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -688,7 +723,7 @@ class MediaActionAdminTest(TestCase):
         default_display = model_admin.get_list_display(request)
         self.assertNotIn("display_remote_ip", default_display)
         self.assertNotIn("display_extra_info", default_display)
-        self.assertEqual(default_display, ["action_date", "display_action", "link_user", "link_media"])
+        self.assertEqual(default_display, ["action_date", "display_action", "link_user", "link_media", "open_on_site"])
 
         response = self.client.get(
             url,
@@ -705,10 +740,13 @@ class MediaActionAdminTest(TestCase):
 
         response = self.client.get(url, {"q": "reported"})
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "fas fa-flag")
+        self.assertContains(response, 'aria-label="Report"')
+        self.assertContains(response, "changelist-status-icon--warning")
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
         self.assertEqual(
             display,
-            ["action_date", "display_action", "link_user", "link_media", "display_remote_ip", "display_extra_info"],
+            ["action_date", "display_action", "link_user", "link_media", "display_remote_ip", "display_extra_info", "open_on_site"],
         )
         self.assertContains(response, "Apply columns")
         self.assertContains(response, "Reset columns")
@@ -734,7 +772,7 @@ class MediaActionAdminTest(TestCase):
         self.assertIn("q=reported", response["Location"])
         response = self.client.get(url, {"q": "reported"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["action_date", "display_action", "link_user", "link_media"])
+        self.assertEqual(display, ["action_date", "display_action", "link_user", "link_media", "open_on_site"])
 
     def test_long_extra_info_is_clipped_with_the_full_text_in_a_tooltip(self):
         report = "This report explains the problem.\n\n" + ("detail " * 30)
@@ -854,6 +892,7 @@ class EncodingAdminTest(TestCase):
         self.assertContains(response, 'title="Pending"')
         self.assertContains(response, "fas fa-th-large")
         self.assertContains(response, "fas fa-ban")
+        self.assertContains(response, reverse("get_media") + f"?m={media.friendly_token}")
 
     def test_optional_columns_hidden_by_default_and_column_chooser(self):
         user = make_user("files_encoding_columns", is_superuser=True)
@@ -864,7 +903,7 @@ class EncodingAdminTest(TestCase):
         request = RequestFactory().get("/admin/")
         request.user = user
         request.session = {}
-        self.assertEqual(model_admin.get_list_display(request), ["get_title", "link_media", "display_status", "has_file"])
+        self.assertEqual(model_admin.get_list_display(request), ["get_title", "link_media", "display_status", "has_file", "open_on_site"])
 
         self.client.force_login(user)
         url = reverse("admin:files_encoding_changelist")
@@ -907,7 +946,7 @@ class EncodingAdminTest(TestCase):
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
         self.assertEqual(
             display,
-            ["get_title", "link_media", "display_chunk", "profile", "progress", "display_status", "has_file"],
+            ["get_title", "link_media", "display_chunk", "profile", "progress", "display_status", "has_file", "open_on_site"],
         )
         html = response.content.decode()
         self.assertIn("field-display_chunk", html)
@@ -926,7 +965,7 @@ class EncodingAdminTest(TestCase):
         self.assertEqual(response.status_code, 302)
         response = self.client.get(url, {"q": "encoding columns"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["get_title", "link_media", "display_status", "has_file"])
+        self.assertEqual(display, ["get_title", "link_media", "display_status", "has_file", "open_on_site"])
 
     def test_change_form_fields_are_read_only(self):
         user = make_user("files_encoding_readonly", is_superuser=True)
@@ -1004,7 +1043,7 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         request = self.admin_request()
         request.session = {}
         self.assertEqual(self.model_admin().get_list_filter(request), [])
-        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user"])
+        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user", "open_on_site"])
         self.assertNotIn("uid", self.model_admin().get_list_display(request))
         self.assertNotIn("related_media_count", self.model_admin().get_list_display(request))
         self.assertNotIn("is_rbac_category", self.fieldset_fields())
@@ -1016,7 +1055,7 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         request = self.admin_request()
         request.session = {}
         self.assertEqual(self.model_admin().get_list_filter(request), ["is_rbac_category"])
-        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user", "is_rbac_category"])
+        self.assertEqual(self.model_admin().get_list_display(request), ["add_date", "title", "user", "is_rbac_category", "open_on_site"])
         self.assertIn("rbac_groups", self.fieldset_fields())
         self.assertNotIn("identity_provider", self.fieldset_fields())
 
@@ -1055,7 +1094,8 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         self.assertContains(response, 'value="related_media_count"')
         html = response.content.decode()
         self.assertLess(html.find('class="category-column-chooser'), html.find('id="changelist-form"'))
-        self.assertNotContains(response, category.uid)
+        self.assertNotIn("field-uid", html)
+        self.assertIn(f"?c={category.uid}", html)
         self.assertNotContains(response, f"category__id__exact={category.pk}")
 
         response = self.client.get(
@@ -1072,7 +1112,7 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
 
         response = self.client.get(url, {"q": "Chooser"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["add_date", "title", "user", "uid", "related_media_count"])
+        self.assertEqual(display, ["add_date", "title", "user", "uid", "related_media_count", "open_on_site"])
         self.assertContains(response, category.uid)
         self.assertContains(response, f"category__id__exact={category.pk}")
         self.assertContains(response, ">1<")
@@ -1089,7 +1129,7 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         self.assertEqual(response.status_code, 302)
         response = self.client.get(url, {"q": "Chooser"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["add_date", "title", "user"])
+        self.assertEqual(display, ["add_date", "title", "user", "open_on_site"])
 
     def test_media_count_links_and_change_lists_media(self):
         category = Category.objects.create(title="Linked media category", media_count=1)
@@ -1399,7 +1439,7 @@ class PlaylistChannelAdminTest(TestCase):
         request.user = self.superuser
         request.session = {}
         default_display = model_admin.get_list_display(request)
-        self.assertEqual(default_display, ["add_date", "title", "link_user"])
+        self.assertEqual(default_display, ["add_date", "title", "link_user", "open_on_site"])
         self.assertNotIn("friendly_token", default_display)
         self.assertNotIn("related_media_count", default_display)
 
@@ -1413,7 +1453,8 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertContains(response, 'value="related_media_count"')
         html = response.content.decode()
         self.assertLess(html.find('class="playlist-column-chooser'), html.find('id="changelist-form"'))
-        self.assertNotContains(response, self.playlist.friendly_token)
+        self.assertNotIn("field-friendly_token", html)
+        self.assertIn(f"/playlists/{self.playlist.friendly_token}", html)
         self.assertNotContains(response, f"playlist__id__exact={self.playlist.pk}")
 
         response = self.client.get(
@@ -1431,7 +1472,7 @@ class PlaylistChannelAdminTest(TestCase):
 
         response = self.client.get(url, {"q": "Admin"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["add_date", "title", "link_user", "friendly_token", "related_media_count"])
+        self.assertEqual(display, ["add_date", "title", "link_user", "friendly_token", "related_media_count", "open_on_site"])
         self.assertContains(response, self.playlist.friendly_token)
 
         response = self.client.get(
@@ -1446,7 +1487,7 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertEqual(response.status_code, 302)
         response = self.client.get(url, {"q": "Admin"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["add_date", "title", "link_user"])
+        self.assertEqual(display, ["add_date", "title", "link_user", "open_on_site"])
 
     def test_playlist_changelist_media_count_links_to_filtered_media(self):
         url = reverse("admin:files_playlist_changelist")
@@ -1470,7 +1511,7 @@ class PlaylistChannelAdminTest(TestCase):
         request.user = self.superuser
         request.session = {}
         default_display = model_admin.get_list_display(request)
-        self.assertEqual(default_display, ["add_date", "title", "link_user"])
+        self.assertEqual(default_display, ["add_date", "title", "link_user", "open_on_site"])
         self.assertNotIn("friendly_token", default_display)
         self.assertNotIn("related_media_count", default_display)
 
@@ -1484,7 +1525,8 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertContains(response, 'value="related_media_count"')
         html = response.content.decode()
         self.assertLess(html.find('class="channel-column-chooser'), html.find('id="changelist-form"'))
-        self.assertNotContains(response, channel.friendly_token)
+        self.assertNotIn("field-friendly_token", html)
+        self.assertIn(f"/channel/{channel.friendly_token}", html)
         self.assertNotContains(response, f"channel__id__exact={channel.pk}")
 
         response = self.client.get(
@@ -1502,7 +1544,7 @@ class PlaylistChannelAdminTest(TestCase):
 
         response = self.client.get(url, {"q": channel.title})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["add_date", "title", "link_user", "friendly_token", "related_media_count"])
+        self.assertEqual(display, ["add_date", "title", "link_user", "friendly_token", "related_media_count", "open_on_site"])
         self.assertContains(response, channel.friendly_token)
         self.assertContains(response, f"channel__id__exact={channel.pk}")
         self.assertContains(response, ">1<")
@@ -1519,7 +1561,7 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertEqual(response.status_code, 302)
         response = self.client.get(url, {"q": channel.title})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["add_date", "title", "link_user"])
+        self.assertEqual(display, ["add_date", "title", "link_user", "open_on_site"])
 
 
 class TagAdminTest(TestCase):
@@ -1539,7 +1581,7 @@ class TagAdminTest(TestCase):
         request = RequestFactory().get("/admin/")
         request.user = self.superuser
         request.session = {}
-        self.assertEqual(model_admin.get_list_display(request), ["title", "link_user"])
+        self.assertEqual(model_admin.get_list_display(request), ["title", "link_user", "open_on_site"])
 
         url = reverse("admin:files_tag_changelist")
         response = self.client.get(url)
@@ -1559,7 +1601,7 @@ class TagAdminTest(TestCase):
 
         response = self.client.get(url, {"q": "admintag"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["title", "link_user", "related_media_count"])
+        self.assertEqual(display, ["title", "link_user", "related_media_count", "open_on_site"])
         filtered = reverse("admin:files_media_changelist") + f"?tags__id__exact={self.tag.pk}"
         self.assertContains(response, filtered)
 
@@ -1570,7 +1612,7 @@ class TagAdminTest(TestCase):
         self.assertEqual(response.status_code, 302)
         response = self.client.get(url, {"q": "admintag"})
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
-        self.assertEqual(display, ["title", "link_user"])
+        self.assertEqual(display, ["title", "link_user", "open_on_site"])
 
     def test_tag_changelist_shows_media_count_link(self):
         url = reverse("admin:files_tag_changelist")
@@ -1591,6 +1633,23 @@ class TagAdminTest(TestCase):
         self.assertIn(reverse("admin:users_user_change", args=[self.superuser.pk]), row_html)
         self.assertIn(self.superuser.username, row_html)
         self.assertNotIn(f"{self.superuser.name} - {self.superuser.email}", row_html)
+
+    def test_tag_changelist_fills_the_start_column_first(self):
+        Tag.objects.create(title="secondadmintag", user=self.superuser)
+        Tag.objects.create(title="zzzadmintag", user=self.superuser)
+        response = self.client.get(reverse("admin:files_tag_changelist"))
+        html = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        tables = html.split('<table class="table table-striped tag-result-table">')
+        self.assertEqual(len(tables), 3)
+        self.assertEqual(html.count('id="action-toggle"'), 1)
+        self.assertIn(">admintag<", tables[1])
+        self.assertIn(">secondadmintag<", tables[1])
+        self.assertNotIn(">zzzadmintag<", tables[1])
+        self.assertIn(">zzzadmintag<", tables[2])
+        self.assertNotIn(">admintag<", tables[2])
+        self.assertContains(response, reverse("search") + "?t=admintag")
+        self.assertContains(response, "changelist-sort-hint")
 
     def test_tag_change_shows_related_media_link(self):
         response = self.client.get(reverse("admin:files_tag_change", args=[self.tag.pk]))
@@ -1703,12 +1762,18 @@ class VideoTrimRequestAdminTest(TestCase):
 
     def test_list_links_to_trim_request_change(self):
         model_admin = admin.site._registry[VideoTrimRequest]
-        self.assertEqual(model_admin.list_display_links, ("id", "display_status"))
+        self.assertEqual(model_admin.list_display_links, ("display_id", "display_status"))
         response = self.client.get(reverse("admin:files_videotrimrequest_changelist"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_videotrimrequest_change", args=[self.request.pk]))
         # Media column still links to the media, separately from the request change link.
         self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertContains(response, "changelist-id-link")
+        self.assertContains(response, "fas fa-search")
+        self.assertContains(response, "fas fa-hourglass-start")
+        self.assertContains(response, "fas fa-exchange-alt")
+        self.assertContains(response, "fas fa-bolt")
+        self.assertContains(response, reverse("get_media") + f"?m={self.media.friendly_token}")
 
     def test_change_form_is_read_only(self):
         model_admin = admin.site._registry[VideoTrimRequest]
@@ -1765,14 +1830,20 @@ class TranscriptionRequestAdminTest(TestCase):
 
     def test_list_links_to_change_and_is_not_editable(self):
         model_admin = admin.site._registry[TranscriptionRequest]
-        self.assertEqual(model_admin.list_display_links, ("id", "link_media"))
+        self.assertEqual(model_admin.list_display_links, ("display_id",))
         self.assertFalse(getattr(model_admin, "list_editable", ()))
         self.assertIn("logs", model_admin.readonly_fields)
 
         response = self.client.get(reverse("admin:files_transcriptionrequest_changelist"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_transcriptionrequest_change", args=[self.request.pk]))
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertContains(response, "changelist-id-link")
+        self.assertContains(response, "fas fa-search")
         self.assertNotContains(response, 'name="form-0-status"')
+        self.assertContains(response, "fas fa-clock")
+        self.assertContains(response, "fas fa-minus")
+        self.assertContains(response, reverse("get_media") + f"?m={self.media.friendly_token}")
 
     def test_change_form_is_read_only(self):
         model_admin = admin.site._registry[TranscriptionRequest]
@@ -1811,6 +1882,7 @@ class TranscriptionRequestAdminTest(TestCase):
         self.assertNotContains(response, "related-objects-tab")
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class MediaPermissionAdminTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -1829,12 +1901,73 @@ class MediaPermissionAdminTest(TestCase):
     def test_list_is_not_editable_but_supports_bulk_delete(self):
         model_admin = admin.site._registry[MediaPermission]
         self.assertFalse(getattr(model_admin, "list_editable", ()))
+        self.assertEqual(model_admin.list_display_links, ("display_id",))
 
         response = self.client.get(reverse("admin:files_mediapermission_changelist"))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'name="form-0-permission"')
         self.assertContains(response, 'name="_selected_action"')
         self.assertContains(response, 'value="delete_selected"')
+        self.assertContains(response, reverse("admin:files_mediapermission_change", args=[self.permission.pk]))
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertContains(response, "changelist-id-link")
+        self.assertContains(response, "fas fa-search")
+        self.assertContains(response, "fas fa-eye")
+        self.assertContains(response, 'aria-label="Viewer"')
+        self.assertContains(response, "fas fa-user-check")
+        self.assertContains(response, 'aria-label="Explicit"')
+        self.assertContains(response, reverse("get_media") + f"?m={self.media.friendly_token}")
+
+    def test_created_at_is_optional_and_id_sorts_ascending(self):
+        model_admin = admin.site._registry[MediaPermission]
+        self.assertEqual(model_admin.ordering, ("id",))
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        request.session = {}
+        self.assertEqual(
+            model_admin.get_list_display(request),
+            ["display_id", "link_media", "link_user", "link_owner", "display_permission", "display_source", "open_on_site"],
+        )
+
+        url = reverse("admin:files_mediapermission_changelist")
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertNotIn("field-created_at", html)
+        self.assertLess(html.find('class="mediapermission-column-chooser'), html.find('id="changelist-form"'))
+        self.assertNotIn("mediapermission-column-chooser admin-column-chooser card card-outline card-secondary mb-3\" open", html)
+        self.assertContains(response, 'value="created_at"')
+        self.assertContains(response, "Created at")
+        id_header = html.split("column-display_id", 1)[1].split("</th>", 1)[0]
+        self.assertIn("fa-sort-alpha-down", id_header)
+
+        older = MediaPermission.objects.create(
+            media=self.media,
+            user=make_user("media_permission_older"),
+            owner_user=self.superuser,
+            permission="editor",
+        )
+        response = self.client.get(url)
+        ids = [obj.pk for obj in response.context["cl"].result_list]
+        self.assertIn(older.pk, ids)
+        self.assertEqual(ids, sorted(ids))
+
+        response = self.client.get(url, {"set_mediapermission_columns": "1", "mediapermission_col": "created_at", "q": "permission"})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("q=permission", response["Location"])
+        self.assertNotIn("set_mediapermission_columns", response["Location"])
+
+        response = self.client.get(url, {"q": "permission"})
+        display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
+        self.assertEqual(display[0], "created_at")
+        self.assertIn("field-created_at", response.content.decode())
+        id_header = response.content.decode().split("column-display_id", 1)[1].split("</th>", 1)[0]
+        self.assertIn("fa-sort-alpha-down", id_header)
+
+        response = self.client.get(url, {"reset_mediapermission_columns": "1", "q": "permission"})
+        self.assertEqual(response.status_code, 302)
+        response = self.client.get(url, {"q": "permission"})
+        self.assertNotIn("field-created_at", response.content.decode())
 
 
 class LanguageAdminTest(TestCase):
@@ -1952,6 +2085,11 @@ class MediaRelationshipNavigationTest(TestCase):
         self.assertContains(response, "changelist-clipped-text__full")
         self.assertContains(response, "First line of the comment.")
         self.assertContains(response, "visible on media change")
+        self.assertContains(response, "changelist-text-with-link")
+        self.assertContains(response, reverse("admin:files_comment_change", args=[self.comment.pk]))
+        self.assertContains(response, reverse("get_media") + f"?m={self.media.friendly_token}")
+        linked = response.content.decode().split('class="changelist-text-with-link"', 1)[1]
+        self.assertNotIn("open-on-site", linked.split("</a>", 1)[0])
         preview = response.content.decode().split('changelist-clipped-text__preview">', 1)[1].split("<", 1)[0]
         self.assertLessEqual(len(preview), ADMIN_CLIPPED_TEXT_LENGTH)
         self.assertTrue(preview.endswith("…"))
@@ -1993,3 +2131,29 @@ class MediaRelationshipNavigationTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, reverse("admin:files_media_changelist"))
         self.assertContains(response, f"user__id__exact={self.superuser.pk}")
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
+class EmailAddressAdminTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = make_user("email_admin_root", is_superuser=True, name="Email Admin")
+        cls.member = make_user("email_member", name="Member Person")
+        EmailAddress.objects.create(user=cls.superuser, email=cls.superuser.email, primary=True, verified=True)
+        EmailAddress.objects.create(user=cls.member, email=cls.member.email, primary=False, verified=False)
+
+    def setUp(self):
+        self.client.force_login(self.superuser)
+
+    def test_changelist_uses_status_icons_and_username(self):
+        response = self.client.get(reverse("admin:account_emailaddress_changelist"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "fa-star")
+        self.assertContains(response, "fa-check-circle")
+        self.assertContains(response, "fa-times-circle")
+        self.assertContains(response, "fa-minus")
+        self.assertNotContains(response, "icon-yes.svg")
+        self.assertNotContains(response, f"{self.member.name} - {self.member.email}")
+        self.assertContains(response, self.member.username)
+        self.assertContains(response, "column-display_primary")
+        self.assertContains(response, "column-display_verified")

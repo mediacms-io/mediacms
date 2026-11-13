@@ -711,6 +711,28 @@ def media_init(friendly_token):
     return True
 
 
+@task(name="refresh_media_metadata", queue="long_tasks")
+def refresh_media_metadata(friendly_token, user_id=None):
+    """Fill missing media/encoding metadata and record integrity audits."""
+    from files.metadata_integrity import refresh_and_check_media
+
+    try:
+        media = Media.objects.get(friendly_token=friendly_token)
+    except Media.DoesNotExist:
+        logger.info("failed to get media with friendly_token %s" % friendly_token)
+        return False
+
+    user = None
+    if user_id:
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            user = None
+
+    refresh_and_check_media(media, user=user)
+    return True
+
+
 @task(name="check_running_states", queue="short_tasks")
 def check_running_states():
     # Experimental - unused

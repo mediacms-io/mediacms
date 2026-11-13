@@ -102,12 +102,14 @@
                                         </h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table moderation-person moderation-reports site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Reporter"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -127,10 +129,20 @@
                                                                 {{ report.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ report.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ report.action_date|relative_when }}</td>
+                                                        <td>
+                                                            {% if report.media__friendly_token %}
+                                                                <a href="{% url 'get_media' %}?m={{ report.media__friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            {% if report.latest_report_id %}
+                                                                <a href="{% url 'admin:actions_mediaaction_change' report.latest_report_id %}" class="open-on-site" title="{{ 'View latest report'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'View latest report'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-flag fa-sm" aria-hidden="true"></i></a>
+                                                            {% endif %}
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="5">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -145,13 +157,14 @@
                                         </h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table moderation-audit site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Audit"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -173,15 +186,20 @@
                                                         </td>
                                                         <td>
                                                             {% if audit.id %}
-                                                                <a href="{% url 'admin:actions_mediaaction_change' audit.id %}">{{ audit.action_label|custom_translate:LANGUAGE_CODE }}</a>
+                                                                <a href="{% url 'admin:actions_mediaaction_change' audit.id %}" class="changelist-status-icon changelist-status-icon--{{ audit.action_modifier }}" title="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}" aria-label="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}"><i class="{{ audit.action_icon }}" aria-hidden="true"></i></a>
                                                             {% else %}
-                                                                {{ audit.action_label|custom_translate:LANGUAGE_CODE }}
+                                                                <span class="changelist-status-icon changelist-status-icon--{{ audit.action_modifier }}" title="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}" aria-label="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}"><i class="{{ audit.action_icon }}" aria-hidden="true"></i></span>
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ audit.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ audit.action_date|relative_when }}</td>
+                                                        <td>
+                                                            {% if audit.media__friendly_token %}
+                                                                <a href="{% url 'get_media' %}?m={{ audit.media__friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                                            {% endif %}
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="5">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -196,12 +214,13 @@
                                         </h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table moderation-person moderation-open site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -215,10 +234,15 @@
                                                                 {{ media.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ media.add_date|relative_when }}</td>
+                                                        <td>
+                                                            {% if media.friendly_token %}
+                                                                <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                                            {% endif %}
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -233,12 +257,13 @@
                                         </h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table moderation-person moderation-open site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -258,10 +283,15 @@
                                                                 {{ approval.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ approval.action_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ approval.action_date|relative_when }}</td>
+                                                        <td>
+                                                            {% if approval.media__friendly_token %}
+                                                                <a href="{% url 'get_media' %}?m={{ approval.media__friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                                            {% endif %}
+                                                        </td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>

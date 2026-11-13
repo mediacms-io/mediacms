@@ -1,0 +1,38 @@
+{% load i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="dashboard-switcher mb-3">
+    <div class="btn-group flex-wrap" role="group" aria-label="{{ 'Dashboard'|custom_translate:LANGUAGE_CODE }}">
+        <a href="{% url 'admin:index' %}" class="btn btn-sm {% if not dashboard_section %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Dashboard"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'moderation' %}" class="btn btn-sm {% if dashboard_section == 'moderation' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'people' %}" class="btn btn-sm {% if dashboard_section == 'people' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "People"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'library' %}" class="btn btn-sm {% if dashboard_section == 'library' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Library"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'processing' %}" class="btn btn-sm {% if dashboard_section == 'processing' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Processing"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'engagement' %}" class="btn btn-sm {% if dashboard_section == 'engagement' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'site' %}" class="btn btn-sm {% if dashboard_section == 'site' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Site"|custom_translate:LANGUAGE_CODE }}</a>
+    </div>
+    <div class="dashboard-switcher-refresh">
+        {% if dashboard_stats.generated_at %}
+            <span class="dashboard-switcher-updated">{{ "Updated at"|custom_translate:LANGUAGE_CODE }} <time datetime="{{ dashboard_stats.generated_at|date:'c' }}">{{ dashboard_stats.generated_at|date:"M j, Y g:i A" }}</time></span>
+        {% endif %}
+        <a class="btn btn-sm btn-outline-secondary" href="?refresh_stats=1"><i class="fas fa-sync-alt" aria-hidden="true"></i> {{ "Refresh stats"|custom_translate:LANGUAGE_CODE }}</a>
+    </div>
+</div>
+<style>
+    .dashboard-switcher {
+        display: flex;
+        flex-wrap: wrap-reverse;
+        align-items: center;
+        gap: 0.75rem 1rem;
+        width: 100%;
+    }
+    .dashboard-switcher-refresh {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .dashboard-switcher-updated {
+        color: #6c757d;
+        white-space: nowrap;
+    }
+</style>

@@ -10,9 +10,12 @@ from admin_customizations.action_choices import (
     build_grouped_action_choices,
 )
 from files.admin_helpers import (
+    MEDIA_ACTION_ICONS,
+    OpenOnSiteMixin,
     TranslateChoiceLabelsMixin,
     admin_change_link,
     admin_change_url,
+    admin_status_icon,
     clipped_admin_text,
     translated_choice_display,
 )
@@ -46,8 +49,10 @@ MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATI
 
 
 @admin.register(MediaAction)
-class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
+class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelAdmin):
     """Append-only audit of user/moderation actions. View and delete (or clear reports); never edit."""
+
+    open_on_site_uses_media = True
 
     change_list_template = "admin/actions/mediaaction/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in.
@@ -113,7 +118,8 @@ class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
         optional = self._optional_column_keys()
-        return [column for column in self.list_display if column not in optional or column in visible_optional]
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_mediaaction_columns") == "1" or request.GET.get("set_mediaaction_columns") == "1"):
@@ -170,7 +176,9 @@ class MediaActionAdmin(TranslateChoiceLabelsMixin, admin.ModelAdmin):
 
     @admin.display(description="Action", ordering="action")
     def display_action(self, obj):
-        return translated_choice_display(obj, "action")
+        label = translated_choice_display(obj, "action")
+        icon, modifier = MEDIA_ACTION_ICONS.get(obj.action, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):

@@ -18,6 +18,8 @@ MODERATION_MEDIA_ACTIONS = (
     ("media_reviewed", "Media reviewed"),
     ("media_unreviewed", "Media unreviewed"),
     ("original_deleted", "Original deleted"),
+    ("metadata_refresh", "Metadata refreshed"),
+    ("integrity_warning", "Integrity warning"),
 )
 
 USER_MEDIA_ACTIONS = PUBLIC_USER_MEDIA_ACTIONS + MODERATION_MEDIA_ACTIONS

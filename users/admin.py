@@ -1,5 +1,7 @@
 from datetime import timedelta
 
+from allauth.account.admin import EmailAddressAdmin as AllauthEmailAddressAdmin
+from allauth.account.models import EmailAddress
 from django.conf import settings
 from django.contrib import admin, messages
 from django.db.models import Count
@@ -11,7 +13,13 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
-from files.admin_helpers import admin_change_link, admin_changelist_link, admin_text
+from files.admin_helpers import (
+    OpenOnSiteMixin,
+    admin_change_link,
+    admin_changelist_link,
+    admin_status_icon,
+    admin_text,
+)
 from files.frontend_translations import translate_string
 from files.models import Comment, Media, Playlist
 
@@ -63,7 +71,7 @@ class RegularUserFilter(admin.SimpleListFilter):
         return queryset
 
 
-class UserAdmin(admin.ModelAdmin):
+class UserAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     change_list_template = "admin/users/user/change_list.html"
     search_fields = ["email", "username", "name"]
     exclude = [
@@ -146,7 +154,8 @@ class UserAdmin(admin.ModelAdmin):
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
         optional = self._optional_column_keys()
-        return [column for column in self.list_display if column not in optional or column in visible_optional]
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_user_columns") == "1" or request.GET.get("set_user_columns") == "1"):
@@ -353,7 +362,7 @@ class UserAdmin(admin.ModelAdmin):
     actions = [approve_users, unapprove_users, deactivate_users, reactivate_users]
 
 
-class ChannelAdmin(admin.ModelAdmin):
+class ChannelAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     search_fields = ["title", "friendly_token", "user__username"]
     change_list_template = "admin/users/channel/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in.
@@ -418,7 +427,8 @@ class ChannelAdmin(admin.ModelAdmin):
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
         optional = self._optional_column_keys()
-        return [column for column in self.list_display if column not in optional or column in visible_optional]
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_channel_columns") == "1" or request.GET.get("set_channel_columns") == "1"):
@@ -484,3 +494,31 @@ class ChannelAdmin(admin.ModelAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Channel, ChannelAdmin)
+
+
+class EmailAddressAdmin(AllauthEmailAddressAdmin):
+    """Email changelist that fits the card and uses status icons for the flags."""
+
+    list_display = ("email", "link_user", "display_primary", "display_verified")
+    list_display_links = ("email",)
+    list_select_related = ("user",)
+
+    @admin.display(description="User", ordering="user__username")
+    def link_user(self, obj):
+        return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="Primary", ordering="primary")
+    def display_primary(self, obj):
+        if obj.primary:
+            return admin_status_icon("fas fa-star", admin_text(None, "Yes"), modifier="primary")
+        return admin_status_icon("fas fa-minus", admin_text(None, "No"), modifier="not-listable")
+
+    @admin.display(description="Verified", ordering="verified")
+    def display_verified(self, obj):
+        if obj.verified:
+            return admin_status_icon("fas fa-check-circle", admin_text(None, "Yes"), modifier="success")
+        return admin_status_icon("fas fa-times-circle", admin_text(None, "No"), modifier="fail")
+
+
+admin.site.unregister(EmailAddress)
+admin.site.register(EmailAddress, EmailAddressAdmin)

@@ -19,14 +19,22 @@ from admin_customizations.action_choices import (
 )
 from files.admin_helpers import (
     MEDIA_ENCODING_STATUS_ICONS,
+    MEDIA_PERMISSION_ICONS,
+    MEDIA_PERMISSION_SOURCE_ICONS,
     MEDIA_STATE_STATUS_ICONS,
     MEDIA_TYPE_STATUS_ICONS,
+    TRIM_ACTION_ICONS,
+    TRIM_STATUS_ICONS,
+    TRIM_STYLE_ICONS,
+    OpenOnSiteMixin,
     TranslateChoiceLabelsMixin,
     TranslateManyToManyHelpMixin,
     admin_change_link,
     admin_change_url,
     admin_changelist_link,
     admin_changelist_url,
+    admin_inspect_id,
+    admin_open_on_site_link,
     admin_status_icon,
     admin_text,
     clipped_admin_text,
@@ -38,6 +46,10 @@ from files.integrity import (
     INTEGRITY_CHECKS,
     INTEGRITY_FILTER_PARAM,
     get_integrity_check,
+)
+from files.metadata_integrity import (
+    MISSING_METADATA_FILTER_PARAM,
+    qs_missing_media_metadata,
 )
 from files.methods import (
     can_delete_original_media_file,
@@ -131,10 +143,25 @@ class IntegrityIssuesFilter(admin.SimpleListFilter):
         return queryset.filter(pk__in=check.queryset().values("pk"))
 
 
+class MissingMetadataFilter(admin.SimpleListFilter):
+    title = "Missing metadata"
+    parameter_name = MISSING_METADATA_FILTER_PARAM
+
+    def lookups(self, request, model_admin):
+        return (("1", "Missing md5sum or size"),)
+
+    def queryset(self, request, queryset):
+        if self.value() == "1":
+            return queryset.filter(pk__in=qs_missing_media_metadata().values("pk"))
+        return queryset
+
+
 class CommentAdmin(admin.ModelAdmin):
     search_fields = ["text", "user__username", "media__title"]
     list_display = ["add_date", "link_media", "link_user", "display_text"]
-    list_display_links = ("display_text",)
+    # The text cell draws its own change link beside the open-on-site eye.
+    # Django's wrapper would nest those anchors and drop the eye onto a second line.
+    list_display_links = None
     list_filter = ["add_date", ("media", admin.RelatedOnlyFieldListFilter), ("user", admin.RelatedOnlyFieldListFilter)]
     list_select_related = ("user", "media")
     ordering = ("-add_date",)
@@ -153,7 +180,14 @@ class CommentAdmin(admin.ModelAdmin):
 
     @admin.display(description="Text", ordering="text")
     def display_text(self, obj):
-        return clipped_admin_text(obj.text)
+        text = format_html('<a href="{}">{}</a>', reverse("admin:files_comment_change", args=[obj.pk]), clipped_admin_text(obj.text))
+        if not obj.media_id:
+            return text
+        return format_html(
+            '<span class="changelist-text-with-link">{}{}</span>',
+            text,
+            admin_open_on_site_link(obj.get_absolute_url()),
+        )
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
@@ -172,7 +206,7 @@ class CommentAdmin(admin.ModelAdmin):
         )
 
 
-class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin.ModelAdmin):
+class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin.ModelAdmin):
     search_fields = ["title", "user__username", "friendly_token"]
     change_list_template = "admin/files/media/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
@@ -200,7 +234,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         ("is_reviewed", "Is reviewed", ("is_reviewed__exact",)),
         ("featured", "Featured", ("featured__exact",)),
         ("get_comments_count", "Comments", ()),
-        ("get_encodings_count", "Encodings", ("encoding_status__exact", "encoding_queue", INTEGRITY_FILTER_PARAM)),
+        ("get_encodings_count", "Encodings", ("encoding_status__exact", "encoding_queue", INTEGRITY_FILTER_PARAM, MISSING_METADATA_FILTER_PARAM)),
         ("display_reported_times", "Reported times", ("reported",)),
         ("allow_download", "Allow download", ("allow_download__exact",)),
         ("enable_comments", "Allow comments", ("enable_comments__exact",)),
@@ -213,6 +247,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         "encoding_status",
         EncodingQueueFilter,
         IntegrityIssuesFilter,
+        MissingMetadataFilter,
         "featured",
         "listable",
         "media_type",
@@ -240,6 +275,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
             "regenerate_preview",
             "regenerate_hls",
             "refresh_derivatives",
+            "refresh_metadata_check_integrity",
         ],
         [
             "mark_as_reviewed",
@@ -309,7 +345,8 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
 
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
-        return [column for column in self.list_display if column not in self._optional_column_keys() or column in visible_optional]
+        columns = [column for column in self.list_display if column not in self._optional_column_keys() or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def get_list_editable(self, request):
         display = set(self.get_list_display(request))
@@ -935,6 +972,25 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
             messages.SUCCESS if done else messages.WARNING,
         )
 
+    @admin.action(description="Refresh metadata / check integrity", permissions=["change"])
+    def refresh_metadata_check_integrity(self, request, queryset):
+        from files.tasks import refresh_media_metadata
+
+        queued = 0
+        user_id = getattr(request.user, "pk", None)
+        for m in queryset:
+            refresh_media_metadata.delay(m.friendly_token, user_id)
+            queued += 1
+        self.message_user(
+            request,
+            admin_text(
+                getattr(request, "LANGUAGE_CODE", None),
+                "Queued metadata refresh / integrity check for {queued} media item(s).",
+                queued=queued,
+            ),
+            messages.SUCCESS if queued else messages.WARNING,
+        )
+
     def save_model(self, request, obj, form, change):
         previous_reviewed = None
         if change and obj.pk:
@@ -1161,6 +1217,7 @@ class MediaAdmin(TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin
         regenerate_preview,
         regenerate_hls,
         refresh_derivatives,
+        refresh_metadata_check_integrity,
         mark_as_reviewed,
         mark_as_unreviewed,
         clear_reports,
@@ -1250,7 +1307,7 @@ class CategoryAdminForm(forms.ModelForm):
             rbac_group.categories.remove(self.instance)
 
 
-class CategoryAdmin(admin.ModelAdmin):
+class CategoryAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     form = CategoryAdminForm
 
     search_fields = ["title", "uid"]
@@ -1317,7 +1374,7 @@ class CategoryAdmin(admin.ModelAdmin):
         for offset, column in enumerate(extras):
             list_display.insert(insert_at + offset, column)
 
-        return list_display
+        return self._append_open_on_site(list_display)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_category_columns") == "1" or request.GET.get("set_category_columns") == "1"):
@@ -1431,7 +1488,7 @@ class CategoryAdmin(admin.ModelAdmin):
         return admin_changelist_link(Media, str(count), category__id__exact=obj.pk)
 
 
-class TagAdmin(admin.ModelAdmin):
+class TagAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     search_fields = ["title"]
     change_list_template = "admin/files/tag/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in.
@@ -1482,7 +1539,8 @@ class TagAdmin(admin.ModelAdmin):
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
         optional = self._optional_column_keys()
-        return [column for column in self.list_display if column not in optional or column in visible_optional]
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_tag_columns") == "1" or request.GET.get("set_tag_columns") == "1"):
@@ -1610,7 +1668,8 @@ class LanguageAdmin(admin.ModelAdmin):
         return admin_changelist_link(Subtitle, str(count), language__id__exact=obj.pk)
 
 
-class SubtitleAdmin(admin.ModelAdmin):
+class SubtitleAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+    open_on_site_uses_media = True
     list_display = ["id", "link_language", "link_media", "link_user"]
     list_filter = ["language"]
     search_fields = ["media__title", "user__username"]
@@ -1640,11 +1699,12 @@ class SubtitleAdmin(admin.ModelAdmin):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
 
-class VideoTrimRequestAdmin(admin.ModelAdmin):
+class VideoTrimRequestAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+    open_on_site_uses_media = True
     """Pipeline request snapshot. Inspect or delete; do not rewrite request params or status."""
 
-    list_display = ["add_date", "id", "link_media", "display_status", "display_video_action", "display_media_trim_style"]
-    list_display_links = ("id", "display_status")
+    list_display = ["add_date", "display_id", "link_media", "display_status", "display_video_action", "display_media_trim_style"]
+    list_display_links = ("display_id", "display_status")
     list_filter = ["status", "video_action", "media_trim_style", "add_date"]
     search_fields = ["media__title"]
     list_select_related = ("media",)
@@ -1667,24 +1727,43 @@ class VideoTrimRequestAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    @admin.display(description="ID", ordering="id")
+    def display_id(self, obj):
+        return admin_inspect_id(obj.pk)
+
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
-        return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
+        if not obj.media_id:
+            return "—"
+        title = obj.media.title
+        return format_html(
+            '<a href="{}" title="{}">{}</a>',
+            admin_change_url(obj.media),
+            title,
+            clipped_admin_text(title, always_tooltip=True),
+        )
 
     @admin.display(description="status", ordering="status")
     def display_status(self, obj):
-        return translated_choice_display(obj, "status")
+        label = translated_choice_display(obj, "status")
+        icon, modifier = TRIM_STATUS_ICONS.get(obj.status, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
     @admin.display(description="video action", ordering="video_action")
     def display_video_action(self, obj):
-        return translated_choice_display(obj, "video_action")
+        label = translated_choice_display(obj, "video_action")
+        icon, modifier = TRIM_ACTION_ICONS.get(obj.video_action, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
     @admin.display(description="media trim style", ordering="media_trim_style")
     def display_media_trim_style(self, obj):
-        return translated_choice_display(obj, "media_trim_style")
+        label = translated_choice_display(obj, "media_trim_style")
+        icon, modifier = TRIM_STYLE_ICONS.get(obj.media_trim_style, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
 
-class EncodingAdmin(admin.ModelAdmin):
+class EncodingAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+    open_on_site_uses_media = True
     """Encoding job rows are pipeline-owned. Inspect or retry/delete; do not hand-edit state."""
 
     change_list_template = "admin/files/encoding/change_list.html"
@@ -1741,7 +1820,8 @@ class EncodingAdmin(admin.ModelAdmin):
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
         optional = self._optional_column_keys()
-        return [column for column in self.list_display if column not in optional or column in visible_optional]
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_encoding_columns") == "1" or request.GET.get("set_encoding_columns") == "1"):
@@ -1848,11 +1928,12 @@ class EncodingAdmin(admin.ModelAdmin):
         )
 
 
-class TranscriptionRequestAdmin(admin.ModelAdmin):
+class TranscriptionRequestAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+    open_on_site_uses_media = True
     """Whisper caption request snapshot. Inspect or delete; do not rewrite request params or logs."""
 
-    list_display = ["add_date", "id", "link_media", "display_status", "translate_to_english"]
-    list_display_links = ("id", "link_media")
+    list_display = ["add_date", "display_id", "link_media", "display_status", "display_translate_to_english"]
+    list_display_links = ("display_id",)
     list_filter = ["status", "translate_to_english", "add_date"]
     search_fields = ["media__title", "logs"]
     list_select_related = ("media",)
@@ -1875,13 +1956,33 @@ class TranscriptionRequestAdmin(admin.ModelAdmin):
     def has_change_permission(self, request, obj=None):
         return False
 
+    @admin.display(description="ID", ordering="id")
+    def display_id(self, obj):
+        return admin_inspect_id(obj.pk)
+
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
-        return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
+        if not obj.media_id:
+            return "—"
+        title = obj.media.title
+        return format_html(
+            '<a href="{}" title="{}">{}</a>',
+            admin_change_url(obj.media),
+            title,
+            clipped_admin_text(title, always_tooltip=True),
+        )
 
     @admin.display(description="status", ordering="status")
     def display_status(self, obj):
-        return translated_choice_display(obj, "status")
+        label = translated_choice_display(obj, "status")
+        icon, modifier = MEDIA_ENCODING_STATUS_ICONS.get(obj.status, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
+
+    @admin.display(description="Translate to English", ordering="translate_to_english")
+    def display_translate_to_english(self, obj):
+        if obj.translate_to_english:
+            return admin_status_icon("fas fa-language", admin_text(None, "Yes"), modifier="running")
+        return admin_status_icon("fas fa-minus", admin_text(None, "No"), modifier="not-listable")
 
 
 class PageAdminForm(forms.ModelForm):
@@ -1898,7 +1999,7 @@ class PageAdminForm(forms.ModelForm):
         fields = "__all__"
 
 
-class PageAdmin(admin.ModelAdmin):
+class PageAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     form = PageAdminForm
     search_fields = ["title", "slug"]
     list_display = ["title", "link_slug", "page_url"]
@@ -1930,7 +2031,7 @@ class PageAdmin(admin.ModelAdmin):
         return format_html('<a href="{0}" target="_blank" rel="noopener noreferrer">{0}</a>', url)
 
 
-class PlaylistAdmin(admin.ModelAdmin):
+class PlaylistAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     search_fields = ["title", "friendly_token", "user__username"]
     change_list_template = "admin/files/playlist/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in.
@@ -1988,7 +2089,8 @@ class PlaylistAdmin(admin.ModelAdmin):
     def get_list_display(self, request):
         visible_optional = self._visible_optional_columns(request)
         optional = self._optional_column_keys()
-        return [column for column in self.list_display if column not in optional or column in visible_optional]
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
 
     def changelist_view(self, request, extra_context=None):
         if request.method == "GET" and (request.GET.get("reset_playlist_columns") == "1" or request.GET.get("set_playlist_columns") == "1"):
@@ -2052,15 +2154,20 @@ class PlaylistAdmin(admin.ModelAdmin):
         return admin_changelist_link(Media, str(count), playlist__id__exact=obj.pk)
 
 
-class MediaPermissionAdmin(admin.ModelAdmin):
-    list_display = ["created_at", "id", "link_media", "link_user", "link_owner", "display_permission", "display_source"]
-    list_display_links = ("id", "link_media")
+class MediaPermissionAdmin(OpenOnSiteMixin, admin.ModelAdmin):
+    open_on_site_uses_media = True
+    change_list_template = "admin/files/mediapermission/change_list.html"
+    # Full column set; get_list_display() hides optional ones unless opted-in.
+    list_display = ["created_at", "display_id", "link_media", "link_user", "link_owner", "display_permission", "display_source"]
+    list_display_links = ("display_id",)
+    optional_list_columns = (("created_at", "Created at", ()),)
+    optional_columns_session_key = "mediacms_mediapermission_admin_optional_columns"
     list_filter = ["permission", "source", ("media", admin.RelatedOnlyFieldListFilter)]
     search_fields = ["media__title", "user__username", "owner_user__username"]
     list_select_related = ("media", "user", "owner_user")
     autocomplete_fields = ("media", "user", "owner_user")
     readonly_fields = ("created_at",)
-    ordering = ("-created_at",)
+    ordering = ("id",)
     fieldsets = (
         (
             "Permission",
@@ -2071,9 +2178,88 @@ class MediaPermissionAdmin(admin.ModelAdmin):
         ),
     )
 
+    def _optional_column_keys(self):
+        return {key for key, _label, _filters in self.optional_list_columns}
+
+    def _session_optional_columns(self, request):
+        stored = request.session.get(self.optional_columns_session_key)
+        if stored is None:
+            return set()
+        allowed = self._optional_column_keys()
+        return {key for key in stored if key in allowed}
+
+    def _filter_enabled_optional_columns(self, request):
+        enabled = set()
+        for key, _label, filter_params in self.optional_list_columns:
+            if any(request.GET.get(param) not in (None, "") for param in filter_params):
+                enabled.add(key)
+        return enabled
+
+    def _visible_optional_columns(self, request):
+        return self._session_optional_columns(request) | self._filter_enabled_optional_columns(request)
+
+    def get_list_display(self, request):
+        visible_optional = self._visible_optional_columns(request)
+        optional = self._optional_column_keys()
+        columns = [column for column in self.list_display if column not in optional or column in visible_optional]
+        return self._append_open_on_site(columns)
+
+    def changelist_view(self, request, extra_context=None):
+        set_columns = request.GET.get("set_mediapermission_columns") == "1"
+        reset_columns = request.GET.get("reset_mediapermission_columns") == "1"
+        if request.method == "GET" and (set_columns or reset_columns):
+            if reset_columns:
+                request.session.pop(self.optional_columns_session_key, None)
+            else:
+                allowed = self._optional_column_keys()
+                selected = [key for key in request.GET.getlist("mediapermission_col") if key in allowed]
+                request.session[self.optional_columns_session_key] = selected
+            request.session.modified = True
+            params = request.GET.copy()
+            params.pop("set_mediapermission_columns", None)
+            params.pop("reset_mediapermission_columns", None)
+            params.pop("mediapermission_col", None)
+            query = params.urlencode()
+            url = request.path
+            if query:
+                url = f"{url}?{query}"
+            return HttpResponseRedirect(url)
+
+        extra_context = extra_context or {}
+        visible = self._visible_optional_columns(request)
+        filter_forced = self._filter_enabled_optional_columns(request)
+        lang = getattr(request, "LANGUAGE_CODE", "en")
+        extra_context["mediapermission_optional_columns"] = [
+            {
+                "key": key,
+                "label": translate_string(lang, label),
+                "checked": key in visible,
+                "filter_forced": key in filter_forced,
+            }
+            for key, label, _filters in self.optional_list_columns
+        ]
+        preserved = request.GET.copy()
+        preserved.pop("set_mediapermission_columns", None)
+        preserved.pop("reset_mediapermission_columns", None)
+        preserved.pop("mediapermission_col", None)
+        extra_context["mediapermission_column_chooser_preserved_qsl"] = list(preserved.items())
+        return super().changelist_view(request, extra_context=extra_context)
+
+    @admin.display(description="ID", ordering="id")
+    def display_id(self, obj):
+        return admin_inspect_id(obj.pk)
+
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
-        return admin_change_link(obj.media, obj.media.title if obj.media_id else None)
+        if not obj.media_id:
+            return "—"
+        title = obj.media.title
+        return format_html(
+            '<a href="{}" title="{}">{}</a>',
+            admin_change_url(obj.media),
+            title,
+            clipped_admin_text(title, always_tooltip=True),
+        )
 
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
@@ -2085,11 +2271,15 @@ class MediaPermissionAdmin(admin.ModelAdmin):
 
     @admin.display(description="permission", ordering="permission")
     def display_permission(self, obj):
-        return translated_choice_display(obj, "permission")
+        label = translated_choice_display(obj, "permission")
+        icon, modifier = MEDIA_PERMISSION_ICONS.get(obj.permission, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
     @admin.display(description="source", ordering="source")
     def display_source(self, obj):
-        return translated_choice_display(obj, "source")
+        label = translated_choice_display(obj, "source")
+        icon, modifier = MEDIA_PERMISSION_SOURCE_ICONS.get(obj.source, ("fas fa-question-circle", "unknown"))
+        return admin_status_icon(icon, label, modifier=modifier)
 
 
 class LicenseAdmin(admin.ModelAdmin):

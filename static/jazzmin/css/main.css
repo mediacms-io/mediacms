@@ -86,6 +86,10 @@ div.inline-related {
     font-size: 1rem;
 }
 
+.changelist-status-icon--primary {
+    color: #d97706;
+}
+
 .changelist-status-icon--success,
 .changelist-status-icon--public,
 .changelist-status-icon--listable {
@@ -191,10 +195,24 @@ div.inline-related {
 }
 
 #result_list thead th .changelist-header-label__title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+#result_list thead th .changelist-header-label__text {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+#result_list thead th .changelist-sort-hint {
+    flex: 0 0 auto;
+    opacity: 0.55;
+    font-size: 0.75rem;
 }
 
 #result_list thead th .changelist-sort-controls {
@@ -219,6 +237,111 @@ div.inline-related {
 
 #result_list thead th .changelist-sort-clear:hover {
     color: #dc3545;
+}
+
+#result_list .open-on-site {
+    color: #6c757d;
+}
+
+#result_list .open-on-site:hover,
+#result_list .open-on-site:focus {
+    color: #007bff;
+}
+
+#result_list td.field-open_on_site,
+#result_list th.column-open_on_site,
+#result_list td.field-is_active,
+#result_list th.column-is_active,
+#result_list td.field-is_superuser,
+#result_list th.column-is_superuser,
+#result_list td.field-is_editor,
+#result_list th.column-is_editor,
+#result_list td.field-is_manager,
+#result_list th.column-is_manager,
+#result_list td.field-is_staff,
+#result_list th.column-is_staff,
+#result_list td.field-is_approved,
+#result_list th.column-is_approved,
+#result_list td.field-is_rbac_category,
+#result_list th.column-is_rbac_category,
+#result_list td.field-is_lms_course,
+#result_list th.column-is_lms_course,
+#result_list td.field-display_video_action,
+#result_list th.column-display_video_action,
+#result_list td.field-display_media_trim_style,
+#result_list th.column-display_media_trim_style,
+#result_list td.field-display_translate_to_english,
+#result_list th.column-display_translate_to_english {
+    text-align: center;
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+#result_list th.column-open_on_site .changelist-header-label,
+#result_list th.column-display_media_type .changelist-header-label,
+#result_list th.column-display_state .changelist-header-label,
+#result_list th.column-display_encoding_status .changelist-header-label,
+#result_list th.column-display_listable .changelist-header-label,
+#result_list th.column-display_reported_times .changelist-header-label,
+#result_list th.column-display_status .changelist-header-label,
+#result_list th.column-display_chunk .changelist-header-label,
+#result_list th.column-has_file .changelist-header-label,
+#result_list th.column-display_video_action .changelist-header-label,
+#result_list th.column-display_media_trim_style .changelist-header-label,
+#result_list th.column-display_translate_to_english .changelist-header-label,
+#result_list th.column-is_active .changelist-header-label,
+#result_list th.column-is_superuser .changelist-header-label,
+#result_list th.column-is_editor .changelist-header-label,
+#result_list th.column-is_manager .changelist-header-label,
+#result_list th.column-is_staff .changelist-header-label,
+#result_list th.column-is_approved .changelist-header-label,
+#result_list th.column-is_rbac_category .changelist-header-label,
+#result_list th.column-is_lms_course .changelist-header-label,
+#result_list th.column-display_permission .changelist-header-label,
+#result_list th.column-display_source .changelist-header-label,
+#result_list th.column-display_action .changelist-header-label {
+    justify-content: center;
+}
+
+.changelist-text-with-link {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+}
+
+.changelist-text-with-link .changelist-clipped-text,
+.changelist-text-with-link > :not(.open-on-site) {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.changelist-text-with-link .open-on-site {
+    flex: 0 0 auto;
+}
+
+.admin-column-chooser > summary {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    list-style: none;
+}
+
+.admin-column-chooser > summary::-webkit-details-marker {
+    display: none;
+}
+
+.admin-column-chooser > summary::before {
+    content: "\f054";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    margin-inline-end: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.admin-column-chooser[open] > summary::before {
+    content: "\f078";
 }
 
 .empty-form {
@@ -1592,8 +1715,10 @@ code.media-id {
 }
 
 /*
- * Media changelist: fixed layout keeps many optional columns on one line.
- * Title takes leftover width with clipped-text hover; count/status cells stay narrow.
+ * Media changelist: the table stays within the card. Title takes leftover width
+ * and may shrink to almost nothing (max-width: 0 stops the full title from
+ * setting a column minimum). Default icon columns stay icon-sized so their
+ * header labels do not force horizontal scrolling.
  * list_display_links renders the title as tbody th.field-display_title.
  */
 .model-media.change-list #result_list {
@@ -1601,25 +1726,73 @@ code.media-id {
     width: 100%;
 }
 
-.model-media.change-list #result_list th:first-child,
+.model-media.change-list #result_list th,
+.model-media.change-list #result_list td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-media.change-list #result_list th.action-checkbox-column,
 .model-media.change-list #result_list td.action-checkbox {
-    width: 2.75rem;
+    width: 3.25rem;
+}
+
+.model-media.change-list .card-body.table-responsive {
+    container-type: inline-size;
 }
 
 .model-media.change-list #result_list th.column-add_date,
 .model-media.change-list #result_list td.field-add_date {
-    width: 9.75rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    width: 12.25rem;
+}
+
+@container (max-width: 40rem) {
+    .model-media.change-list #result_list th.column-add_date,
+    .model-media.change-list #result_list td.field-add_date {
+        width: 7rem;
+    }
+}
+
+.model-media.change-list #result_list th.column-duration,
+.model-media.change-list #result_list td.field-duration,
+.model-media.change-list #result_list th.column-get_comments_count,
+.model-media.change-list #result_list td.field-get_comments_count,
+.model-media.change-list #result_list th.column-get_encodings_count,
+.model-media.change-list #result_list td.field-get_encodings_count {
+    width: 5.5rem;
+}
+
+.model-media.change-list #result_list th.column-display_media_type,
+.model-media.change-list #result_list td.field-display_media_type,
+.model-media.change-list #result_list th.column-display_state,
+.model-media.change-list #result_list td.field-display_state,
+.model-media.change-list #result_list th.column-display_encoding_status,
+.model-media.change-list #result_list td.field-display_encoding_status,
+.model-media.change-list #result_list th.column-display_listable,
+.model-media.change-list #result_list td.field-display_listable,
+.model-media.change-list #result_list th.column-display_reported_times,
+.model-media.change-list #result_list td.field-display_reported_times,
+.model-media.change-list #result_list th.column-is_reviewed,
+.model-media.change-list #result_list td.field-is_reviewed,
+.model-media.change-list #result_list th.column-featured,
+.model-media.change-list #result_list td.field-featured,
+.model-media.change-list #result_list th.column-allow_download,
+.model-media.change-list #result_list td.field-allow_download,
+.model-media.change-list #result_list th.column-enable_comments,
+.model-media.change-list #result_list td.field-enable_comments,
+.model-media.change-list #result_list th.column-open_on_site,
+.model-media.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
 }
 
 .model-media.change-list #result_list th.column-display_title,
 .model-media.change-list #result_list th.field-display_title,
 .model-media.change-list #result_list td.field-display_title {
-    /* Take leftover width; min-width lets ellipsis win under table-layout: fixed. */
-    width: auto;
+    width: 100%;
     min-width: 0;
+    max-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1628,34 +1801,11 @@ code.media-id {
 
 .model-media.change-list #result_list th.column-link_user,
 .model-media.change-list #result_list td.field-link_user {
-    width: 6rem;
-    max-width: 6.5rem;
+    width: 8rem;
+    max-width: 8rem;
+    text-align: start;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
-}
-
-.model-media.change-list #result_list th.column-duration,
-.model-media.change-list #result_list td.field-duration,
-.model-media.change-list #result_list th.column-get_comments_count,
-.model-media.change-list #result_list td.field-get_comments_count,
-.model-media.change-list #result_list th.column-get_encodings_count,
-.model-media.change-list #result_list td.field-get_encodings_count,
-.model-media.change-list #result_list th.column-is_reviewed,
-.model-media.change-list #result_list td.field-is_reviewed,
-.model-media.change-list #result_list th.column-featured,
-.model-media.change-list #result_list td.field-featured,
-.model-media.change-list #result_list th.column-allow_download,
-.model-media.change-list #result_list td.field-allow_download,
-.model-media.change-list #result_list th.column-enable_comments,
-.model-media.change-list #result_list td.field-enable_comments {
-    width: 2.5rem;
-    max-width: 3.25rem;
-    padding-left: 0.35rem;
-    padding-right: 0.35rem;
-    white-space: nowrap;
-    vertical-align: middle;
 }
 
 .model-media.change-list #result_list th.field-display_title a,
@@ -1666,6 +1816,110 @@ code.media-id {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/*
+ * Trim and caption requests: media title takes leftover width, like the media changelist.
+ * The id is the row link and carries a search icon. Status columns stay icon-sized.
+ */
+.model-videotrimrequest.change-list #result_list,
+.model-transcriptionrequest.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-videotrimrequest.change-list .card-body.table-responsive,
+.model-transcriptionrequest.change-list .card-body.table-responsive {
+    container-type: inline-size;
+}
+
+.model-videotrimrequest.change-list #result_list th,
+.model-videotrimrequest.change-list #result_list td,
+.model-transcriptionrequest.change-list #result_list th,
+.model-transcriptionrequest.change-list #result_list td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-videotrimrequest.change-list #result_list th.action-checkbox-column,
+.model-videotrimrequest.change-list #result_list td.action-checkbox,
+.model-transcriptionrequest.change-list #result_list th.action-checkbox-column,
+.model-transcriptionrequest.change-list #result_list td.action-checkbox {
+    width: 3.25rem;
+}
+
+.model-videotrimrequest.change-list #result_list th.column-add_date,
+.model-videotrimrequest.change-list #result_list td.field-add_date,
+.model-transcriptionrequest.change-list #result_list th.column-add_date,
+.model-transcriptionrequest.change-list #result_list td.field-add_date {
+    width: 12.25rem;
+}
+
+@container (max-width: 40rem) {
+    .model-videotrimrequest.change-list #result_list th.column-add_date,
+    .model-videotrimrequest.change-list #result_list td.field-add_date,
+    .model-transcriptionrequest.change-list #result_list th.column-add_date,
+    .model-transcriptionrequest.change-list #result_list td.field-add_date {
+        width: 7rem;
+    }
+}
+
+.model-videotrimrequest.change-list #result_list th.column-display_id,
+.model-videotrimrequest.change-list #result_list th.field-display_id,
+.model-videotrimrequest.change-list #result_list td.field-display_id,
+.model-transcriptionrequest.change-list #result_list th.column-display_id,
+.model-transcriptionrequest.change-list #result_list th.field-display_id,
+.model-transcriptionrequest.change-list #result_list td.field-display_id {
+    width: 5.5rem;
+}
+
+.model-videotrimrequest.change-list #result_list th.column-display_status,
+.model-videotrimrequest.change-list #result_list td.field-display_status,
+.model-videotrimrequest.change-list #result_list th.column-display_video_action,
+.model-videotrimrequest.change-list #result_list td.field-display_video_action,
+.model-videotrimrequest.change-list #result_list th.column-display_media_trim_style,
+.model-videotrimrequest.change-list #result_list td.field-display_media_trim_style,
+.model-videotrimrequest.change-list #result_list th.column-open_on_site,
+.model-videotrimrequest.change-list #result_list td.field-open_on_site,
+.model-transcriptionrequest.change-list #result_list th.column-display_status,
+.model-transcriptionrequest.change-list #result_list td.field-display_status,
+.model-transcriptionrequest.change-list #result_list th.column-display_translate_to_english,
+.model-transcriptionrequest.change-list #result_list td.field-display_translate_to_english,
+.model-transcriptionrequest.change-list #result_list th.column-open_on_site,
+.model-transcriptionrequest.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
+}
+
+.model-videotrimrequest.change-list #result_list th.column-link_media,
+.model-videotrimrequest.change-list #result_list td.field-link_media,
+.model-transcriptionrequest.change-list #result_list th.column-link_media,
+.model-transcriptionrequest.change-list #result_list td.field-link_media {
+    width: 100%;
+    min-width: 0;
+    max-width: 0;
+}
+
+.model-videotrimrequest.change-list #result_list td.field-link_media a,
+.model-transcriptionrequest.change-list #result_list td.field-link_media a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.changelist-id-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+.changelist-id-link .fa-search {
+    font-size: 0.8rem;
 }
 
 /*
@@ -1693,8 +1947,9 @@ code.media-id {
 .model-category.change-list #result_list th.column-title,
 .model-category.change-list #result_list th.field-title,
 .model-category.change-list #result_list td.field-title {
-    width: auto;
+    width: 100%;
     min-width: 0;
+    max-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1703,8 +1958,7 @@ code.media-id {
 
 .model-category.change-list #result_list th.column-user,
 .model-category.change-list #result_list td.field-user {
-    width: 7rem;
-    max-width: 8rem;
+    width: 8rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1715,19 +1969,285 @@ code.media-id {
 .model-category.change-list #result_list td.field-uid,
 .model-category.change-list #result_list th.column-related_media_count,
 .model-category.change-list #result_list td.field-related_media_count,
+.model-category.change-list #result_list th.column-identity_provider,
+.model-category.change-list #result_list td.field-identity_provider {
+    width: 6.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
 .model-category.change-list #result_list th.column-is_rbac_category,
 .model-category.change-list #result_list td.field-is_rbac_category,
-.model-category.change-list #result_list th.column-identity_provider,
-.model-category.change-list #result_list td.field-identity_provider,
 .model-category.change-list #result_list th.column-is_lms_course,
-.model-category.change-list #result_list td.field-is_lms_course {
-    width: 1%;
+.model-category.change-list #result_list td.field-is_lms_course,
+.model-category.change-list #result_list th.column-open_on_site,
+.model-category.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
     white-space: nowrap;
     vertical-align: middle;
 }
 
 .model-category.change-list #result_list th.field-title a,
 .model-category.change-list #result_list td.field-title a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Users changelist: username keeps a stable width. Date added, full name, and
+ * email take the leftover space and shrink first.
+ */
+.model-user.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-user.change-list .card-body.table-responsive {
+    container-type: inline-size;
+}
+
+.model-user.change-list #result_list th,
+.model-user.change-list #result_list td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-user.change-list #result_list th.action-checkbox-column,
+.model-user.change-list #result_list td.action-checkbox {
+    width: 3.25rem;
+}
+
+.model-user.change-list #result_list th.column-username,
+.model-user.change-list #result_list th.field-username,
+.model-user.change-list #result_list td.field-username {
+    width: 12rem;
+}
+
+.model-user.change-list #result_list th.column-is_active,
+.model-user.change-list #result_list td.field-is_active,
+.model-user.change-list #result_list th.column-is_superuser,
+.model-user.change-list #result_list td.field-is_superuser,
+.model-user.change-list #result_list th.column-is_editor,
+.model-user.change-list #result_list td.field-is_editor,
+.model-user.change-list #result_list th.column-is_manager,
+.model-user.change-list #result_list td.field-is_manager,
+.model-user.change-list #result_list th.column-open_on_site,
+.model-user.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
+}
+
+.model-user.change-list #result_list th.column-media_count,
+.model-user.change-list #result_list td.field-media_count {
+    width: 5.5rem;
+}
+
+.model-user.change-list #result_list th.column-date_added,
+.model-user.change-list #result_list td.field-date_added,
+.model-user.change-list #result_list th.column-name,
+.model-user.change-list #result_list td.field-name,
+.model-user.change-list #result_list th.column-email,
+.model-user.change-list #result_list td.field-email {
+    width: 100%;
+    min-width: 0;
+    max-width: 0;
+}
+
+.model-user.change-list #result_list th.field-username a,
+.model-user.change-list #result_list td.field-username a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Email addresses: the address takes leftover width and ellipsizes. The user
+ * stays a short username. Primary and verified are status icons.
+ */
+.model-emailaddress.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-emailaddress.change-list .card-body.table-responsive {
+    container-type: inline-size;
+}
+
+.model-emailaddress.change-list #result_list th,
+.model-emailaddress.change-list #result_list td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-emailaddress.change-list #result_list th.action-checkbox-column,
+.model-emailaddress.change-list #result_list td.action-checkbox {
+    width: 3.25rem;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.model-emailaddress.change-list #result_list th.column-email,
+.model-emailaddress.change-list #result_list th.field-email,
+.model-emailaddress.change-list #result_list td.field-email {
+    width: 100%;
+    min-width: 0;
+    max-width: 0;
+}
+
+.model-emailaddress.change-list #result_list th.column-link_user,
+.model-emailaddress.change-list #result_list td.field-link_user {
+    width: 10rem;
+}
+
+.model-emailaddress.change-list #result_list th.column-display_primary,
+.model-emailaddress.change-list #result_list th.column-display_verified,
+.model-emailaddress.change-list #result_list td.field-display_primary,
+.model-emailaddress.change-list #result_list td.field-display_verified {
+    width: 5.5rem;
+    text-align: center;
+    text-overflow: clip;
+}
+
+.model-emailaddress.change-list #result_list th.column-display_primary .changelist-header-label,
+.model-emailaddress.change-list #result_list th.column-display_verified .changelist-header-label {
+    justify-content: center;
+}
+
+.model-emailaddress.change-list #result_list th.field-email a,
+.model-emailaddress.change-list #result_list td.field-link_user a {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@container (max-width: 40rem) {
+    .model-emailaddress.change-list #result_list th.column-link_user,
+    .model-emailaddress.change-list #result_list td.field-link_user {
+        width: 6.5rem;
+    }
+}
+
+/*
+ * Media permissions: the media title takes leftover width. Created at and the
+ * two user columns shrink first. Permission and source stay icon-sized.
+ */
+.model-mediapermission.change-list #result_list {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.model-mediapermission.change-list .card-body.table-responsive {
+    container-type: inline-size;
+}
+
+.model-mediapermission.change-list #result_list th,
+.model-mediapermission.change-list #result_list td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-mediapermission.change-list #result_list th.action-checkbox-column,
+.model-mediapermission.change-list #result_list td.action-checkbox {
+    width: 3.25rem;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.model-mediapermission.change-list #result_list th.column-created_at,
+.model-mediapermission.change-list #result_list td.field-created_at {
+    width: 12.25rem;
+}
+
+.model-mediapermission.change-list #result_list th.column-display_id,
+.model-mediapermission.change-list #result_list th.field-display_id,
+.model-mediapermission.change-list #result_list td.field-display_id {
+    width: 5.5rem;
+}
+
+.model-mediapermission.change-list #result_list th.column-link_user,
+.model-mediapermission.change-list #result_list td.field-link_user,
+.model-mediapermission.change-list #result_list th.column-link_owner,
+.model-mediapermission.change-list #result_list td.field-link_owner {
+    width: 8rem;
+}
+
+.model-mediapermission.change-list #result_list th.column-display_permission,
+.model-mediapermission.change-list #result_list td.field-display_permission,
+.model-mediapermission.change-list #result_list th.column-display_source,
+.model-mediapermission.change-list #result_list td.field-display_source,
+.model-mediapermission.change-list #result_list th.column-open_on_site,
+.model-mediapermission.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
+    text-overflow: clip;
+}
+
+@container (min-width: 64rem) {
+    .model-mediapermission.change-list #result_list th.column-display_permission,
+    .model-mediapermission.change-list #result_list td.field-display_permission {
+        width: 7.5rem;
+    }
+
+    .model-mediapermission.change-list #result_list th.column-display_source,
+    .model-mediapermission.change-list #result_list td.field-display_source {
+        width: 6rem;
+    }
+}
+
+.model-mediapermission.change-list #result_list th.column-link_media,
+.model-mediapermission.change-list #result_list td.field-link_media {
+    width: 100%;
+    min-width: 0;
+    max-width: 0;
+}
+
+@container (max-width: 52rem) {
+    .model-mediapermission.change-list #result_list th.column-created_at,
+    .model-mediapermission.change-list #result_list td.field-created_at {
+        width: 8rem;
+    }
+
+    .model-mediapermission.change-list #result_list th.column-link_user,
+    .model-mediapermission.change-list #result_list td.field-link_user,
+    .model-mediapermission.change-list #result_list th.column-link_owner,
+    .model-mediapermission.change-list #result_list td.field-link_owner {
+        width: 6rem;
+    }
+}
+
+@container (max-width: 40rem) {
+    .model-mediapermission.change-list #result_list th.column-created_at,
+    .model-mediapermission.change-list #result_list td.field-created_at {
+        width: 6.5rem;
+    }
+
+    .model-mediapermission.change-list #result_list th.column-link_user,
+    .model-mediapermission.change-list #result_list td.field-link_user,
+    .model-mediapermission.change-list #result_list th.column-link_owner,
+    .model-mediapermission.change-list #result_list td.field-link_owner {
+        width: 4.5rem;
+    }
+}
+
+.model-mediapermission.change-list #result_list td.field-link_media a,
+.model-mediapermission.change-list #result_list td.field-link_user a,
+.model-mediapermission.change-list #result_list td.field-link_owner a {
     display: block;
     max-width: 100%;
     overflow: hidden;
@@ -1760,8 +2280,9 @@ code.media-id {
 .model-playlist.change-list #result_list th.column-title,
 .model-playlist.change-list #result_list th.field-title,
 .model-playlist.change-list #result_list td.field-title {
-    width: auto;
+    width: 100%;
     min-width: 0;
+    max-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1770,8 +2291,7 @@ code.media-id {
 
 .model-playlist.change-list #result_list th.column-link_user,
 .model-playlist.change-list #result_list td.field-link_user {
-    width: 7rem;
-    max-width: 8rem;
+    width: 8rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1782,7 +2302,17 @@ code.media-id {
 .model-playlist.change-list #result_list td.field-friendly_token,
 .model-playlist.change-list #result_list th.column-related_media_count,
 .model-playlist.change-list #result_list td.field-related_media_count {
-    width: 1%;
+    width: 6.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-playlist.change-list #result_list th.column-open_on_site,
+.model-playlist.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -1822,8 +2352,9 @@ code.media-id {
 .model-channel.change-list #result_list th.column-title,
 .model-channel.change-list #result_list th.field-title,
 .model-channel.change-list #result_list td.field-title {
-    width: auto;
+    width: 100%;
     min-width: 0;
+    max-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1832,8 +2363,7 @@ code.media-id {
 
 .model-channel.change-list #result_list th.column-link_user,
 .model-channel.change-list #result_list td.field-link_user {
-    width: 7rem;
-    max-width: 8rem;
+    width: 8rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1844,7 +2374,17 @@ code.media-id {
 .model-channel.change-list #result_list td.field-friendly_token,
 .model-channel.change-list #result_list th.column-related_media_count,
 .model-channel.change-list #result_list td.field-related_media_count {
-    width: 1%;
+    width: 6.5rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-channel.change-list #result_list th.column-open_on_site,
+.model-channel.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
     white-space: nowrap;
     vertical-align: middle;
 }
@@ -1860,9 +2400,48 @@ code.media-id {
 }
 
 /*
- * Comments changelist: date stays one line; media/user/text share the rest evenly.
- * Jazzmin headers only get sorting classes, so widths use nth-child. list_display_links
- * renders as tbody th. Full values stay on clipped-text hover tooltips.
+ * Tags changelist: two separate tables side by side. Each title fills its own table.
+ */
+.tag-changelist-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.75rem;
+}
+
+.tag-changelist-columns .tag-result-table {
+    table-layout: auto;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+.model-tag.change-list .tag-result-table th:not(.column-title):not(.field-title),
+.model-tag.change-list .tag-result-table td:not(.field-title) {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.model-tag.change-list .tag-result-table th.column-title,
+.model-tag.change-list .tag-result-table th.field-title,
+.model-tag.change-list .tag-result-table td.field-title {
+    width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+@media (max-width: 900px) {
+    .tag-changelist-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+/*
+ * Comments changelist: date, media, and user shrink to content. Comment text takes the rest.
+ * list_display_links renders text as tbody th. Full values stay on clipped-text hover tooltips.
  */
 .model-comment.change-list #result_list {
     table-layout: fixed;
@@ -1874,97 +2453,154 @@ code.media-id {
     width: 2.75rem;
 }
 
-.model-comment.change-list #result_list th:nth-child(2),
+.model-comment.change-list #result_list th.column-add_date,
 .model-comment.change-list #result_list td.field-add_date {
-    width: 11.5rem;
+    width: 9.75rem;
     white-space: nowrap;
 }
 
+.model-comment.change-list #result_list th.column-link_media,
 .model-comment.change-list #result_list td.field-link_media,
-.model-comment.change-list #result_list td.field-link_user,
-.model-comment.change-list #result_list th.field-display_text,
-.model-comment.change-list #result_list td.field-display_text {
+.model-comment.change-list #result_list th.column-link_user,
+.model-comment.change-list #result_list td.field-link_user {
+    width: 1%;
+    max-width: 12rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     vertical-align: middle;
 }
 
+.model-comment.change-list #result_list th.column-display_text,
+.model-comment.change-list #result_list th.field-display_text,
+.model-comment.change-list #result_list td.field-display_text {
+    width: 100%;
+    min-width: 0;
+    max-width: 0;
+    overflow: hidden;
+    vertical-align: middle;
+}
+
 .model-comment.change-list #result_list td.field-link_media a,
 .model-comment.change-list #result_list td.field-link_user a,
-.model-comment.change-list #result_list th.field-display_text a,
-.model-comment.change-list #result_list td.field-display_text a {
+.model-comment.change-list #result_list th.field-display_text > a,
+.model-comment.change-list #result_list td.field-display_text .changelist-text-with-link > a:not(.open-on-site) {
     display: block;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+.model-comment.change-list #result_list td.field-display_text .changelist-text-with-link,
+.model-comment.change-list #result_list th.field-display_text .changelist-text-with-link {
+    flex-wrap: nowrap;
+    max-width: 100%;
+}
+
+.model-comment.change-list #result_list td.field-display_text .open-on-site,
+.model-comment.change-list #result_list th.field-display_text .open-on-site {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+}
+
 /*
- * Media actions changelist: fixed layout keeps the table within the card.
- * Columns: checkbox | date | Action | User | Media (flex) | optional Remote IP /
- * Extra info (last). Optional cells use clipped-text hover tooltips.
+ * Media actions: media title takes leftover width and ellipsizes.
+ * Date and user shrink first. The action stays an icon with its label in the tooltip.
  */
 .model-mediaaction.change-list #result_list {
     table-layout: fixed;
     width: 100%;
 }
 
-.model-mediaaction.change-list #result_list th:first-child,
-.model-mediaaction.change-list #result_list td.action-checkbox {
-    width: 2.75rem;
+.model-mediaaction.change-list .card-body.table-responsive {
+    container-type: inline-size;
 }
 
-.model-mediaaction.change-list #result_list th:nth-child(2),
-.model-mediaaction.change-list #result_list td.field-action_date {
-    width: 11.5rem;
+.model-mediaaction.change-list #result_list th,
+.model-mediaaction.change-list #result_list td {
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
+    vertical-align: middle;
 }
 
-.model-mediaaction.change-list #result_list th:nth-child(3),
+.model-mediaaction.change-list #result_list th.action-checkbox-column,
+.model-mediaaction.change-list #result_list td.action-checkbox {
+    width: 3.25rem;
+}
+
+.model-mediaaction.change-list #result_list th.column-action_date,
+.model-mediaaction.change-list #result_list td.field-action_date {
+    width: 12.25rem;
+}
+
+.model-mediaaction.change-list #result_list th.column-display_action,
 .model-mediaaction.change-list #result_list th.field-display_action,
 .model-mediaaction.change-list #result_list td.field-display_action {
-    width: 7.5rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
+    width: 5.5rem;
+    text-align: center;
+    text-overflow: clip;
 }
 
-.model-mediaaction.change-list #result_list th:nth-child(4),
+.model-mediaaction.change-list #result_list th.column-link_user,
 .model-mediaaction.change-list #result_list td.field-link_user {
-    width: 7rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
+    width: 8rem;
 }
 
-.model-mediaaction.change-list #result_list th:nth-child(5),
-.model-mediaaction.change-list #result_list td.field-link_media {
-    width: 35%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
+.model-mediaaction.change-list #result_list th.column-display_remote_ip,
+.model-mediaaction.change-list #result_list td.field-display_remote_ip {
+    width: 8rem;
 }
 
-.model-mediaaction.change-list #result_list th:nth-child(n + 6),
-.model-mediaaction.change-list #result_list td.field-display_remote_ip,
+.model-mediaaction.change-list #result_list th.column-display_extra_info,
 .model-mediaaction.change-list #result_list th.field-display_extra_info,
 .model-mediaaction.change-list #result_list td.field-display_extra_info {
-    width: 7rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    vertical-align: middle;
+    width: 10rem;
+}
+
+.model-mediaaction.change-list #result_list th.column-open_on_site,
+.model-mediaaction.change-list #result_list td.field-open_on_site {
+    width: 2.5rem;
+    text-align: center;
+}
+
+.model-mediaaction.change-list #result_list th.column-link_media,
+.model-mediaaction.change-list #result_list td.field-link_media {
+    width: 100%;
+    min-width: 0;
+    max-width: 0;
+}
+
+@container (max-width: 52rem) {
+    .model-mediaaction.change-list #result_list th.column-action_date,
+    .model-mediaaction.change-list #result_list td.field-action_date {
+        width: 8rem;
+    }
+
+    .model-mediaaction.change-list #result_list th.column-link_user,
+    .model-mediaaction.change-list #result_list td.field-link_user {
+        width: 6rem;
+    }
+}
+
+@container (max-width: 40rem) {
+    .model-mediaaction.change-list #result_list th.column-action_date,
+    .model-mediaaction.change-list #result_list td.field-action_date {
+        width: 6.5rem;
+    }
+
+    .model-mediaaction.change-list #result_list th.column-link_user,
+    .model-mediaaction.change-list #result_list td.field-link_user {
+        width: 4.5rem;
+    }
 }
 
 .model-mediaaction.change-list #result_list td.field-link_media a,
-.model-mediaaction.change-list #result_list th.field-display_action a,
-.model-mediaaction.change-list #result_list td.field-display_action a,
 .model-mediaaction.change-list #result_list td.field-link_user a {
     display: block;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

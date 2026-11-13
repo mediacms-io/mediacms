@@ -1,0 +1,30 @@
+{% load i18n jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+<th class="{% header_class header forloop %} {{ header.class_attrib|header_column_class }}" tabindex="0" rowspan="1" colspan="1"{% if header.text and "<" not in header.text %} title="{{ header.text|custom_translate:LANGUAGE_CODE }}"{% endif %}>
+    <div class="text changelist-header-label">
+        {% if suppress_toggle and "action-checkbox" in header.class_attrib or suppress_toggle and "action-toggle" in header.text %}
+        {% elif header.sortable %}
+            {# single_sort_url drops secondary o= fields so only one column stays sorted #}
+            <a class="changelist-header-label__title" href="{{ header.url_primary|single_sort_url }}">
+                <span class="changelist-header-label__text">{{ header.text|custom_translate:LANGUAGE_CODE }}</span>
+                {% if not header.sorted %}
+                <i class="fa fa-sort changelist-sort-hint" aria-hidden="true"></i>
+                {% endif %}
+            </a>
+        {% else %}
+            <span class="changelist-header-label__title"><span class="changelist-header-label__text">{{ header.text|custom_translate:LANGUAGE_CODE }}</span></span>
+        {% endif %}
+        {% if header.sorted %}
+        <span class="changelist-sort-controls">
+            {% if header.ascending %}
+                <i class="fa fa-sort-alpha-down" aria-hidden="true"></i>
+            {% else %}
+                <i class="fa fa-sort-alpha-up" aria-hidden="true"></i>
+            {% endif %}
+            <a class="changelist-sort-clear" href="{{ header.url_remove }}" title="Clear sorting" aria-label="Clear sorting">
+                <i class="fa fa-times" aria-hidden="true"></i>
+            </a>
+        </span>
+        {% endif %}
+    </div>
+</th>

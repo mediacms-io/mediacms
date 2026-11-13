@@ -47,12 +47,18 @@ class Command(BaseCommand):
             with open(file_path, 'w') as f:
                 f.write("translation_strings = {\n")
                 for key, value in translation_strings_wip.items():
-                    f.write(f'    "{key}": "{value}",\n')  # noqa
+                    f.write(f'    {_py_double_quoted(key)}: {_py_double_quoted(value)},\n')
                 f.write("}\n\n")
 
                 f.write("replacement_strings = {\n")
                 for key, value in replacement_strings_wip.items():
-                    f.write(f'    "{key}": "{value}",\n')  # noqa
+                    f.write(f'    {_py_double_quoted(key)}: {_py_double_quoted(value)},\n')
                 f.write("}\n")
 
             self.stdout.write(self.style.SUCCESS(f'Processed {file}'))
+
+
+def _py_double_quoted(value):
+    """Serialize a translation string as a Python double-quoted literal."""
+    text = str(value).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+    return f'"{text}"'

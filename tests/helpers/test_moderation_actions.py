@@ -31,7 +31,15 @@ class ModerationMediaActionTest(TestCase):
 
     def test_save_user_action_rejects_moderation_types(self):
         actor = {"user_id": self.moderator.id, "remote_ip_addr": "127.0.0.1"}
-        for action in ("report_cleared", "report_confirmed", "media_reviewed", "media_unreviewed", "original_deleted"):
+        for action in (
+            "report_cleared",
+            "report_confirmed",
+            "media_reviewed",
+            "media_unreviewed",
+            "original_deleted",
+            "metadata_refresh",
+            "integrity_warning",
+        ):
             self.assertFalse(save_user_action(actor, friendly_token=self.media.friendly_token, action=action))
         self.assertFalse(MediaAction.objects.filter(media=self.media, action__in=dict(MODERATION_MEDIA_ACTIONS)).exists())
 
@@ -41,6 +49,13 @@ class ModerationMediaActionTest(TestCase):
         self.assertIsNotNone(event)
         self.assertEqual(event.action, "original_deleted")
         self.assertEqual(event.user_id, self.moderator.pk)
+
+    def test_metadata_integrity_actions_are_moderation_actions(self):
+        for action in ("metadata_refresh", "integrity_warning"):
+            self.assertIn(action, dict(MODERATION_MEDIA_ACTIONS))
+            event = record_moderation_action(self.moderator, self.media, action, extra_info="test")
+            self.assertIsNotNone(event)
+            self.assertEqual(event.action, action)
 
     def test_clear_media_reports_logs_report_cleared(self):
         MediaAction.objects.create(user=self.moderator, media=self.media, action="report", extra_info="rude")

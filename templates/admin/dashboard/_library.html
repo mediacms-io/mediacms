@@ -123,12 +123,12 @@
 
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <div class="card card-outline card-primary">
+                                <div class="card card-outline card-primary media-breakdown-card">
                                     <div class="card-header">
                                         <h3 class="card-title">{{ "Media by type"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-sm">
+                                        <table class="table media-breakdown">
                                             <tr>
                                                 <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video"><i class="fas fa-video text-danger"></i> {{ "Video"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                 <td><a href="{% url 'admin:files_media_changelist' %}?media_type__exact=video"><strong>{{ stats.media.by_type.video }}</strong></a></td>
@@ -150,12 +150,12 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="card card-outline card-info">
+                                <div class="card card-outline card-info media-breakdown-card">
                                     <div class="card-header">
                                         <h3 class="card-title">{{ "Media by state"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body">
-                                        <table class="table table-sm">
+                                        <table class="table media-breakdown">
                                             <tr>
                                                 <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public"><i class="fas fa-globe text-success"></i> {{ "Public"|custom_translate:LANGUAGE_CODE }}</a></td>
                                                 <td><a href="{% url 'admin:files_media_changelist' %}?state__exact=public"><strong>{{ stats.media.by_state.public }}</strong></a></td>
@@ -185,12 +185,13 @@
                                         <h3 class="card-title">{{ "Recent video uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -204,10 +205,11 @@
                                                                 {{ media.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ media.add_date|relative_when }}</td>
+                                                        <td><a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -220,12 +222,13 @@
                                         <h3 class="card-title">{{ "Recent audio uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -239,10 +242,11 @@
                                                                 {{ media.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ media.add_date|relative_when }}</td>
+                                                        <td><a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -255,12 +259,13 @@
                                         <h3 class="card-title">{{ "Recent image uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -274,10 +279,11 @@
                                                                 {{ media.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ media.add_date|relative_when }}</td>
+                                                        <td><a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>
@@ -290,12 +296,13 @@
                                         <h3 class="card-title">{{ "Recent PDF uploads"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
                                     <div class="card-body p-0">
-                                        <table class="table table-sm">
+                                        <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
                                                 <tr>
                                                     <th>{{ "Title"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
                                                     <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                                                    <th></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -309,10 +316,11 @@
                                                                 {{ media.user__username|default:'-' }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ media.add_date|date:"Y-m-d H:i" }}</td>
+                                                        <td>{{ media.add_date|relative_when }}</td>
+                                                        <td><a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a></td>
                                                     </tr>
                                                 {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                                                    <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
                                                 {% endfor %}
                                             </tbody>
                                         </table>

@@ -1,5 +1,4 @@
 {% load i18n static admin_urls jazzmin custom_filters %}
-            <!-- Media Overview Section -->
             <div class="col-12">
                 <div class="card">
                     <div class="card-header">
@@ -7,113 +6,125 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-success">
-                                    <div class="inner">
-                                        <h3>{{ stats.media.by_encoding_status.success }}</h3>
-                                        <p>{{ "Encoded"|custom_translate:LANGUAGE_CODE }}</p>
+                            <div class="col-md-12">
+                                <div class="card card-outline card-secondary">
+                                    <div class="card-header">
+                                        <h3 class="card-title">{{ "Encodings"|custom_translate:LANGUAGE_CODE }}</h3>
                                     </div>
-                                    <div class="icon">
-                                        <i class="fas fa-check-circle"></i>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-lg-3 col-6">
+                                                <div class="small-box bg-info">
+                                                    <div class="inner">
+                                                        <h3>{{ stats.media.by_encoding_status.pending }}</h3>
+                                                        <p>{{ "Pending"|custom_translate:LANGUAGE_CODE }}</p>
+                                                    </div>
+                                                    <div class="icon"><i class="fas fa-clock"></i></div>
+                                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=pending" class="small-box-footer">
+                                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-3 col-6">
+                                                <div class="small-box bg-warning">
+                                                    <div class="inner">
+                                                        <h3>{{ stats.media.by_encoding_status.running }}</h3>
+                                                        <p>{{ "Running"|custom_translate:LANGUAGE_CODE }}</p>
+                                                    </div>
+                                                    <div class="icon"><i class="fas fa-spinner"></i></div>
+                                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=running" class="small-box-footer">
+                                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-3 col-6">
+                                                <div class="small-box bg-success">
+                                                    <div class="inner">
+                                                        <h3>{{ stats.media.by_encoding_status.success }}</h3>
+                                                        <p>{{ "Success"|custom_translate:LANGUAGE_CODE }}</p>
+                                                    </div>
+                                                    <div class="icon"><i class="fas fa-check-circle"></i></div>
+                                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=success" class="small-box-footer">
+                                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div class="col-lg-3 col-6">
+                                                <div class="small-box bg-danger">
+                                                    <div class="inner">
+                                                        <h3>{{ stats.media.by_encoding_status.fail }}</h3>
+                                                        <p>{{ "Failed"|custom_translate:LANGUAGE_CODE }}</p>
+                                                    </div>
+                                                    <div class="icon"><i class="fas fa-times-circle"></i></div>
+                                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=fail" class="small-box-footer">
+                                                        {{ "Open failed"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-lg-6 col-12">
+                                                <div class="small-box bg-warning mb-0">
+                                                    <div class="inner" style="padding-right: 5.5rem;">
+                                                        <h3>{{ stats.media.encoding_queue }}</h3>
+                                                        <p>{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</p>
+                                                        <div class="progress mt-2 mb-2 encoding-queue-breakdown" style="height: 8px; background: rgba(0,0,0,.15);">
+                                                            {% if stats.media.encoding_queue %}
+                                                                <div class="progress-bar" style="width: {% widthratio stats.media.by_encoding_status.pending stats.media.encoding_queue 100 %}%; background: rgba(0,0,0,.4);"></div>
+                                                                <div class="progress-bar bg-white" style="width: {% widthratio stats.media.by_encoding_status.running stats.media.encoding_queue 100 %}%;"></div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="d-flex justify-content-between" style="font-size: .95rem;">
+                                                            <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=pending" class="text-dark">
+                                                                <i class="fas fa-clock"></i> {{ "Pending"|custom_translate:LANGUAGE_CODE }} {{ stats.media.by_encoding_status.pending }}
+                                                            </a>
+                                                            <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=running" class="text-dark">
+                                                                <i class="fas fa-spinner"></i> {{ "Running"|custom_translate:LANGUAGE_CODE }} {{ stats.media.by_encoding_status.running }}
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                    <div class="icon"><i class="fas fa-tasks"></i></div>
+                                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="small-box-footer">
+                                                        {{ "Open encoding queue"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=success" class="small-box-footer">
-                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-danger">
-                                    <div class="inner">
-                                        <h3>{{ stats.media.failed }}</h3>
-                                        <p>{{ "Failed encodings"|custom_translate:LANGUAGE_CODE }}</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-times-circle"></i>
-                                    </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=fail" class="small-box-footer">
-                                        {{ "Open failed"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
-                                </div>
-                            </div>
-                            <div class="col-lg-3 col-6">
-                                <div class="small-box bg-warning">
-                                    <div class="inner">
-                                        <h3>{{ stats.media.encoding_queue }}</h3>
-                                        <p>{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</p>
-                                    </div>
-                                    <div class="icon">
-                                        <i class="fas fa-tasks"></i>
-                                    </div>
-                                    <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="small-box-footer">
-                                        {{ "Open encoding queue"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
-                                    </a>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row mt-3">
-                            <div class="col-md-12">
-                                <div class="card card-outline card-secondary">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Encoding status"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row">
-                                            <div class="col-md-3">
-                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=pending" class="info-box">
-                                                    <span class="info-box-icon bg-info"><i class="fas fa-clock"></i></span>
-                                                    <div class="info-box-content">
-                                                        <span class="info-box-text">{{ "Pending"|custom_translate:LANGUAGE_CODE }}</span>
-                                                        <span class="info-box-number">{{ stats.media.by_encoding_status.pending }}</span>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=running" class="info-box">
-                                                    <span class="info-box-icon bg-warning"><i class="fas fa-spinner fa-spin"></i></span>
-                                                    <div class="info-box-content">
-                                                        <span class="info-box-text">{{ "Running"|custom_translate:LANGUAGE_CODE }}</span>
-                                                        <span class="info-box-number">{{ stats.media.by_encoding_status.running }}</span>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=success" class="info-box">
-                                                    <span class="info-box-icon bg-success"><i class="fas fa-check"></i></span>
-                                                    <div class="info-box-content">
-                                                        <span class="info-box-text">{{ "Success"|custom_translate:LANGUAGE_CODE }}</span>
-                                                        <span class="info-box-number">{{ stats.media.by_encoding_status.success }}</span>
-                                                    </div>
-                                                </a>
-                                            </div>
-                                            <div class="col-md-3">
-                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_status__exact=fail" class="info-box">
-                                                    <span class="info-box-icon bg-danger"><i class="fas fa-times"></i></span>
-                                                    <div class="info-box-content">
-                                                        <span class="info-box-text">{{ "Failed"|custom_translate:LANGUAGE_CODE }}</span>
-                                                        <span class="info-box-number">{{ stats.media.by_encoding_status.fail }}</span>
-                                                    </div>
-                                                </a>
-                                            </div>
+                        {% for group in stats.processing.status_groups %}
+                            <div class="row mt-3">
+                                <div class="col-md-12">
+                                    <div class="card card-outline card-secondary">
+                                        <div class="card-header">
+                                            <h3 class="card-title">{{ group.label|custom_translate:LANGUAGE_CODE }}</h3>
                                         </div>
-                                        <div class="row mt-3">
-                                            <div class="col-md-12">
-                                                <a href="{% url 'admin:files_media_changelist' %}?encoding_queue=yes" class="info-box">
-                                                    <span class="info-box-icon bg-warning"><i class="fas fa-tasks"></i></span>
-                                                    <div class="info-box-content">
-                                                        <span class="info-box-text">{{ "Encoding queue"|custom_translate:LANGUAGE_CODE }}</span>
-                                                        <span class="info-box-number">{{ stats.media.encoding_queue }}</span>
-                                                        <span class="progress-description">{{ "Media with encoding pending or running"|custom_translate:LANGUAGE_CODE }}</span>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                {% for item in group.statuses %}
+                                                    <div class="col-lg-3 col-6">
+                                                        <div class="small-box bg-{{ item.tone }}">
+                                                            <div class="inner">
+                                                                <h3>{{ item.count }}</h3>
+                                                                <p>{{ item.label|custom_translate:LANGUAGE_CODE }}</p>
+                                                            </div>
+                                                            <div class="icon"><i class="{{ item.icon }}"></i></div>
+                                                            <a href="{{ item.url }}" class="small-box-footer">
+                                                                {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                                            </a>
+                                                        </div>
                                                     </div>
-                                                </a>
+                                                {% endfor %}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        {% endfor %}
 
                     </div>
                 </div>
             </div>
-

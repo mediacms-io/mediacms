@@ -74,10 +74,16 @@ class DashboardStatisticsTest(TestCase):
         self.assertNotIn("recent_media_reviews", stats)
         self.assertNotIn("recent_report_confirmations", stats)
         self.assertNotIn("recent_report_clears", stats)
-        audit_actions = {item["action"] for item in stats["recent_report_audits"]}
-        self.assertTrue(audit_actions.issubset({"report_cleared", "report_confirmed", "media_unreviewed", "original_deleted"}))
+        audit_actions = {item["action"]: item for item in stats["recent_report_audits"]}
+        self.assertTrue(set(audit_actions).issubset({"report_cleared", "report_confirmed", "media_unreviewed", "original_deleted"}))
         self.assertNotIn("report", audit_actions)
         self.assertNotIn("media_reviewed", audit_actions)
+        self.assertNotIn("metadata_refresh", audit_actions)
+        self.assertNotIn("integrity_warning", audit_actions)
+        self.assertEqual(audit_actions["report_cleared"]["action_icon"], "fas fa-broom")
+        self.assertEqual(audit_actions["report_cleared"]["action_modifier"], "success")
+        self.assertEqual(audit_actions["report_confirmed"]["action_icon"], "fas fa-user-shield")
+        self.assertEqual(audit_actions["report_confirmed"]["action_modifier"], "fail")
         approved_ids = {item["media_id"] for item in stats["recent_approved"]}
         self.assertIn(self.queued.pk, approved_ids)
 
@@ -178,6 +184,7 @@ class DashboardStatisticsTest(TestCase):
             second = calculate_statistics()
         self.assertEqual(len(ctx), 0)
         self.assertEqual(second["media"]["total"], first["media"]["total"])
+        self.assertEqual(second["generated_at"], first["generated_at"])
         self.assertEqual(second["system"]["encoding_queue"], first["media"]["encoding_queue"])
 
     def test_calculate_statistics_force_refresh_bypasses_cache(self):
@@ -371,6 +378,7 @@ class DashboardStatisticsTest(TestCase):
         self.assertNotIn(staff.username, regular_names)
 
 
+@override_settings(SECURE_SSL_REDIRECT=False)
 class DashboardIndexOrderTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -403,6 +411,9 @@ class DashboardIndexOrderTest(TestCase):
         self.assertNotContains(response, "Needs Review")
 
     def test_dashboard_section_pages_keep_detailed_tables(self):
+        media = create_media(self.admin, title="dash audit icon media")
+        MediaAction.objects.create(user=self.admin, media=media, action="report_cleared")
+        invalidate_dashboard_stats_cache()
         moderation = self.client.get(reverse("admin:dashboard_section", args=["moderation"]))
         people = self.client.get(reverse("admin:dashboard_section", args=["people"]))
         library = self.client.get(reverse("admin:dashboard_section", args=["library"]))
@@ -417,6 +428,8 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(moderation, "Media approved (7 days)")
         self.assertContains(moderation, "Recent reports")
         self.assertContains(moderation, "Recent report audit actions")
+        self.assertContains(moderation, "fas fa-broom")
+        self.assertContains(moderation, 'aria-label="Report cleared"')
         self.assertContains(moderation, "Recent pending review")
         self.assertContains(moderation, "Recently approved")
         self.assertNotContains(moderation, "Recent confirmed reports")
@@ -449,9 +462,10 @@ class DashboardIndexOrderTest(TestCase):
         self.assertNotContains(library, "Encoding status")
         self.assertIn("added_last_7_days", calculate_statistics()["media"])
         self.assertIn("total_tags", calculate_statistics()["system"])
-        self.assertContains(processing, "Encoding status")
         self.assertContains(processing, "Failed encodings")
         self.assertContains(processing, "Encoding queue")
+        self.assertContains(processing, "encoding-queue-breakdown")
+        self.assertNotContains(processing, "Encoding status")
         self.assertNotContains(processing, "Recent video uploads")
         self.assertContains(engagement, "Most liked media")
         self.assertContains(site, "Object totals")

@@ -10,32 +10,33 @@
 {% if results %}
     <div class="card">
         <div class="card-body table-responsive p-0">
+            {% if cl.opts.model_name == "tag" %}
+            <div id="result_list" class="tag-changelist-columns">
+                {% for column in results|tag_columns %}
+                <table class="table table-striped tag-result-table">
+                    <thead>
+                        <tr>
+                            {% for header in result_headers %}
+                            {% include "admin/includes/changelist_header_cell.html" with header=header suppress_toggle=forloop.parentloop.counter0 %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in column %}
+                        <tr role="row" class="{% cycle 'even' 'odd' %}">
+                            {% for item in result %}{{ item }}{% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endfor %}
+            </div>
+            {% else %}
             <table id="result_list" class="table table-striped">
                 <thead>
                     <tr>
                         {% for header in result_headers %}
-                        <th class="{% header_class header forloop %}" tabindex="0" rowspan="1" colspan="1">
-                            <div class="text changelist-header-label">
-                                {% if header.sortable %}
-                                    {# single_sort_url drops secondary o= fields so only one column stays sorted #}
-                                    <a class="changelist-header-label__title" href="{{ header.url_primary|single_sort_url }}">{{ header.text|custom_translate:LANGUAGE_CODE }}</a>
-                                {% else %}
-                                    <span class="changelist-header-label__title">{{ header.text|custom_translate:LANGUAGE_CODE }}</span>
-                                {% endif %}
-                                {% if header.sorted %}
-                                <span class="changelist-sort-controls">
-                                    {% if header.ascending %}
-                                        <i class="fa fa-sort-alpha-down" aria-hidden="true"></i>
-                                    {% else %}
-                                        <i class="fa fa-sort-alpha-up" aria-hidden="true"></i>
-                                    {% endif %}
-                                    <a class="changelist-sort-clear" href="{{ header.url_remove }}" title="Clear sorting" aria-label="Clear sorting">
-                                        <i class="fa fa-times" aria-hidden="true"></i>
-                                    </a>
-                                </span>
-                                {% endif %}
-                            </div>
-                        </th>
+                        {% include "admin/includes/changelist_header_cell.html" with header=header suppress_toggle=False %}
                         {% endfor %}
                     </tr>
                 </thead>
@@ -44,9 +45,10 @@
                     <tr role="row" class="{% cycle 'even' 'odd' %}">
                         {% for item in result %}{{ item }}{% endfor %}
                     </tr>
-                {% endfor %}
+                    {% endfor %}
                 </tbody>
             </table>
+            {% endif %}
         </div>
     </div>
 {% endif %}

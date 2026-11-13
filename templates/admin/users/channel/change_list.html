@@ -6,34 +6,6 @@
 {% block search %}
 {{ block.super }}
 {% if channel_optional_columns %}
-<div class="admin-column-chooser channel-column-chooser card card-outline card-secondary mb-3">
-    <div class="card-header py-2">
-        <strong>{{ "Columns"|custom_translate:LANGUAGE_CODE }}</strong>
-        <span class="text-muted small ml-2">{{ "Optional columns are hidden by default. Related filters can force a column on."|custom_translate:LANGUAGE_CODE }}</span>
-    </div>
-    <div class="card-body py-2">
-        <form method="get" action="" class="admin-column-chooser-form channel-column-chooser-form">
-            <input type="hidden" name="set_channel_columns" value="1">
-            {% for key, value in channel_column_chooser_preserved_qsl %}
-            <input type="hidden" name="{{ key }}" value="{{ value }}">
-            {% endfor %}
-            <div class="admin-column-chooser-options">
-                {% for column in channel_optional_columns %}
-                <label class="mb-0" title="{% if column.filter_forced %}{{ "Shown because an active filter needs this column"|custom_translate:LANGUAGE_CODE }}{% endif %}">
-                    <input type="checkbox"
-                           name="channel_col"
-                           value="{{ column.key }}"
-                           {% if column.checked %}checked{% endif %}>
-                    {{ column.label }}{% if column.filter_forced %} *{% endif %}
-                </label>
-                {% endfor %}
-            </div>
-            <div class="admin-column-chooser-actions">
-                <button type="submit" class="btn btn-sm btn-primary">{{ "Apply columns"|custom_translate:LANGUAGE_CODE }}</button>
-                <button type="submit" name="reset_channel_columns" value="1" class="btn btn-sm btn-outline-secondary">{{ "Reset columns"|custom_translate:LANGUAGE_CODE }}</button>
-            </div>
-        </form>
-    </div>
-</div>
+{% include "admin/includes/column_chooser.html" with chooser_class="channel-column-chooser" columns=channel_optional_columns set_param="set_channel_columns" reset_param="reset_channel_columns" col_param="channel_col" preserved=channel_column_chooser_preserved_qsl %}
 {% endif %}
 {% endblock %}

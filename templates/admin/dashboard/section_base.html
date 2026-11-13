@@ -2,6 +2,377 @@
 {% load i18n static admin_urls jazzmin custom_filters %}
 {% get_current_language as LANGUAGE_CODE %}
 
+{% block extrastyle %}
+    {{ block.super }}
+    <style>
+        .media-breakdown-card .card-title {
+            font-size: 1.45rem;
+        }
+        .media-breakdown {
+            font-size: 1.7rem;
+            margin-bottom: 0;
+        }
+        .media-breakdown td {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .media-breakdown td:last-child {
+            width: 1%;
+            text-align: right;
+            font-size: 2.35rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .media-breakdown .fas {
+            width: 1.75rem;
+            margin-right: 0.55rem;
+            text-align: center;
+        }
+        .site-open-table th:last-child,
+        .site-open-table td:last-child {
+            width: 2.5rem;
+            padding-left: 0.35rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: visible;
+        }
+        .engagement-rank th:nth-child(2),
+        .engagement-rank td:nth-child(2) {
+            width: 5.5rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .engagement-rank td:nth-child(2) .badge,
+        .people-rank td:nth-child(2) .badge {
+            font-size: 0.95rem;
+            padding: 0.35em 0.55em;
+        }
+        .people-rank th:nth-child(2),
+        .people-rank td:nth-child(2) {
+            width: 7.25rem;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .people-when th:nth-child(2),
+        .people-when td:nth-child(2) {
+            width: 8rem;
+            text-align: right;
+        }
+        .people-when.site-open-table th:last-child,
+        .people-when.site-open-table td:last-child {
+            width: 2.5rem;
+            padding-left: 0.35rem;
+            text-align: center;
+            overflow: visible;
+        }
+        .site-open-table .open-on-site {
+            position: relative;
+            color: #6c757d;
+        }
+        .site-open-table .open-on-site:hover,
+        .site-open-table .open-on-site:focus {
+            color: #007bff;
+        }
+        .site-open-table .open-on-site:hover::after,
+        .site-open-table .open-on-site:focus::after {
+            content: attr(title);
+            position: absolute;
+            right: 0;
+            bottom: calc(100% + 0.3rem);
+            z-index: 5;
+            padding: 0.2rem 0.45rem;
+            border-radius: 0.2rem;
+            background: #343a40;
+            color: #fff;
+            font-size: 0.75rem;
+            line-height: 1.2;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+        .card-body:has(.when-table) {
+            container-name: whentable;
+            container-type: inline-size;
+        }
+        .when-table {
+            table-layout: fixed;
+            width: 100%;
+        }
+        .when-table td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .when-table th {
+            white-space: normal;
+        }
+        .card-body.p-0 .when-table > thead > tr > th:last-child,
+        .card-body.p-0 .when-table > tbody > tr > td:last-child {
+            padding-right: 0.75rem;
+        }
+        .when-table th:last-child,
+        .when-table td:last-child {
+            width: 8rem;
+            text-align: right;
+        }
+        .library-uploads th:nth-child(3),
+        .library-uploads td:nth-child(3) {
+            width: 4.75rem;
+            padding-left: 0.2rem;
+            padding-right: 0.25rem;
+            text-align: right;
+            white-space: nowrap;
+        }
+        .library-uploads th:nth-child(2),
+        .library-uploads td:nth-child(2) {
+            padding-right: 0.2rem;
+        }
+        .library-uploads th:nth-child(2),
+        .library-uploads td:nth-child(2),
+        .moderation-person th:nth-child(2),
+        .moderation-person td:nth-child(2) {
+            width: 9.5rem;
+            padding-left: 1.25rem;
+            text-align: right;
+        }
+        @container whentable (max-width: 32rem) {
+            .when-table th:last-child,
+            .when-table td:last-child {
+                width: 7.5rem;
+            }
+            .library-uploads th:nth-child(2),
+            .library-uploads td:nth-child(2),
+            .moderation-person th:nth-child(2),
+            .moderation-person td:nth-child(2) {
+                width: 8rem;
+            }
+        }
+        @container whentable (max-width: 22rem) {
+            .when-table th:last-child,
+            .when-table td:last-child {
+                width: 6.25rem;
+            }
+            .library-uploads th:nth-child(2),
+            .library-uploads td:nth-child(2),
+            .moderation-person th:nth-child(2),
+            .moderation-person td:nth-child(2) {
+                width: 7rem;
+            }
+        }
+        .when-fit {
+            container-name: when;
+            container-type: inline-size;
+            display: block;
+            width: 100%;
+            text-align: right;
+        }
+        .library-uploads .when-fit {
+            display: inline;
+            width: auto;
+            text-align: right;
+        }
+        .moderation-audit .when-fit {
+            text-align: left;
+        }
+        .moderation-audit th {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .moderation-audit th:nth-child(2),
+        .moderation-audit td:nth-child(2) {
+            width: 8.5rem;
+            padding-left: 1.25rem;
+            text-align: right;
+        }
+        .moderation-audit a.changelist-status-icon,
+        .moderation-audit a.changelist-status-icon:hover,
+        .moderation-audit a.changelist-status-icon:focus {
+            text-decoration: none;
+        }
+        .moderation-audit a.changelist-status-icon--success,
+        .moderation-audit a.changelist-status-icon--success:hover,
+        .moderation-audit a.changelist-status-icon--success:focus {
+            color: #28a745 !important;
+        }
+        .moderation-audit a.changelist-status-icon--fail,
+        .moderation-audit a.changelist-status-icon--fail:hover,
+        .moderation-audit a.changelist-status-icon--fail:focus {
+            color: #dc3545 !important;
+        }
+        .moderation-audit a.changelist-status-icon--not-listable,
+        .moderation-audit a.changelist-status-icon--not-listable:hover,
+        .moderation-audit a.changelist-status-icon--not-listable:focus,
+        .moderation-audit a.changelist-status-icon--pending,
+        .moderation-audit a.changelist-status-icon--pending:hover,
+        .moderation-audit a.changelist-status-icon--pending:focus {
+            color: #6c757d !important;
+        }
+        .moderation-audit th:nth-child(3),
+        .moderation-audit td:nth-child(3) {
+            width: 4.5rem;
+            padding-left: 0.35rem;
+            padding-right: 0.35rem;
+            text-align: center;
+        }
+        .moderation-audit th:nth-child(4),
+        .moderation-audit td:nth-child(4) {
+            width: 7.75rem;
+            padding-left: 0.35rem;
+            text-align: left;
+        }
+        @container whentable (max-width: 32rem) {
+            .moderation-audit th:nth-child(2),
+            .moderation-audit td:nth-child(2) {
+                width: 5.75rem;
+            }
+            .moderation-audit th:nth-child(3),
+            .moderation-audit td:nth-child(3) {
+                width: 4.5rem;
+            }
+            .moderation-audit th:nth-child(4),
+            .moderation-audit td:nth-child(4) {
+                width: 5rem;
+            }
+        }
+        @container whentable (max-width: 22rem) {
+            .moderation-audit th:nth-child(2),
+            .moderation-audit td:nth-child(2) {
+                width: 4.25rem;
+                padding-left: 0.25rem;
+            }
+            .moderation-audit th:nth-child(3),
+            .moderation-audit td:nth-child(3) {
+                width: 4.25rem;
+            }
+            .moderation-audit th:nth-child(4),
+            .moderation-audit td:nth-child(4) {
+                width: 4.25rem;
+            }
+        }
+        .when-fit .when-mid,
+        .when-fit .when-short {
+            display: none;
+        }
+        @container when (max-width: 6.2rem) {
+            .when-fit .when-full { display: none; }
+            .when-fit .when-mid { display: inline; }
+        }
+        @container when (max-width: 3.4rem) {
+            .when-fit .when-mid { display: none; }
+            .when-fit .when-short { display: inline; }
+        }
+        .library-uploads.site-open-table th:last-child,
+        .library-uploads.site-open-table td:last-child {
+            width: 1.75rem;
+            padding-left: 0.15rem;
+            padding-right: 0.65rem;
+            text-align: center;
+            overflow: visible;
+        }
+        .moderation-reports.when-table {
+            table-layout: auto;
+        }
+        .moderation-reports th:first-child,
+        .moderation-reports td:first-child {
+            width: 100%;
+            max-width: 0;
+        }
+        .moderation-reports th:nth-child(2),
+        .moderation-reports td:nth-child(2),
+        .moderation-reports th:nth-child(3),
+        .moderation-reports td:nth-child(3) {
+            width: 1%;
+            padding-left: 0.35rem;
+            white-space: nowrap;
+        }
+        .moderation-reports th:nth-child(3),
+        .moderation-reports td:nth-child(3) {
+            padding-right: 0.35rem;
+            text-align: right;
+        }
+        .moderation-reports th:nth-child(4),
+        .moderation-reports td:nth-child(4),
+        .moderation-reports th:nth-child(5),
+        .moderation-reports td:nth-child(5) {
+            width: 2.15rem;
+            padding-left: 0.1rem;
+            padding-right: 0.35rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: visible;
+        }
+        .moderation-reports .when-fit {
+            display: inline;
+            width: auto;
+        }
+        .moderation-reports .when-fit .when-full,
+        .moderation-reports .when-fit .when-short {
+            display: none;
+        }
+        .moderation-reports .when-fit .when-mid {
+            display: inline;
+        }
+        .card-outline > .card-header {
+            overflow: hidden;
+        }
+        .moderation-open.when-table {
+            table-layout: auto;
+        }
+        .moderation-open th:first-child,
+        .moderation-open td:first-child {
+            width: 100%;
+            max-width: 0;
+        }
+        .moderation-open th:nth-child(2),
+        .moderation-open td:nth-child(2),
+        .moderation-open th:nth-child(3),
+        .moderation-open td:nth-child(3) {
+            width: 1%;
+            padding-left: 0.35rem;
+            white-space: nowrap;
+        }
+        .moderation-audit.site-open-table th:last-child,
+        .moderation-audit.site-open-table td:last-child,
+        .moderation-open.site-open-table th:last-child,
+        .moderation-open.site-open-table td:last-child {
+            width: 2.15rem;
+            padding-left: 0.1rem;
+            padding-right: 0.65rem;
+            text-align: center;
+            white-space: nowrap;
+            overflow: visible;
+        }
+        .moderation-open .when-fit {
+            display: inline;
+            width: auto;
+        }
+        .library-uploads .when-fit .when-full,
+        .library-uploads .when-fit .when-short {
+            display: none;
+        }
+        .library-uploads .when-fit .when-mid {
+            display: inline;
+        }
+        .library-uploads.when-table {
+            table-layout: auto;
+            width: 100%;
+        }
+        .library-uploads th:first-child,
+        .library-uploads td:first-child {
+            width: 100%;
+            max-width: 0;
+        }
+        .library-uploads th:nth-child(2),
+        .library-uploads td:nth-child(2),
+        .library-uploads th:nth-child(3),
+        .library-uploads td:nth-child(3) {
+            width: 1%;
+        }
+    </style>
+{% endblock %}
+
 {% block content_title %}
     {{ title|custom_translate:LANGUAGE_CODE }}
 {% endblock %}
@@ -14,17 +385,7 @@
 {% endblock %}
 
 {% block content %}
-    <div class="mb-3 d-flex flex-wrap align-items-center justify-content-between">
-        <div class="btn-group flex-wrap" role="group" aria-label="{{ 'Dashboard'|custom_translate:LANGUAGE_CODE }}">
-            <a href="{% url 'admin:dashboard_section' 'moderation' %}" class="btn btn-sm {% if dashboard_section == 'moderation' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</a>
-            <a href="{% url 'admin:dashboard_section' 'people' %}" class="btn btn-sm {% if dashboard_section == 'people' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "People"|custom_translate:LANGUAGE_CODE }}</a>
-            <a href="{% url 'admin:dashboard_section' 'library' %}" class="btn btn-sm {% if dashboard_section == 'library' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Library"|custom_translate:LANGUAGE_CODE }}</a>
-            <a href="{% url 'admin:dashboard_section' 'processing' %}" class="btn btn-sm {% if dashboard_section == 'processing' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Processing"|custom_translate:LANGUAGE_CODE }}</a>
-            <a href="{% url 'admin:dashboard_section' 'engagement' %}" class="btn btn-sm {% if dashboard_section == 'engagement' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Engagement"|custom_translate:LANGUAGE_CODE }}</a>
-            <a href="{% url 'admin:dashboard_section' 'site' %}" class="btn btn-sm {% if dashboard_section == 'site' %}btn-primary{% else %}btn-outline-primary{% endif %}">{{ "Site"|custom_translate:LANGUAGE_CODE }}</a>
-        </div>
-        <a class="btn btn-sm btn-outline-secondary" href="?refresh_stats=1">{{ "Refresh stats"|custom_translate:LANGUAGE_CODE }}</a>
-    </div>
+    {% include "admin/dashboard/_section_nav.html" %}
 
     {% if dashboard_stats %}
         {% with stats=dashboard_stats %}
