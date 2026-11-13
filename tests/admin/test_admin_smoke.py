@@ -192,6 +192,58 @@ class AdminAccessTest(TestCase):
         self.assertEqual(client.get(reverse("admin:index")).status_code, 200)
         self.assertEqual(client.get(admin_url(Category, "changelist")).status_code, 403)
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_admin_login_uses_the_site_card(self):
+        response = Client().get(reverse("admin:login"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("user-action-form-inner", html)
+        self.assertIn("auth-card-language", html)
+        self.assertIn('action="/i18n/setlang/"', html)
+        self.assertIn('value="/admin/login/"', html)
+        self.assertIn("auth-card-theme", html)
+        self.assertIn("MediaCMS[mediacms][theme][mode]", html)
+        self.assertIn("Sign in with a staff account.", html)
+        self.assertNotIn("If you have not created an account yet", html)
+
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_admin_logout_uses_the_site_card(self):
+        client = Client()
+        client.force_login(self.staff)
+        response = client.post(reverse("admin:logout"))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("user-action-form-inner", html)
+        self.assertIn("auth-card-language", html)
+        self.assertIn('action="/i18n/setlang/"', html)
+        self.assertIn('value="/admin/login/"', html)
+        self.assertIn("auth-card-theme", html)
+        self.assertIn("You have signed out.", html)
+        self.assertIn(reverse("admin:login"), html)
+        self.assertNotIn("/accounts/logout/", html)
+
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_public_login_and_logout_use_the_site_card(self):
+        client = Client()
+        login = client.get("/accounts/login/")
+        self.assertEqual(login.status_code, 200)
+        login_html = login.content.decode()
+        self.assertIn("user-action-form-inner", login_html)
+        self.assertIn("auth-card-language", login_html)
+        self.assertIn('value="/accounts/login/"', login_html)
+        self.assertIn("auth-card-theme", login_html)
+        self.assertIn("If you have not created an account yet", login_html)
+
+        client.force_login(self.staff)
+        logout = client.get("/accounts/logout/")
+        self.assertEqual(logout.status_code, 200)
+        logout_html = logout.content.decode()
+        self.assertIn("user-action-form-inner", logout_html)
+        self.assertIn("auth-card-language", logout_html)
+        self.assertIn('value="/accounts/logout/"', logout_html)
+        self.assertIn("auth-card-theme", logout_html)
+        self.assertIn("Are you sure you want to sign out?", logout_html)
+
 
 class AdminAppListTest(TestCase):
     @classmethod
@@ -210,7 +262,7 @@ class AdminAppListTest(TestCase):
 
     def test_workflow_groups_come_first(self):
         labels = [app["app_label"] for app in self.app_list()]
-        self.assertEqual(labels[:5], ["moderation", "library", "processing", "people", "site"])
+        self.assertEqual(labels[:6], ["moderation", "library", "processing", "people", "integrations", "site"])
 
     def test_email_addresses_are_listed_under_people(self):
         people_app = next(app for app in self.app_list() if app["app_label"] == "people")

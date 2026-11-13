@@ -1,0 +1,26 @@
+{% load custom_filters %}
+{% for line in fieldset %}
+    {% with name=line.fields.0 %}
+        {% if name != "banner_logo" %}
+            {% include "admin/includes/fieldset_line.html" %}
+        {% endif %}
+    {% endwith %}
+{% endfor %}
+<section class="media-image-card channel-banner-card">
+    <h3 class="media-image-card__title">{{ "Banner"|custom_translate:LANGUAGE_CODE }}</h3>
+    {% for line in fieldset %}
+        {% with name=line.fields.0 %}
+            {% if name == "banner_logo" %}
+                <div class="media-image-card__field field-{{ name }}">
+                    {% for field in line %}
+                        {{ field.field }}
+                        {% if field.field.help_text %}
+                            <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
+                        {% endif %}
+                        {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    {% endfor %}
+</section>

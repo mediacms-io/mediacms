@@ -1,0 +1,37 @@
+{% load custom_filters %}
+<div class="col-12">
+    <div class="card card-outline card-secondary">
+        <div class="card-header">
+            <h3 class="card-title">{{ "System"|custom_translate:LANGUAGE_CODE }}</h3>
+            {% include "admin/dashboard/_copy_tools.html" %}
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0 runtime-table">
+                <thead>
+                    <tr>
+                        <th>{{ "Group"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Name"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Value"|custom_translate:LANGUAGE_CODE }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stats.system.runtime %}
+                        <tr>
+                            <td>{{ item.group|custom_translate:LANGUAGE_CODE }}</td>
+                            <td>
+                                {% if item.translate %}
+                                    {{ item.label|custom_translate:LANGUAGE_CODE }}
+                                {% else %}
+                                    <code>{{ item.label }}</code>
+                                {% endif %}
+                            </td>
+                            <td class="runtime-value"><code>{{ item.value }}</code></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

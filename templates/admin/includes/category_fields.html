@@ -1,0 +1,53 @@
+{% load custom_filters %}
+{% for line in fieldset %}
+    {% with name=line.fields.0 %}
+        {% if name != "thumbnail" and name != "listings_thumbnail" %}
+            {% include "admin/includes/fieldset_line.html" %}
+        {% endif %}
+    {% endwith %}
+{% endfor %}
+<div class="category-images">
+    <div class="category-images__notice">
+        <p class="category-images__lead">{{ "Visitors see one image, chosen in this order."|custom_translate:LANGUAGE_CODE }}</p>
+        <ol class="category-images__priority">
+            <li>{{ "Thumbnail"|custom_translate:LANGUAGE_CODE }}</li>
+            <li>{{ "Listings thumbnail"|custom_translate:LANGUAGE_CODE }}</li>
+            <li>{{ "Most-viewed public media"|custom_translate:LANGUAGE_CODE }}</li>
+            <li>{{ "Default image"|custom_translate:LANGUAGE_CODE }}</li>
+        </ol>
+    </div>
+    <div class="category-image-cards">
+        <section class="media-image-card category-thumbnail-card">
+            <h3 class="media-image-card__title">{{ "Thumbnail"|custom_translate:LANGUAGE_CODE }}</h3>
+            {% for line in fieldset %}
+                {% with name=line.fields.0 %}
+                    {% if name == "thumbnail" %}
+                        <div class="media-image-card__field field-{{ name }}">
+                            {% for field in line %}
+                                {{ field.field }}
+                                {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+            <p class="category-images__card-note">{{ "An uploaded file. It is shown first, and the scheduled task does not replace it."|custom_translate:LANGUAGE_CODE }}</p>
+        </section>
+        <section class="media-image-card category-listings-card">
+            <h3 class="media-image-card__title">{{ "Listings thumbnail"|custom_translate:LANGUAGE_CODE }}</h3>
+            {% for line in fieldset %}
+                {% with name=line.fields.0 %}
+                    {% if name == "listings_thumbnail" %}
+                        <div class="media-image-card__field field-{{ name }}">
+                            {% for field in line %}
+                                {{ field.field }}
+                                {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+            <p class="category-images__card-note">{{ "A site path or an external http or https image. Shown only when no file is uploaded. A scheduled task replaces this with the most-viewed eligible media image, or clears it when none qualifies."|custom_translate:LANGUAGE_CODE }}</p>
+        </section>
+    </div>
+</div>

@@ -195,9 +195,245 @@
         else if ($carousel.length) { handleCarousel($carousel); }
         else if ($collapsible.length) { handleCollapsible($collapsible); }
 
+        function bindImageDropzones() {
+            document.querySelectorAll('.image-dropzone').forEach(function (zone) {
+                if (zone.dataset.dropBound) {
+                    return;
+                }
+                const input = zone.querySelector('input[type="file"]');
+                if (!input) {
+                    return;
+                }
+                zone.dataset.dropBound = '1';
+
+                function showChosenName(file) {
+                    const prompt = zone.querySelector('.file-dropzone__prompt');
+                    if (!prompt || !file) {
+                        return;
+                    }
+                    let name = zone.querySelector('.file-dropzone__chosen');
+                    if (!name) {
+                        name = document.createElement('span');
+                        name.className = 'file-dropzone__chosen';
+                        prompt.after(name);
+                    }
+                    name.textContent = file.name;
+                }
+
+                function showPreview(file) {
+                    showChosenName(file);
+                    if (!file || !file.type || file.type.indexOf('image/') !== 0) {
+                        return;
+                    }
+                    let img = zone.querySelector('.image-dropzone__preview');
+                    if (!img) {
+                        img = document.createElement('img');
+                        img.className = 'image-dropzone__preview';
+                        img.alt = '';
+                        zone.insertBefore(img, zone.firstChild);
+                    }
+                    img.src = URL.createObjectURL(file);
+                }
+
+                ['dragenter', 'dragover'].forEach(function (eventName) {
+                    zone.addEventListener(eventName, function (event) {
+                        event.preventDefault();
+                        zone.classList.add('is-dragover');
+                    });
+                });
+                ['dragleave', 'drop'].forEach(function (eventName) {
+                    zone.addEventListener(eventName, function (event) {
+                        event.preventDefault();
+                        zone.classList.remove('is-dragover');
+                    });
+                });
+                zone.addEventListener('drop', function (event) {
+                    if (!event.dataTransfer || !event.dataTransfer.files.length) {
+                        return;
+                    }
+                    input.files = event.dataTransfer.files;
+                    showPreview(input.files[0]);
+                });
+                input.addEventListener('change', function () {
+                    if (input.files && input.files.length) {
+                        showPreview(input.files[0]);
+                    }
+                });
+            });
+        }
+        bindImageDropzones();
+
+        function formatThumbnailClock(seconds) {
+            let tenths = Math.round(Number(seconds) * 10);
+            if (!Number.isFinite(tenths) || tenths < 0) {
+                return '';
+            }
+            const frac = tenths % 10;
+            let whole = Math.floor(tenths / 10);
+            const hours = Math.floor(whole / 3600);
+            whole -= hours * 3600;
+            const minutes = Math.floor(whole / 60);
+            const secs = whole - minutes * 60;
+            const pad = function (number) {
+                return String(number).padStart(2, '0');
+            };
+            return pad(hours) + ':' + pad(minutes) + ':' + pad(secs) + '.' + frac;
+        }
+
+        function parseThumbnailClock(text) {
+            const value = (text || '').trim();
+            if (!value) {
+                return null;
+            }
+            if (value.indexOf(':') === -1) {
+                const number = Number(value);
+                return Number.isFinite(number) ? Math.round(number * 10) / 10 : null;
+            }
+            const parts = value.split(':');
+            if (parts.length < 2 || parts.length > 3) {
+                return null;
+            }
+            const seconds = Number(parts[parts.length - 1]);
+            const minutes = Number(parts[parts.length - 2]);
+            const hours = parts.length === 3 ? Number(parts[0]) : 0;
+            if (![seconds, minutes, hours].every(Number.isFinite)) {
+                return null;
+            }
+            if (minutes < 0 || minutes > 59 || seconds < 0 || seconds >= 60 || hours < 0) {
+                return null;
+            }
+            return Math.round((hours * 3600 + minutes * 60 + seconds) * 10) / 10;
+        }
+
+        function bindThumbnailTimes() {
+            document.querySelectorAll('.thumbnail-time').forEach(function (zone) {
+                if (zone.dataset.timeBound) {
+                    return;
+                }
+                const input = zone.querySelector('input');
+                if (!input) {
+                    return;
+                }
+                zone.dataset.timeBound = '1';
+                const duration = Number(zone.dataset.duration);
+                const max = Number.isFinite(duration) && duration > 0 ? Math.round(duration * 10) / 10 : 0;
+                zone.querySelectorAll('.thumbnail-time__step').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        const step = Number(button.dataset.step);
+                        const current = parseThumbnailClock(input.value);
+                        let next = Math.round(((current == null ? 0 : current) + step) * 10) / 10;
+                        if (next <= 0) {
+                            input.value = '';
+                            return;
+                        }
+                        if (max && next > max) {
+                            next = max;
+                        }
+                        input.value = formatThumbnailClock(next);
+                    });
+                });
+            });
+        }
+        bindThumbnailTimes();
+
+        function fallbackCopy(value) {
+            const area = document.createElement('textarea');
+            area.value = value;
+            area.setAttribute('readonly', '');
+            area.style.position = 'fixed';
+            area.style.left = '-9999px';
+            document.body.appendChild(area);
+            area.select();
+            let ok = false;
+            try {
+                ok = document.execCommand('copy');
+            } catch (error) {
+                ok = false;
+            }
+            document.body.removeChild(area);
+            return ok;
+        }
+
+        document.querySelectorAll('.admin-copy-value__button').forEach(function (button) {
+            button.addEventListener('click', function () {
+                const value = button.getAttribute('data-copy-value') || '';
+                const copied = button.getAttribute('data-copied-label') || 'Copied';
+                const copy = button.getAttribute('data-copy-label') || 'Copy';
+                const done = function () {
+                    button.setAttribute('title', copied);
+                    button.setAttribute('aria-label', copied);
+                    window.setTimeout(function () {
+                        button.setAttribute('title', copy);
+                        button.setAttribute('aria-label', copy);
+                    }, 1500);
+                };
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(value).then(done).catch(function () {
+                        if (fallbackCopy(value)) {
+                            done();
+                        }
+                    });
+                    return;
+                }
+                if (fallbackCopy(value)) {
+                    done();
+                }
+            });
+        });
+
         applySelect2();
 
+        function syncLicenseInspect(select) {
+            const wrapper = select.closest('.related-widget-wrapper');
+            if (!wrapper) {
+                return;
+            }
+            const link = wrapper.querySelector('a.license-inspect');
+            if (!link) {
+                return;
+            }
+            const template = link.getAttribute('data-href-template') || '';
+            const value = select.value;
+            if (value) {
+                link.href = template.replace('__fk__', value);
+                link.hidden = false;
+                link.removeAttribute('aria-disabled');
+            } else {
+                link.removeAttribute('href');
+                link.hidden = true;
+                link.setAttribute('aria-disabled', 'true');
+            }
+        }
+
+        function equalizeCategoryImageCards() {
+            document.querySelectorAll('.category-image-cards').forEach(function (grid) {
+                const cards = grid.querySelectorAll(':scope > .media-image-card');
+                if (cards.length < 2) {
+                    return;
+                }
+                cards.forEach(function (card) {
+                    card.style.minHeight = '';
+                });
+                let tallest = 0;
+                cards.forEach(function (card) {
+                    tallest = Math.max(tallest, card.offsetHeight);
+                });
+                const height = tallest + 'px';
+                cards.forEach(function (card) {
+                    card.style.minHeight = height;
+                });
+            });
+        }
+
+        equalizeCategoryImageCards();
+        window.addEventListener('resize', equalizeCategoryImageCards);
+        document.querySelectorAll('.category-image-cards img').forEach(function (img) {
+            img.addEventListener('load', equalizeCategoryImageCards);
+        });
+
+        document.querySelectorAll('.related-widget-wrapper select').forEach(syncLicenseInspect);
         $('body').on('change', '.related-widget-wrapper select', function(e) {
+            syncLicenseInspect(this);
             const event = $.Event('django:update-related');
             $(this).trigger(event);
             if (!event.isDefaultPrevented() && typeof(window.updateRelatedObjectLinks) !== 'undefined') {

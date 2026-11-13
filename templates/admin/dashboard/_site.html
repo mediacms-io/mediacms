@@ -14,6 +14,7 @@
                                         <p>{{ "Passing checks"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon"><i class="fas fa-check-circle"></i></div>
+                                    <a href="{% url 'admin:dashboard_section' 'health' %}" class="small-box-footer">{{ "Health checks"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-3 col-6">
@@ -23,6 +24,7 @@
                                         <p>{{ "Warnings"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                                    <a href="{% url 'admin:dashboard_section' 'health' %}" class="small-box-footer">{{ "Health checks"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-3 col-6">
@@ -32,6 +34,7 @@
                                         <p>{{ "Failures"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon"><i class="fas fa-times-circle"></i></div>
+                                    <a href="{% url 'admin:dashboard_section' 'health' %}" class="small-box-footer">{{ "Health checks"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i></a>
                                 </div>
                             </div>
                             <div class="col-md-3 col-6">
@@ -41,84 +44,7 @@
                                         <p>{{ "Info checks"|custom_translate:LANGUAGE_CODE }}</p>
                                     </div>
                                     <div class="icon"><i class="fas fa-info-circle"></i></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <div class="card card-outline {% if stats.system.health_counts.fail %}card-danger{% elif stats.system.health_counts.warn %}card-warning{% else %}card-secondary{% endif %}">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Health checks"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-sm mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{ "Status"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Check"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Detail"|custom_translate:LANGUAGE_CODE }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for check in stats.system.health_checks %}
-                                                    <tr>
-                                                        <td>
-                                                            {% if check.status == "ok" %}
-                                                                <span class="badge badge-success">{{ "OK"|custom_translate:LANGUAGE_CODE }}</span>
-                                                            {% elif check.status == "warn" %}
-                                                                <span class="badge badge-warning">{{ "Warning"|custom_translate:LANGUAGE_CODE }}</span>
-                                                            {% elif check.status == "fail" %}
-                                                                <span class="badge badge-danger">{{ "Fail"|custom_translate:LANGUAGE_CODE }}</span>
-                                                            {% else %}
-                                                                <span class="badge badge-info">{{ "Info"|custom_translate:LANGUAGE_CODE }}</span>
-                                                            {% endif %}
-                                                        </td>
-                                                        <td>
-                                                            {% if check.link %}
-                                                                <a href="{{ check.link }}">{{ check.label|custom_translate:LANGUAGE_CODE }}</a>
-                                                            {% else %}
-                                                                {{ check.label|custom_translate:LANGUAGE_CODE }}
-                                                            {% endif %}
-                                                        </td>
-                                                        <td>{{ check.detail }}</td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <div class="card card-outline card-info">
-                                    <div class="card-header">
-                                        <h3 class="card-title">{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
-                                    <div class="card-body p-0">
-                                        <table class="table table-sm mb-0">
-                                            <thead>
-                                                <tr>
-                                                    <th>{{ "Setting"|custom_translate:LANGUAGE_CODE }}</th>
-                                                    <th>{{ "Value"|custom_translate:LANGUAGE_CODE }}</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {% for item in stats.system.configuration %}
-                                                    <tr>
-                                                        <td><code>{{ item.label }}</code></td>
-                                                        <td><code>{{ item.value }}</code></td>
-                                                    </tr>
-                                                {% empty %}
-                                                    <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
-                                                {% endfor %}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <a href="{% url 'admin:dashboard_section' 'health' %}" class="small-box-footer">{{ "Health checks"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i></a>
                                 </div>
                             </div>
                         </div>

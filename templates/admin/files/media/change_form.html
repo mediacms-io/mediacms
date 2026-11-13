@@ -1,0 +1,24 @@
+{% extends "admin/change_form.html" %}
+{% load i18n jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block field_sets %}
+    <div class="col-12 col-lg-9">
+        <div class="card">
+            <div class="card-body">
+                {% if media_glance_cards %}
+                    <section class="media-glance" aria-label="{{ 'At a glance'|custom_translate:LANGUAGE_CODE }}">
+                        {% for card in media_glance_cards %}
+                            <article class="media-glance__card">
+                                <div class="media-glance__label">{{ card.label|custom_translate:LANGUAGE_CODE }}</div>
+                                <div class="media-glance__value">{{ card.value }}</div>
+                            </article>
+                        {% endfor %}
+                    </section>
+                {% endif %}
+                {% get_changeform_template adminform as changeform_template %}
+                {% include changeform_template %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

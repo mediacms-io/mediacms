@@ -1,0 +1,29 @@
+{% load custom_filters %}
+<div class="col-12">
+    <div class="card card-outline card-info">
+        <div class="card-header">
+            <h3 class="card-title">{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>
+            {% include "admin/dashboard/_copy_tools.html" %}
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ "Setting"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Value"|custom_translate:LANGUAGE_CODE }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stats.system.configuration %}
+                        <tr>
+                            <td><code>{{ item.label }}</code></td>
+                            <td><code>{{ item.value }}</code></td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="2">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

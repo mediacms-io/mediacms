@@ -1,5 +1,5 @@
 {% extends "admin/base_site.html" %}
-{% load i18n admin_urls static admin_list jazzmin custom_filters %}
+{% load i18n admin_urls static admin_list jazzmin custom_filters admin_filters %}
 {% get_current_language as LANGUAGE_CODE %}
 
 {% block extrastyle %}
@@ -55,6 +55,23 @@
         {% block search %}
             {% search_form cl %}
         {% endblock %}
+        {% changelist_icon_legend cl as icon_legend %}
+        {% if icon_legend %}
+            <details class="changelist-icon-legend">
+                <summary>
+                    <i class="fas fa-chevron-right changelist-filter-chevron" aria-hidden="true"></i>
+                    <span class="changelist-filter-summary-label">{{ "Legend"|custom_translate:LANGUAGE_CODE }}</span>
+                </summary>
+                <ul class="changelist-icon-legend-list">
+                    {% for item in icon_legend %}
+                        <li>
+                            <i class="{{ item.icon }}" aria-hidden="true"></i>
+                            <span>{{ item.label|custom_translate:LANGUAGE_CODE }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </details>
+        {% endif %}
         <div>
             <form id="changelist-form" method="post"{% if cl.formset and cl.formset.is_multipart %}enctype="multipart/form-data"{% endif %} novalidate>{% csrf_token %}
                 <div id="content-main">

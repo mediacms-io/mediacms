@@ -1,0 +1,22 @@
+{% extends "account/auth_card.html" %}
+{% load custom_filters %}
+
+{% block headtitle %} | {{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock headtitle %}
+
+{% block auth_heading %}{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
+
+{% block auth_intro %}
+<p>{{ "Sign in with a staff account."|custom_translate:request.LANGUAGE_CODE }}</p>
+{% endblock %}
+
+{% block auth_actions %}
+<form class="login" method="post" action="{{ app_path }}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        {{ form.non_field_errors }}
+    {% endif %}
+    {{ form.as_p }}
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="primaryAction" type="submit">{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}</button>
+</form>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% load i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="image-dropzone">
+    {% if widget.preview_url %}
+    <img class="image-dropzone__preview" src="{{ widget.preview_url }}" alt="">
+    {% endif %}
+    <label class="image-dropzone__target" for="{{ widget.attrs.id }}">
+        <span>{{ "Click or drop to replace"|custom_translate:LANGUAGE_CODE }}</span>
+        <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+    </label>
+    {% if widget.preview_url and not widget.required %}
+    <div class="image-dropzone__clear">
+        <input type="checkbox" name="{{ widget.checkbox_name }}" id="{{ widget.checkbox_id }}"{% if widget.attrs.disabled %} disabled{% endif %}>
+        <label for="{{ widget.checkbox_id }}">{{ widget.clear_checkbox_label }}</label>
+    </div>
+    {% endif %}
+</div>

@@ -45,7 +45,7 @@ class BuildWorkflowAppListTest(TestCase):
 
         self.assertEqual(
             list(apps),
-            ["moderation", "library", "processing", "people", "site", "integrations"],
+            ["moderation", "library", "processing", "people", "integrations", "site"],
         )
         self.assertEqual(apps["moderation"][0], "ModerationOverview")
         self.assertIn("ReportedMedia", apps["moderation"])
@@ -59,9 +59,12 @@ class BuildWorkflowAppListTest(TestCase):
         self.assertIn("Encoding", apps["processing"])
         self.assertEqual(apps["people"][0], "PeopleOverview")
         self.assertEqual(apps["people"][1:], ["User", "EmailAddress"])
-        self.assertEqual(apps["site"][0], "SiteOverview")
-        self.assertEqual(apps["site"][1:], ["Page"])
-        self.assertEqual(apps["integrations"], ["MigrationService"])
+        self.assertEqual(
+            apps["site"][:5],
+            ["SiteOverview", "SiteHealth", "SiteConfiguration", "SiteSystem", "Page"],
+        )
+        self.assertEqual(apps["integrations"][0], "IntegrationsOverview")
+        self.assertEqual(apps["integrations"][1:], ["MigrationService"])
         self.assertNotIn("TinyMCEMedia", apps["site"])
         self.assertNotIn("LTIPlatform", apps["integrations"])
 
@@ -83,6 +86,7 @@ class BuildWorkflowAppListTest(TestCase):
         self.assertNotIn("NeedsReview", apps["moderation"])
         self.assertIn("WaitingForApproval", apps["people"])
         self.assertIn("RBACGroup", apps["people"])
+        self.assertEqual(apps["integrations"][0], "IntegrationsOverview")
         self.assertIn("SocialApp", apps["integrations"])
         self.assertIn("LoginOption", apps["integrations"])
         self.assertIn("SAMLConfiguration", apps["integrations"])

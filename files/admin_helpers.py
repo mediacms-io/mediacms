@@ -93,6 +93,65 @@ def admin_change_link(obj, text=None, fragment=None):
     return format_html('<a href="{}">{}</a>', admin_change_url(obj, fragment=fragment), label)
 
 
+def admin_inspect_link(obj, text=None, fragment=None):
+    """Name plus an icon-only Inspect link. The tooltip carries the word."""
+    if obj is None or getattr(obj, "pk", None) is None:
+        return "—"
+    label = admin_text(None, "Inspect")
+    name = text if text is not None else str(obj)
+    return format_html(
+        '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">'
+        '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
+        name,
+        admin_change_url(obj, fragment=fragment),
+        label,
+        label,
+    )
+
+
+def admin_copy_value(value):
+    """Value with an icon-only copy button. The tooltip carries the word."""
+    text = "" if value is None else str(value).strip()
+    if not text:
+        return "—"
+    label = admin_text(None, "Copy")
+    copied = admin_text(None, "Copied")
+    return format_html(
+        '<span class="admin-copy-value"><span class="admin-copy-value__text">{}</span>'
+        '<button type="button" class="admin-copy-value__button" data-copy-value="{}" data-copy-label="{}" data-copied-label="{}" title="{}" aria-label="{}">'
+        '<i class="fas fa-copy" aria-hidden="true"></i></button></span>',
+        text,
+        text,
+        label,
+        copied,
+        label,
+        label,
+    )
+
+
+def admin_relation_link(obj, request, text=None):
+    """Object link with Edit when the user can change it, otherwise Inspect."""
+    if obj is None or obj.pk is None:
+        return "—"
+    label = text if text is not None else str(obj)
+    model_admin = admin.site._registry.get(obj.__class__)
+    can_change = bool(request is not None and model_admin is not None and model_admin.has_change_permission(request, obj))
+    if can_change:
+        icon = "fas fa-pencil-alt"
+        action = "Edit"
+    else:
+        icon = "fas fa-search"
+        action = "Inspect"
+    lang = getattr(request, "LANGUAGE_CODE", None) if request is not None else None
+    return format_html(
+        '<a class="admin-relation-link" href="{}">{}<span class="admin-relation-link__action"><i class="{}" aria-hidden="true"></i>{}</span></a>',
+        admin_change_url(obj),
+        label,
+        icon,
+        admin_text(lang, action),
+    )
+
+
 def admin_inspect_id(pk):
     """Numeric id with a search icon so the changelist row link is obvious."""
     return format_html(
@@ -129,6 +188,16 @@ MEDIA_ENCODING_STATUS_ICONS = {
     "running": ("fas fa-spinner", "running"),
     "success": ("fas fa-check-circle", "success"),
     "fail": ("fas fa-times-circle", "fail"),
+}
+REPORT_ACTION_ICONS = {
+    "report": ("fas fa-flag", "warning"),
+    "report_cleared": ("fas fa-check", "success"),
+    "report_confirmed": ("fas fa-flag", "fail"),
+    "media_reviewed": ("fas fa-check-circle", "success"),
+    "media_unreviewed": ("fas fa-undo", "pending"),
+    "original_deleted": ("fas fa-trash", "fail"),
+    "metadata_refresh": ("fas fa-sync", "running"),
+    "integrity_warning": ("fas fa-exclamation-triangle", "warning"),
 }
 TRIM_STATUS_ICONS = {
     "initial": ("fas fa-hourglass-start", "pending"),

@@ -60,6 +60,18 @@ describe('utils/contexts', () => {
             view.unmount();
         });
 
+        test('mediacms-theme event selects the posted mode', () => {
+            let value: any;
+            const view = renderWithProvider((v) => (value = v));
+            act(() => {
+                window.dispatchEvent(new CustomEvent('mediacms-theme', { detail: 'dark' }));
+            });
+            expect(value.currentThemeMode).toBe('dark');
+            expect(document.body.classList.contains('dark_theme')).toBe(true);
+            expect(readCachedMode()).toBe('dark');
+            view.unmount();
+        });
+
         test('changeThemeMode toggles between dark and light and updates body, logo and cache', () => {
             let value: any;
             const view = renderWithProvider((v) => (value = v));

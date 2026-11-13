@@ -109,6 +109,20 @@
         form.submit();
     }
 
+    function filterChoiceWithIcon(data) {
+        if (!data.element) {
+            return data.text;
+        }
+        const icon = data.element.getAttribute('data-icon');
+        if (!icon) {
+            return data.text;
+        }
+        const $choice = $('<span class="changelist-filter-choice"></span>');
+        $choice.append($('<i>', { class: icon, 'aria-hidden': 'true' }));
+        $choice.append($('<span></span>').text(data.text));
+        return $choice;
+    }
+
     function initFilterSelects($root) {
         // Select2 measures width, so wait until the filter card is open.
         // Ignore the change events Select2 emits while it is being created.
@@ -120,6 +134,8 @@
                 width: '100%',
                 minimumInputLength: getMinimuInputLength($this),
                 dropdownParent: $this.closest('.changelist-filter-card'),
+                templateResult: filterChoiceWithIcon,
+                templateSelection: filterChoiceWithIcon,
             });
         });
 
@@ -178,6 +194,11 @@
             event.preventDefault();
             event.stopPropagation();
             window.location.href = this.getAttribute('href');
+        });
+
+        // The reset control sits in the Columns summary. Don't toggle that disclosure.
+        $(document).on('click', '.admin-column-chooser-reset', function (event) {
+            event.stopPropagation();
         });
     });
 

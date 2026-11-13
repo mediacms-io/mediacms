@@ -15,6 +15,8 @@ from files.admin_helpers import (
     TranslateChoiceLabelsMixin,
     admin_change_link,
     admin_change_url,
+    admin_copy_value,
+    admin_inspect_link,
     admin_status_icon,
     clipped_admin_text,
     translated_choice_display,
@@ -74,6 +76,11 @@ class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelA
         "session_key",
         "link_media",
         "link_user",
+        "display_media",
+        "display_user",
+        "display_action",
+        "display_form_extra_info",
+        "display_form_remote_ip",
     ]
     exclude = ("user", "media")
     ordering = ("-action_date",)
@@ -88,7 +95,15 @@ class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelA
         (
             "Action",
             {
-                "fields": ("link_media", "link_user", "action", "extra_info", "action_date", "remote_ip", "session_key"),
+                "fields": (
+                    "display_media",
+                    "display_user",
+                    "display_action",
+                    "display_form_extra_info",
+                    "action_date",
+                    "display_form_remote_ip",
+                    "session_key",
+                ),
                 "classes": ("tab",),
             },
         ),
@@ -179,6 +194,27 @@ class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelA
         label = translated_choice_display(obj, "action")
         icon, modifier = MEDIA_ACTION_ICONS.get(obj.action, ("fas fa-question-circle", "unknown"))
         return admin_status_icon(icon, label, modifier=modifier)
+
+    @admin.display(description="Media")
+    def display_media(self, obj):
+        if not obj.media_id:
+            return "—"
+        fragment = "reports-tab" if obj.action in MEDIA_REPORT_TAB_ACTIONS else None
+        return admin_inspect_link(obj.media, clipped_admin_text(obj.media.title, always_tooltip=True), fragment=fragment)
+
+    @admin.display(description="User")
+    def display_user(self, obj):
+        if not obj.user_id:
+            return "—"
+        return admin_inspect_link(obj.user, obj.user.username)
+
+    @admin.display(description="Extra info")
+    def display_form_extra_info(self, obj):
+        return admin_copy_value(obj.extra_info)
+
+    @admin.display(description="Remote IP")
+    def display_form_remote_ip(self, obj):
+        return admin_copy_value(obj.remote_ip)
 
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):

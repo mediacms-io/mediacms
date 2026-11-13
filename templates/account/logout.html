@@ -1,24 +1,21 @@
-{% extends "base.html" %}
+{% extends "account/auth_card.html" %}
+{% load custom_filters %}
 
-{% block headtitle %} | Sign Out{% endblock headtitle %}
+{% block headtitle %} | {{ "Sign out"|custom_translate:request.LANGUAGE_CODE }}{% endblock headtitle %}
 
-{% block innercontent %}
-<div class="user-action-form-wrap">
-    <div class="user-action-form-inner">
+{% block auth_heading %}{{ "Sign out"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
 
-	<h1>Sign Out</h1>
+{% block auth_intro %}
+<p>{{ "Are you sure you want to sign out?"|custom_translate:request.LANGUAGE_CODE }}</p>
+{% endblock %}
 
-		<p>Are you sure you want to sign out?</p>
-
-		<form method="post" class="logout" action="{% url 'account_logout' %}">
-		  {% csrf_token %}
-		  {% if redirect_field_value %}
-		  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
-		  {% endif %}
-		  <button type="submit">Sign Out</button>
-		  <a class="button secondaryAction" href="/">Cancel</a>
-		</form>
-
-    </div>
-</div>
-{% endblock innercontent %}
+{% block auth_actions %}
+<form method="post" class="logout" action="{% url 'account_logout' %}">
+    {% csrf_token %}
+    {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+    {% endif %}
+    <button class="primaryAction" type="submit">{{ "Sign out"|custom_translate:request.LANGUAGE_CODE }}</button>
+    <a class="button secondaryAction" href="/">{{ "Cancel"|custom_translate:request.LANGUAGE_CODE }}</a>
+</form>
+{% endblock %}

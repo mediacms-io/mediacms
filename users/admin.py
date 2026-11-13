@@ -13,10 +13,12 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
+from files.admin import ImageDropzoneWidget
 from files.admin_helpers import (
     OpenOnSiteMixin,
     admin_change_link,
     admin_changelist_link,
+    admin_inspect_link,
     admin_status_icon,
     admin_text,
 )
@@ -377,7 +379,7 @@ class ChannelAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
-    readonly_fields = ("friendly_token", "link_user", "related_media")
+    readonly_fields = ("friendly_token", "link_user", "display_user", "related_media")
     exclude = ("user",)
     fieldsets = (
         (
@@ -386,12 +388,12 @@ class ChannelAdmin(OpenOnSiteMixin, admin.ModelAdmin):
                 "fields": (
                     "title",
                     "description",
-                    "link_user",
+                    "display_user",
                     "friendly_token",
-                    "banner_logo",
                     "subscribers",
+                    "banner_logo",
                 ),
-                "classes": ("tab",),
+                "classes": ("tab", "channel-fields"),
             },
         ),
         (
@@ -469,6 +471,12 @@ class ChannelAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         extra_context["channel_column_chooser_preserved_qsl"] = list(preserved.items())
         return super().changelist_view(request, extra_context=extra_context)
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and db_field.name == "banner_logo":
+            formfield.widget = ImageDropzoneWidget()
+        return formfield
+
     def get_queryset(self, request):
         qs = super().get_queryset(request)
         if "related_media_count" in self.get_list_display(request):
@@ -478,6 +486,12 @@ class ChannelAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="User")
+    def display_user(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_inspect_link(obj.user, obj.user.username)
 
     @admin.display(description="Media")
     def related_media(self, obj):

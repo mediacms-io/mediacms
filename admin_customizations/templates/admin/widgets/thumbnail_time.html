@@ -1,0 +1,13 @@
+{% load i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="thumbnail-time" data-duration="{{ widget.duration }}">
+    <input type="text" name="{{ widget.name }}"{% if widget.value != None %} value="{{ widget.value }}"{% endif %}{% include "django/forms/widgets/attrs.html" %}>
+    <span class="thumbnail-time__spin">
+        <button type="button" class="thumbnail-time__step" data-step="0.1" aria-label="{{ "Increase thumbnail time"|custom_translate:LANGUAGE_CODE }}">
+            <i class="fas fa-chevron-up" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="thumbnail-time__step" data-step="-0.1" aria-label="{{ "Decrease thumbnail time"|custom_translate:LANGUAGE_CODE }}">
+            <i class="fas fa-chevron-down" aria-hidden="true"></i>
+        </button>
+    </span>
+</div>

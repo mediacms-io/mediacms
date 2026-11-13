@@ -546,7 +546,7 @@ class Media(models.Model):
         if not self.media_type == "video":
             return False
 
-        if self.thumbnail_time and 0 <= self.thumbnail_time < self.duration:
+        if self.thumbnail_time and 0 < self.thumbnail_time <= self.duration:
             thumbnail_time = self.thumbnail_time
         else:
             thumbnail_time = round(random.uniform(0, self.duration - 0.1), 1)

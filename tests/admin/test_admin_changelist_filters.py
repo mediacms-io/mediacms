@@ -5,11 +5,13 @@ from django.contrib.admin import RelatedOnlyFieldListFilter
 from django.contrib.admin.filters import FieldListFilter
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from files.models import Comment, EncodeProfile, Media, MediaPermission
 from files.templatetags.admin_filters import (
+    changelist_legend,
+    choice_icon,
     classify_filter,
     clear_filters_query,
     filter_id,
@@ -133,7 +135,21 @@ class ChangelistFilterWidgetTests(TestCase):
         self.assertNotIn("is_reviewed", query)
         self.assertNotIn("p=2", query)
 
+    def test_filter_choices_and_legend_use_icons(self):
+        self.assertEqual(choice_icon("media_type", {"media_type__exact": "video"}, "segmented"), "fas fa-video")
+        self.assertEqual(choice_icon("state", {"state__exact": "private"}, "segmented"), "fas fa-lock")
+        self.assertEqual(choice_icon("is_reviewed", {"is_reviewed__exact": "1"}, "boolean"), "fas fa-check")
+        self.assertEqual(choice_icon("is_reviewed", {"is_reviewed__exact": "0"}, "boolean"), "fas fa-times")
+        self.assertEqual(choice_icon("user", {"user__id__exact": "4"}, "select"), "fas fa-user")
 
+        legend = changelist_legend(self._changelist(Media))
+        icons = {item["icon"] for item in legend}
+        self.assertIn("fas fa-video", icons)
+        self.assertIn("fas fa-lock", icons)
+        self.assertIn("fas fa-eye", icons)
+
+
+@override_settings(SECURE_SSL_REDIRECT=False)
 class ChangelistFilterBarTests(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -162,9 +178,15 @@ class ChangelistFilterBarTests(TestCase):
         self.assertIn("enable_comments", display)
         self.assertContains(filtered, "changelist-filter-chip")
         self.assertContains(filtered, "Clear filters")
+        self.assertContains(filtered, "fa-times")
+        self.assertContains(filtered, "btn-outline-secondary changelist-filter-clear")
         self.assertContains(filtered, "Shown because an active filter needs this column")
         self.assertNotContains(filtered, 'class="changelist-filter-card" open')
-        self.assertRegex(filtered.content.decode(), r'href="\?" class="changelist-filter-clear"')
+        self.assertRegex(filtered.content.decode(), r'href="\?" class="btn btn-sm btn-outline-secondary changelist-filter-clear"')
+        self.assertLess(filtered.content.decode().find("admin-column-chooser-reset"), filtered.content.decode().find("admin-column-chooser-options"))
+        self.assertContains(response, 'class="changelist-icon-legend"')
+        self.assertNotContains(response, 'class="changelist-icon-legend" open')
+        self.assertContains(response, "fa-video")
 
         cleared = self.client.get(url)
         cleared_display = list(cleared.context["cl"].list_display)
@@ -174,7 +196,7 @@ class ChangelistFilterBarTests(TestCase):
     def test_clear_filters_keeps_the_search_query(self):
         url = reverse("admin:files_media_changelist")
         response = self.client.get(url, {"q": "public", "is_reviewed__exact": "1"})
-        match = re.search(r'href="([^"]*)" class="changelist-filter-clear"', response.content.decode())
+        match = re.search(r'href="([^"]*)" class="btn btn-sm btn-outline-secondary changelist-filter-clear"', response.content.decode())
         self.assertIsNotNone(match)
         self.assertIn("q=public", match.group(1))
         self.assertNotIn("is_reviewed", match.group(1))
@@ -190,6 +212,19 @@ class ChangelistFilterBarTests(TestCase):
         self.assertContains(users, 'placeholder="Email address, Username, or Full name"')
         comments = self.client.get(reverse("admin:files_comment_changelist"))
         self.assertContains(comments, 'placeholder="Text, Username, or Media title"')
+
+    def test_encode_profile_legend_covers_filter_icons(self):
+        response = self.client.get(reverse("admin:files_encodeprofile_changelist"))
+        self.assertContains(response, 'class="changelist-icon-legend"')
+        self.assertNotContains(response, 'class="changelist-icon-legend" open')
+        self.assertContains(response, "fa-file-code")
+
+    def test_comment_changelist_legend_explains_the_open_on_site_icon(self):
+        response = self.client.get(reverse("admin:files_comment_changelist"))
+        self.assertContains(response, 'class="changelist-icon-legend"')
+        self.assertNotContains(response, 'class="changelist-icon-legend" open')
+        self.assertContains(response, "Open on site")
+        self.assertContains(response, "fa-eye")
 
     def test_search_only_changelist_has_no_filter_card(self):
         response = self.client.get(reverse("admin:files_tag_changelist"))

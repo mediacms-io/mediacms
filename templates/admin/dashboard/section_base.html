@@ -6,27 +6,27 @@
     {{ block.super }}
     <style>
         .media-breakdown-card .card-title {
-            font-size: 1.45rem;
+            font-size: 1.1rem;
         }
         .media-breakdown {
-            font-size: 1.7rem;
+            font-size: 0.95rem;
             margin-bottom: 0;
         }
         .media-breakdown td {
-            padding: 0.85rem 1rem;
+            padding: 0.45rem 0.75rem;
             vertical-align: middle;
             white-space: nowrap;
         }
         .media-breakdown td:last-child {
             width: 1%;
             text-align: right;
-            font-size: 2.35rem;
+            font-size: 1.2rem;
             font-weight: 700;
             line-height: 1;
         }
         .media-breakdown .fas {
-            width: 1.75rem;
-            margin-right: 0.55rem;
+            width: 1.1rem;
+            margin-right: 0.4rem;
             text-align: center;
         }
         .site-open-table th:last-child,
@@ -384,6 +384,43 @@
         .library-uploads td:nth-child(3) {
             width: 1%;
         }
+        .dashboard-copy-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            float: none;
+            margin-left: auto;
+        }
+        html.theme-darkly .dashboard-section-content .btn.dashboard-copy-btn {
+            color: #d6e8ff;
+            border-color: #8ebfff;
+            background-color: transparent;
+        }
+        html.theme-darkly .dashboard-section-content .btn.dashboard-copy-btn:hover,
+        html.theme-darkly .dashboard-section-content .btn.dashboard-copy-btn:focus {
+            color: var(--white);
+            background-color: var(--primary);
+            border-color: #8ebfff;
+        }
+        .dashboard-section-content .card-header:has(.dashboard-copy-tools) {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .dashboard-section-content .card-header:has(.dashboard-copy-tools) .card-title {
+            margin-bottom: 0;
+        }
+        .runtime-value {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .support-example {
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 16rem;
+            overflow: auto;
+        }
     </style>
 {% endblock %}
 
@@ -403,9 +440,122 @@
 
     {% if dashboard_stats %}
         {% with stats=dashboard_stats %}
-            <div class="col-12 dashboard-section-content">
+            <div class="col-12 dashboard-section-content" data-copied-label="{{ 'Copied'|custom_translate:LANGUAGE_CODE }}">
                 {% block dashboard_section_content %}{% endblock %}
             </div>
         {% endwith %}
+        <script>
+            (function () {
+                var root = document.querySelector(".dashboard-section-content");
+                if (!root) {
+                    return;
+                }
+                var copiedLabel = root.getAttribute("data-copied-label") || "Copied";
+
+                function cellsFrom(table) {
+                    var rows = [];
+                    table.querySelectorAll("tr").forEach(function (tr) {
+                        var cells = [];
+                        tr.querySelectorAll("th, td").forEach(function (cell) {
+                            cells.push((cell.innerText || "").replace(/\s+/g, " ").trim());
+                        });
+                        if (cells.length) {
+                            rows.push(cells);
+                        }
+                    });
+                    return rows;
+                }
+
+                function asText(rows) {
+                    return rows.map(function (row) { return row.join("\t"); }).join("\n");
+                }
+
+                function csvCell(value) {
+                    if (/[",\n\r]/.test(value)) {
+                        return '"' + value.replace(/"/g, '""') + '"';
+                    }
+                    return value;
+                }
+
+                function asCsv(rows) {
+                    return rows.map(function (row) {
+                        return row.map(csvCell).join(",");
+                    }).join("\n");
+                }
+
+                function mdCell(value) {
+                    return value.replace(/\|/g, "\\|").replace(/\r?\n/g, " ");
+                }
+
+                function asMarkdown(rows) {
+                    if (!rows.length) {
+                        return "";
+                    }
+                    var header = "| " + rows[0].map(mdCell).join(" | ") + " |";
+                    var separator = "| " + rows[0].map(function () { return "---"; }).join(" | ") + " |";
+                    var body = rows.slice(1).map(function (row) {
+                        return "| " + row.map(mdCell).join(" | ") + " |";
+                    });
+                    return [header, separator].concat(body).join("\n");
+                }
+
+                function flash(button) {
+                    var original = button.textContent;
+                    button.textContent = copiedLabel;
+                    window.setTimeout(function () {
+                        button.textContent = original;
+                    }, 1200);
+                }
+
+                function copyText(text, button) {
+                    var done = function () { flash(button); };
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(text).then(done, function () {
+                            fallbackCopy(text);
+                            done();
+                        });
+                        return;
+                    }
+                    fallbackCopy(text);
+                    done();
+                }
+
+                function fallbackCopy(text) {
+                    var area = document.createElement("textarea");
+                    area.value = text;
+                    area.setAttribute("readonly", "");
+                    area.style.position = "fixed";
+                    area.style.left = "-9999px";
+                    document.body.appendChild(area);
+                    area.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(area);
+                }
+
+                root.querySelectorAll(".js-copy-table").forEach(function (button) {
+                    button.addEventListener("click", function () {
+                        var card = button.closest(".card");
+                        var table = card ? card.querySelector("table") : null;
+                        if (!table) {
+                            return;
+                        }
+                        var rows = cellsFrom(table);
+                        var format = button.getAttribute("data-format");
+                        var text = format === "csv" ? asCsv(rows) : format === "markdown" ? asMarkdown(rows) : asText(rows);
+                        copyText(text, button);
+                    });
+                });
+
+                root.querySelectorAll(".js-copy-block").forEach(function (button) {
+                    button.addEventListener("click", function () {
+                        var target = document.querySelector(button.getAttribute("data-copy-target"));
+                        if (!target) {
+                            return;
+                        }
+                        copyText((target.textContent || "").replace(/\n$/, ""), button);
+                    });
+                });
+            })();
+        </script>
     {% endif %}
 {% endblock %}

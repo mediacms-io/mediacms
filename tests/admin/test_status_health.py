@@ -2,7 +2,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from admin_customizations.admin import get_site_health_checks
-from admin_customizations.processing_stats import get_processing_status_groups
+from admin_customizations.processing_stats import get_migration_status_groups, get_processing_status_groups
 from files.models import EncodeProfile, Encoding, TranscriptionRequest, VideoTrimRequest
 from files.tests import create_account, create_media
 from migrationservice.models import MigrationRecord, MigrationService
@@ -72,18 +72,23 @@ class ProcessingStatusMetricsTest(TestCase):
         MigrationRecord.objects.create(service=service, object_type="media", source_id="processing-stats-2", status="skipped")
 
         groups = {group["key"]: group for group in get_processing_status_groups()}
+        migrations = {group["key"]: group for group in get_migration_status_groups()}
         self.assertEqual(groups["trim_requests"]["statuses"][0]["key"], "initial")
         counts = {key: {item["key"]: item["count"] for item in group["statuses"]} for key, group in groups.items()}
+        migration_counts = {key: {item["key"]: item["count"] for item in group["statuses"]} for key, group in migrations.items()}
         self.assertEqual(counts["trim_requests"]["fail"], 1)
         self.assertEqual(counts["trim_requests"]["initial"], 1)
         self.assertEqual(counts["caption_requests"]["fail"], 1)
         self.assertEqual(counts["caption_requests"]["success"], 1)
         self.assertNotIn("encode_jobs", groups)
-        self.assertEqual(counts["migrations"]["error"], 1)
-        self.assertEqual(counts["migration_records"]["failed"], 1)
-        self.assertEqual(counts["migration_records"]["skipped"], 1)
+        self.assertNotIn("migrations", groups)
+        self.assertNotIn("migration_records", groups)
+        self.assertEqual(migration_counts["migrations"]["error"], 1)
+        self.assertEqual(migration_counts["migration_records"]["failed"], 1)
+        self.assertEqual(migration_counts["migration_records"]["skipped"], 1)
+        self.assertEqual(migrations["migrations"]["total"], 1)
         self.assertIn("status__exact=fail", groups["trim_requests"]["statuses"][3]["url"])
-        self.assertIn("status__exact=error", groups["migrations"]["statuses"][4]["url"])
+        self.assertIn("status__exact=error", migrations["migrations"]["statuses"][4]["url"])
 
     def test_processing_overview_links_each_status(self):
         self.client.force_login(self.user)
@@ -93,14 +98,17 @@ class ProcessingStatusMetricsTest(TestCase):
         for url_name, status in (
             ("admin:files_transcriptionrequest_changelist", "fail"),
             ("admin:files_videotrimrequest_changelist", "initial"),
-            ("admin:migrationservice_migrationservice_changelist", "aborted"),
-            ("admin:migrationservice_migrationrecord_changelist", "skipped"),
         ):
             self.assertIn(f"{reverse(url_name)}?status__exact={status}", content)
+        self.assertNotIn("status__exact=aborted", content)
+        self.assertNotIn("status__exact=skipped", content)
+        self.assertNotIn('card-title">Migrations', content)
+        self.assertNotIn('card-title">Migration records', content)
         self.assertIn("encoding-queue-breakdown", content)
         self.assertIn("fa-check-circle", content)
         self.assertIn("fa-times-circle", content)
         self.assertNotIn("Encoding status", content)
         self.assertNotIn(f"{reverse('admin:files_encoding_changelist')}?status__exact=pending", content)
-        for label in ("Encodings", "Caption Requests", "Trim Requests", "Migrations", "Migration records", "Paused", "Aborted", "Skipped"):
+        for label in ("Encodings", "Caption Requests", "Trim Requests"):
             self.assertIn(label, content)
+        self.assertNotIn("Paused", content)

@@ -1,0 +1,11 @@
+{% load i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+<div class="image-dropzone file-dropzone">
+    {% if widget.is_initial and widget.value.url %}
+    <a class="file-dropzone__current" href="{{ widget.value.url }}">{{ widget.value }}</a>
+    {% endif %}
+    <label class="image-dropzone__target" for="{{ widget.attrs.id }}">
+        <span class="file-dropzone__prompt">{{ "Click or drop to replace"|custom_translate:LANGUAGE_CODE }}</span>
+        <input type="{{ widget.type }}" name="{{ widget.name }}"{% include "django/forms/widgets/attrs.html" %}>
+    </label>
+</div>

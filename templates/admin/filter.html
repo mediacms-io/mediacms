@@ -2,7 +2,12 @@
 {% get_current_language as LANGUAGE_CODE %}
 
 <div class="changelist-filter-field changelist-filter-field--{{ widget }}{% if active %} is-active{% endif %}">
-    <div class="changelist-filter-label" id="filter-label-{{ field_name }}">{{ title|custom_translate:LANGUAGE_CODE }}</div>
+    <div class="changelist-filter-label" id="filter-label-{{ field_name }}">
+        <span class="changelist-filter-choice">
+            <i class="{{ field_icon }}" aria-hidden="true"></i>
+            <span>{{ title|custom_translate:LANGUAGE_CODE|capfirst }}</span>
+        </span>
+    </div>
     {% if widget == "boolean" or widget == "segmented" %}
         <div class="changelist-segmented" role="radiogroup" aria-labelledby="filter-label-{{ field_name }}">
             <label>
@@ -11,7 +16,10 @@
                        name="filterui-{{ field_name }}"
                        data-params="{}"
                        {% if unset_selected %}checked{% endif %}>
-                <span>{{ "Any"|custom_translate:LANGUAGE_CODE }}</span>
+                <span class="changelist-filter-choice">
+                    <i class="fas fa-ellipsis-h" aria-hidden="true"></i>
+                    <span>{{ "Any"|custom_translate:LANGUAGE_CODE }}</span>
+                </span>
             </label>
             {% for choice in choices %}
                 <label>
@@ -20,7 +28,10 @@
                            name="filterui-{{ field_name }}"
                            data-params="{{ choice.params_json }}"
                            {% if choice.selected %}checked{% endif %}>
-                    <span>{{ choice.display|custom_translate:LANGUAGE_CODE }}</span>
+                    <span class="changelist-filter-choice">
+                        <i class="{{ choice.icon }}" aria-hidden="true"></i>
+                        <span>{{ choice.display|custom_translate:LANGUAGE_CODE }}</span>
+                    </span>
                 </label>
             {% endfor %}
         </div>
@@ -32,17 +43,21 @@
                        name="filterui-{{ field_name }}"
                        data-params="{{ choice.params_json }}"
                        {% if choice.selected %}checked{% endif %}>
-                <span>{{ choice.display|custom_translate:LANGUAGE_CODE }}</span>
+                <span class="changelist-filter-choice">
+                    <i class="{{ choice.icon }}" aria-hidden="true"></i>
+                    <span>{{ choice.display|custom_translate:LANGUAGE_CODE }}</span>
+                </span>
             </label>
         {% endfor %}
     {% else %}
         <select class="form-control search-filter changelist-filter-input"
                 data-name="{{ field_name }}"
                 aria-labelledby="filter-label-{{ field_name }}">
-            <option value="" data-params="{}">{% if unset_display %}{{ unset_display|custom_translate:LANGUAGE_CODE }}{% else %}{{ "Any"|custom_translate:LANGUAGE_CODE }}{% endif %}</option>
+            <option value="" data-params="{}" data-icon="fas fa-ellipsis-h">{% if unset_display %}{{ unset_display|custom_translate:LANGUAGE_CODE }}{% else %}{{ "Any"|custom_translate:LANGUAGE_CODE }}{% endif %}</option>
             {% for choice in choices %}
                 <option value="{{ forloop.counter }}"
                         data-params="{{ choice.params_json }}"
+                        data-icon="{{ choice.icon }}"
                         {% if choice.selected %}selected{% endif %}>{{ choice.display|custom_translate:LANGUAGE_CODE }}</option>
             {% endfor %}
         </select>

@@ -1,14 +1,13 @@
 """Site health checks for model rows sitting in a failure status.
 
-Media encoding failures are reported separately. These checks cover the other
-models whose status choices include a failure value: trim requests, caption
-requests, encode jobs, and migration services and records.
+Media encoding failures are reported separately. These checks cover trim
+requests, caption requests, and encode jobs. Migration services and records
+are reported with the other integration checks.
 """
 
 from django.urls import reverse
 
 from files.models import Encoding, TranscriptionRequest, VideoTrimRequest
-from migrationservice.models import MigrationRecord, MigrationService
 
 # warn, matching media encoding failures: the site is up, these jobs are not.
 _FAILURE_STATUS = "warn"
@@ -43,26 +42,6 @@ _TARGETS = (
         "query": "status__exact=fail",
         "problem": "{count} encode job(s) failed.",
         "ok": "No failed encode jobs.",
-    },
-    {
-        "check_id": "migration_errors",
-        "label": "Migration errors",
-        "model": MigrationService,
-        "lookup": {"status": "error"},
-        "admin_name": "admin:migrationservice_migrationservice_changelist",
-        "query": "status__exact=error",
-        "problem": "{count} migration(s) ended in error.",
-        "ok": "No migrations in error.",
-    },
-    {
-        "check_id": "migration_record_failures",
-        "label": "Migration record failures",
-        "model": MigrationRecord,
-        "lookup": {"status": "failed"},
-        "admin_name": "admin:migrationservice_migrationrecord_changelist",
-        "query": "status__exact=failed",
-        "problem": "{count} migration record(s) failed.",
-        "ok": "No failed migration records.",
     },
 )
 

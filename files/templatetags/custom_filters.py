@@ -154,6 +154,7 @@ CHANGELIST_COLUMN_ICONS = {
     "column-display_encoding_status": "fas fa-cogs",
     "column-display_listable": "fas fa-eye",
     "column-display_reported_times": "fas fa-flag",
+    "column-display_duration": "fas fa-stopwatch",
     "column-is_reviewed": "fas fa-check-circle",
     "column-featured": "fas fa-star",
     "column-allow_download": "fas fa-download",
@@ -177,6 +178,12 @@ CHANGELIST_COLUMN_ICONS = {
     "column-display_primary": "fas fa-star",
     "column-display_verified": "fas fa-check-circle",
 }
+
+
+@register.filter
+def column_key_icon(column_key):
+    """Header icon for an optional-column key, or an empty string."""
+    return CHANGELIST_COLUMN_ICONS.get(f"column-{column_key}", "")
 
 
 @register.filter

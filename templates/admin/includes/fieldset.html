@@ -19,40 +19,19 @@
     <div class="p-5{% if fieldset.name %} card-body{% endif %}">
 {% endif %}
 
-    {% for line in fieldset %}
-    <div class="form-group{% if line.fields|length == 1 and line.errors %} errors{% endif %}{% if not line.has_visible_field %} hidden{% endif %}{% for field in line %}{% if field.field.name %} field-{{ field.field.name }}{% endif %}{% endfor %}">
-        <div class="row">
-            {% for field in line %}
-                <label class="{% if not line.fields|length == 1 and forloop.counter != 1 %}col-auto {% else %}col-sm-3 {% endif %}text-left" for="id_{{ field.field.name }}">
-                    {{ field.field.label|capfirst|custom_translate:LANGUAGE_CODE }}
-                    {% if field.field.field.required %}
-                    <span class="text-red">* </span>
-                    {% endif %}
-                </label>
-                <div class="{% if not line.fields|length == 1 %} col-auto  fieldBox {% else %} col-sm-7 {% endif %}
-                             {% if field.field.name %} field-{{ field.field.name }}{% endif %}
-                             {% if not field.is_readonly and field.errors %} errors{% endif %}
-                             {% if field.field.is_hidden %} hidden {% endif %}
-                             {% if field.is_checkcard %} checkcard-row{% endif %}">
-                    {% if field.is_readonly %}
-                        <div class="readonly">{{ field.contents|custom_translate:LANGUAGE_CODE }}</div>
-                    {% else %}
-                        {{ field.field }}
-                    {% endif %}
-                    <div class="help-block red">
-                        {% if not line.fields|length == 1 and not field.is_readonly %}{{ field.errors }}{% endif %}
-                    </div>
-                    {% if field.field.help_text %}
-                        <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
-                    {% endif %}
-                    <div class="help-block text-red">
-                        {% if line.fields|length == 1 %}{{ line.errors }}{% endif %}
-                    </div>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endfor %}
+    {% if "media-content" in fieldset.classes %}
+        {% include "admin/includes/media_content_fields.html" %}
+    {% elif "channel-fields" in fieldset.classes %}
+        {% include "admin/includes/channel_fields.html" %}
+    {% elif "tag-fields" in fieldset.classes %}
+        {% include "admin/includes/tag_fields.html" %}
+    {% elif "category-fields" in fieldset.classes %}
+        {% include "admin/includes/category_fields.html" %}
+    {% else %}
+        {% for line in fieldset %}
+            {% include "admin/includes/fieldset_line.html" %}
+        {% endfor %}
+    {% endif %}
 
 {% if card %}
     </div>

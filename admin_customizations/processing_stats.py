@@ -1,7 +1,8 @@
-"""Status counts for the processing overview.
+"""Status counts for the processing and integrations overviews.
 
-Caption requests, trim requests, and migration services and records. Media
-encoding status is rendered separately from the media statistics.
+Caption requests and trim requests belong to Processing. Migration services
+and records belong to Integrations. Media encoding status is rendered
+separately from the media statistics.
 """
 
 from django.db.models import Count, Q
@@ -23,7 +24,7 @@ _STATUS = {
     "skipped": {"label": "Skipped", "tone": "warning", "icon": "fas fa-forward"},
 }
 
-_GROUPS = (
+_PROCESSING_GROUPS = (
     {
         "key": "caption_requests",
         "label": "Caption Requests",
@@ -38,6 +39,9 @@ _GROUPS = (
         "admin_name": "admin:files_videotrimrequest_changelist",
         "statuses": ("initial", "running", "success", "fail"),
     },
+)
+
+_MIGRATION_GROUPS = (
     {
         "key": "migrations",
         "label": "Migrations",
@@ -55,27 +59,39 @@ _GROUPS = (
 )
 
 
-def get_processing_status_groups():
-    """Return per-status counts and filtered changelist links for pipeline models."""
+def _status_groups(specs):
+    """Return per-status counts, totals, and filtered changelist links."""
     groups = []
-    for spec in _GROUPS:
+    for spec in specs:
         counts = spec["model"].objects.aggregate(**{status: Count("id", filter=Q(status=status)) for status in spec["statuses"]})
         base = reverse(spec["admin_name"])
+        statuses = [
+            {
+                "key": status,
+                "label": _STATUS[status]["label"],
+                "tone": _STATUS[status]["tone"],
+                "icon": _STATUS[status]["icon"],
+                "count": counts[status],
+                "url": f"{base}?status__exact={status}",
+            }
+            for status in spec["statuses"]
+        ]
         groups.append(
             {
                 "key": spec["key"],
                 "label": spec["label"],
-                "statuses": [
-                    {
-                        "key": status,
-                        "label": _STATUS[status]["label"],
-                        "tone": _STATUS[status]["tone"],
-                        "icon": _STATUS[status]["icon"],
-                        "count": counts[status],
-                        "url": f"{base}?status__exact={status}",
-                    }
-                    for status in spec["statuses"]
-                ],
+                "total": sum(item["count"] for item in statuses),
+                "statuses": statuses,
             }
         )
     return groups
+
+
+def get_processing_status_groups():
+    """Return caption and trim request status counts."""
+    return _status_groups(_PROCESSING_GROUPS)
+
+
+def get_migration_status_groups():
+    """Return migration service and record status counts."""
+    return _status_groups(_MIGRATION_GROUPS)

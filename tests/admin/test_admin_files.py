@@ -14,7 +14,7 @@ from django.urls import reverse
 
 import users.admin
 from actions.models import MediaAction
-from files.admin import MEDIA_REPORT_TAB_ACTIONS, CategoryAdminForm, PageAdminForm
+from files.admin import MEDIA_REPORT_TAB_ACTIONS, CategoryAdminForm, MediaAdminForm, PageAdminForm, format_thumbnail_clock, parse_thumbnail_clock
 from files.admin_helpers import ADMIN_CLIPPED_TEXT_LENGTH, clipped_admin_text
 from files.methods import (
     can_delete_original_media_file,
@@ -266,7 +266,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         display = model_admin.get_list_display(self._media_admin_request())
         for column in (
             "link_user",
-            "duration",
+            "display_duration",
             "is_reviewed",
             "featured",
             "get_comments_count",
@@ -330,9 +330,10 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         comments = model_admin.get_list_display(self._media_admin_request({"enable_comments__exact": "1"}))
         self.assertIn("enable_comments", comments)
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_column_chooser_persists_selection_in_session(self):
         url = reverse("admin:files_media_changelist")
-        response = self.client.get(url, {"set_media_columns": "1", "media_col": ["duration", "allow_download"], "state": "public"})
+        response = self.client.get(url, {"set_media_columns": "1", "media_col": ["display_duration", "allow_download"], "state": "public"})
         self.assertEqual(response.status_code, 302)
         self.assertIn("state=public", response["Location"])
         self.assertNotIn("set_media_columns", response["Location"])
@@ -341,9 +342,14 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         response = self.client.get(url, {"state": "public"})
         self.assertEqual(response.status_code, 200)
         display = list(response.context["cl"].list_display)
-        self.assertIn("duration", display)
+        self.assertIn("display_duration", display)
         self.assertIn("allow_download", display)
         self.assertNotIn("display_reported_times", display)
+        self.assertContains(response, "fa-stopwatch")
+        self.assertContains(response, "column-display_duration")
+        html = response.content.decode()
+        legend = html.split('class="changelist-icon-legend"', 1)[1].split("</details>", 1)[0]
+        self.assertIn("Duration", legend)
         self.assertIn("display_listable", display)
         self.assertContains(response, "Apply columns")
         self.assertContains(response, "Reset columns")
@@ -357,12 +363,13 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         self.assertNotEqual(form_pos, -1)
         self.assertLess(chooser_pos, form_pos)
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_column_chooser_reset_clears_session_selection(self):
         url = reverse("admin:files_media_changelist")
-        self.client.get(url, {"set_media_columns": "1", "media_col": ["duration", "allow_download"]})
+        self.client.get(url, {"set_media_columns": "1", "media_col": ["display_duration", "allow_download"]})
         response = self.client.get(url)
         display = list(response.context["cl"].list_display)
-        self.assertIn("duration", display)
+        self.assertIn("display_duration", display)
         self.assertIn("allow_download", display)
 
         response = self.client.get(
@@ -370,7 +377,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
             {
                 "set_media_columns": "1",
                 "reset_media_columns": "1",
-                "media_col": ["duration", "allow_download"],
+                "media_col": ["display_duration", "allow_download"],
                 "state": "public",
             },
         )
@@ -382,7 +389,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
 
         response = self.client.get(url, {"state": "public"})
         display = list(response.context["cl"].list_display)
-        self.assertNotIn("duration", display)
+        self.assertNotIn("display_duration", display)
         self.assertNotIn("allow_download", display)
         self.assertNotIn("display_reported_times", display)
 
@@ -422,11 +429,21 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         MediaAction.objects.create(user=self.superuser, media=self.public, action="like")
 
         html = str(model_admin.report_actions_table(self.public))
-        self.assertIn("spam", html)
-        self.assertIn("Report cleared", html)
-        self.assertIn("Media reviewed", html)
+        self.assertNotIn("spam", html)
+        self.assertIn('aria-label="Report"', html)
+        self.assertIn("fa-flag", html)
+        self.assertIn('aria-label="Report cleared"', html)
+        self.assertIn(">Report cleared<", html)
+        self.assertIn('aria-label="Media reviewed"', html)
+        self.assertIn(">Media reviewed<", html)
         self.assertIn("/admin/actions/mediaaction/", html)
         self.assertNotIn(">Like<", html)
+        self.assertNotIn("Extra info", html)
+        self.assertNotIn(">IP<", html)
+        self.assertLess(html.find(">When<"), html.find(">Action<"))
+        self.assertLess(html.find(">Action<"), html.find(">Inspect<"))
+        self.assertIn("report-actions-table__inspect", html)
+        self.assertIn("fa-search", html)
         self.assertTrue(
             {
                 "report",
@@ -438,40 +455,243 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
                 "integrity_warning",
             }.issubset(set(MEDIA_REPORT_TAB_ACTIONS))
         )
-
-        related = str(model_admin.related_reports(self.public))
-        self.assertIn("3 report/moderation", related)
+        self.assertNotIn("related_reports", dict(fieldsets)["Related"]["fields"])
+        self.assertIn("reported_times", model_admin.readonly_fields)
 
     def test_media_change_fieldsets_are_grouped_by_purpose(self):
         model_admin = admin.site._registry[Media]
         fieldsets = dict(model_admin.get_fieldsets(self.admin_request(), obj=self.public))
         self.assertEqual(
             list(fieldsets.keys()),
-            ["Content", "Publishing", "Sharing", "Media file", "Details", "Reports", "Related"],
+            ["Content", "Publishing", "Sharing", "Details", "Reports", "Related"],
         )
+        self.assertEqual(fieldsets["Content"]["fields"][0], "title")
+        self.assertNotIn("link_user", fieldsets["Content"]["fields"])
+        self.assertNotIn("link_channel", fieldsets["Content"]["fields"])
+        self.assertIn("media_file", fieldsets["Content"]["fields"])
+        self.assertEqual(
+            fieldsets["Content"]["fields"][-4:],
+            ("display_current_poster", "uploaded_poster", "display_current_thumbnail", "uploaded_thumbnail"),
+        )
+        self.assertNotIn("thumbnail_time", fieldsets["Content"]["fields"])
+        self.assertIn("media-content", fieldsets["Content"]["classes"])
         self.assertIn("title", fieldsets["Content"]["fields"])
         self.assertNotIn("rating_category", fieldsets["Content"]["fields"])
+        self.assertNotIn("hls_file", fieldsets["Content"]["fields"])
+        self.assertNotIn("sprites", fieldsets["Content"]["fields"])
+        self.assertEqual(fieldsets["Publishing"]["fields"][0], "display_listable")
+        self.assertIn("display_listable", model_admin.readonly_fields)
+        listable = str(model_admin.display_listable(self.public))
+        self.assertIn("fa-eye-slash", listable)
+        self.assertIn(">No<", listable)
+        self.public.listable = True
+        listed = str(model_admin.display_listable(self.public))
+        self.assertIn("fa-eye\"", listed)
+        self.assertIn(">Yes<", listed)
         self.assertIn("state", fieldsets["Publishing"]["fields"])
         self.assertEqual(
             fieldsets["Sharing"]["fields"],
             ("allow_download", "enable_comments", "password"),
         )
-        self.assertIn("media_file", fieldsets["Media file"]["fields"])
-        self.assertNotIn("allow_whisper_transcribe", fieldsets["Media file"]["fields"])
-        self.assertIn("friendly_token", fieldsets["Details"]["fields"])
+        self.assertNotIn("allow_whisper_transcribe", fieldsets["Content"]["fields"])
+        self.assertEqual(
+            fieldsets["Details"]["fields"][:3],
+            ("display_views", "display_likes", "display_dislikes"),
+        )
+        self.assertEqual(
+            fieldsets["Details"]["fields"][3:],
+            ("display_uid", "display_friendly_token", "display_md5sum", "display_media_info", "display_search"),
+        )
+        token = str(model_admin.display_friendly_token(self.public))
+        self.assertIn(f'data-copy-value="{self.public.friendly_token}"', token)
+        self.assertIn('title="Copy"', token)
+        self.assertIn("fa-copy", token)
+        self.assertIn(f'data-copy-value="{self.public.uid}"', str(model_admin.display_uid(self.public)))
+        md5 = str(model_admin.display_md5sum(self.public))
+        if self.public.md5sum:
+            self.assertIn(f'data-copy-value="{self.public.md5sum}"', md5)
+        else:
+            self.assertEqual(md5, "—")
         self.assertNotIn("related_captions", fieldsets["Details"]["fields"])
         self.assertIn("related_captions", fieldsets["Related"]["fields"])
         self.assertIn("related_permissions", fieldsets["Related"]["fields"])
         self.assertIn("related-links-tab", fieldsets["Related"]["classes"])
         self.assertNotIn("allow_download", model_admin.readonly_fields)
-        for machine_field in ("display_encoding_status", "duration", "md5sum", "search", "views"):
+        for machine_field in ("display_encoding_status", "duration", "md5sum", "search", "display_views"):
             self.assertIn(machine_field, model_admin.readonly_fields)
         self.assertIn("display_media_type", model_admin.readonly_fields)
-        self.assertIn("display_media_type", fieldsets["Media file"]["fields"])
-        self.assertIn("display_encoding_status", fieldsets["Media file"]["fields"])
-        self.assertNotIn("media_type", fieldsets["Media file"]["fields"])
-        self.assertNotIn("encoding_status", fieldsets["Media file"]["fields"])
+        content_field_names = fieldsets["Content"]["fields"]
+        self.assertNotIn("display_media_type", content_field_names)
+        self.assertNotIn("display_encoding_status", content_field_names)
+        self.assertNotIn("media_type", content_field_names)
+        self.assertNotIn("encoding_status", content_field_names)
         self.assertFalse(getattr(model_admin, "inlines", ()))
+
+    def test_media_file_fields_follow_type_and_glance_is_type_specific(self):
+        model_admin = admin.site._registry[Media]
+        video = create_media(self.superuser, filename=SMALL_VIDEO, title="fieldset video")
+        video.video_height = 720
+        video.duration = 65
+        video.size = "1.2MB"
+        pdf = create_media(self.superuser, filename="sample_document.pdf", title="fieldset pdf")
+        audio = create_media(self.superuser, filename="sample_audio.mp3", title="fieldset audio")
+
+        video_sets = dict(model_admin.get_fieldsets(self.admin_request(), obj=video))
+        self.assertNotIn("Media file", video_sets)
+        self.assertIn("thumbnail_time", video_sets["Content"]["fields"])
+        self.assertIn("media_file", video_sets["Content"]["fields"])
+        self.assertNotIn("hls_file", video_sets["Content"]["fields"])
+        self.assertNotIn("sprites", video_sets["Content"]["fields"])
+        labels = [card["label"] for card in model_admin._glance_cards(video)]
+        self.assertEqual(
+            labels,
+            [
+                "Media type",
+                "State",
+                "Is reviewed",
+                "Featured",
+                "User featured",
+                "Listable",
+                "User",
+                "Channel",
+                "Allow download",
+                "Enable comments",
+                "Duration",
+                "Resolution",
+                "Size",
+                "Encoding status",
+            ],
+        )
+        user_card = str(next(card["value"] for card in model_admin._glance_cards(video) if card["label"] == "User"))
+        self.assertIn("fa-search", user_card)
+        self.assertIn('title="Inspect"', user_card)
+        self.assertNotIn(">Edit<", user_card)
+        self.assertEqual(model_admin._format_duration(65), "1:05")
+        self.assertEqual(model_admin._format_duration_brief(15), "15s")
+        self.assertEqual(model_admin._format_duration_brief(15 * 60), "15m")
+        self.assertEqual(model_admin._format_duration_brief(4 * 3600), "4h")
+        self.assertEqual(model_admin._format_duration_brief(2 * 86400), "2d")
+        self.assertEqual(model_admin._format_duration_clock(15), "0:15")
+        self.assertEqual(model_admin._format_duration_clock(15 * 60), "15:00")
+        self.assertEqual(model_admin._format_duration_clock(4 * 3600), "4:00:00")
+        self.assertEqual(model_admin._format_duration_clock(2 * 86400), "2:00:00:00")
+        self.assertEqual(model_admin._format_duration_clock(0), "0:00")
+        video_duration = str(model_admin.display_duration(video))
+        self.assertIn(">1m<", video_duration)
+        self.assertIn('title="1:05"', video_duration)
+        self.assertEqual(str(model_admin.display_duration(pdf)), "<span></span>")
+
+        pdf_sets = dict(model_admin.get_fieldsets(self.admin_request(), obj=pdf))
+        self.assertIn("media_file", pdf_sets["Content"]["fields"])
+        self.assertNotIn("thumbnail_time", pdf_sets["Content"]["fields"])
+        pdf_labels = [card["label"] for card in model_admin._glance_cards(pdf)]
+        self.assertEqual(pdf_labels[:10], labels[:10])
+        self.assertNotIn("Duration", pdf_labels)
+        self.assertNotIn("Encoding status", pdf_labels)
+
+        audio_sets = dict(model_admin.get_fieldsets(self.admin_request(), obj=audio))
+        self.assertIn("media_file", audio_sets["Content"]["fields"])
+        self.assertNotIn("hls_file", audio_sets["Content"]["fields"])
+        audio_labels = [card["label"] for card in model_admin._glance_cards(audio)]
+        self.assertEqual(audio_labels[:10], labels[:10])
+        self.assertIn("Duration", audio_labels)
+        self.assertNotIn("Resolution", audio_labels)
+
+        views = str(model_admin.display_views(video))
+        self.assertIn(f"media__id__exact={video.pk}", views)
+        self.assertIn("action__exact=watch", views)
+        self.assertIn("fa-search", views)
+        self.assertIn('title="Inspect"', views)
+        self.assertNotIn(">Inspect<", views)
+        self.assertIn("action__exact=like", str(model_admin.display_likes(video)))
+        self.assertIn("action__exact=dislike", str(model_admin.display_dislikes(video)))
+        add_date = model_admin.formfield_for_dbfield(Media._meta.get_field("add_date"), self.admin_request())
+        self.assertEqual(add_date.widget.input_type, "datetime-local")
+
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_thumbnail_time_is_a_clock_within_the_video(self):
+        self.assertEqual(format_thumbnail_clock(3.14), "00:00:03.1")
+        self.assertEqual(format_thumbnail_clock(3661.1), "01:01:01.1")
+        self.assertEqual(parse_thumbnail_clock("00:01:05.0"), 65.0)
+        self.assertEqual(parse_thumbnail_clock("65"), 65.0)
+
+        video = create_media(self.superuser, filename=SMALL_VIDEO, title="thumbnail clock")
+        video.duration = 65
+        video.thumbnail_time = 3.14
+        video.save()
+        video.refresh_from_db()
+        self.assertEqual(video.thumbnail_time, 3.1)
+
+        model_admin = admin.site._registry[Media]
+        form_class = model_admin.get_form(self.admin_request(), obj=video)
+        self.assertTrue(issubclass(form_class, MediaAdminForm))
+        bound = form_class(instance=video)
+        rendered = str(bound["thumbnail_time"])
+        self.assertIn("thumbnail-time", rendered)
+        self.assertIn("00:00:03.1", rendered)
+        self.assertIn('data-duration="65"', rendered)
+        self.assertNotIn('type="number"', rendered)
+
+        self.assertNotIn("thumbnail_time", form_class({"thumbnail_time": ""}, instance=video).errors)
+        self.assertNotIn("thumbnail_time", form_class({"thumbnail_time": "00:01:05.0"}, instance=video).errors)
+        too_early = form_class({"thumbnail_time": "00:00:00.0"}, instance=video)
+        too_late = form_class({"thumbnail_time": "00:01:05.1"}, instance=video)
+        self.assertIn("greater than 0", too_early.errors["thumbnail_time"][0])
+        self.assertIn("00:01:05.0", too_late.errors["thumbnail_time"][0])
+
+        response = self.client.get(reverse("admin:files_media_change", args=[video.pk]))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("thumbnail-time__step", html)
+        self.assertIn("00:00:03.1", html)
+
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_content_images_relation_links_and_playlists(self):
+        model_admin = admin.site._registry[Media]
+        poster_field = model_admin.formfield_for_dbfield(Media._meta.get_field("uploaded_poster"), self.admin_request())
+        thumb_field = model_admin.formfield_for_dbfield(Media._meta.get_field("uploaded_thumbnail"), self.admin_request())
+        self.assertEqual(poster_field.widget.template_name, "admin/widgets/image_dropzone.html")
+        self.assertEqual(thumb_field.widget.template_name, "admin/widgets/image_dropzone.html")
+        media_file_field = model_admin.formfield_for_dbfield(Media._meta.get_field("media_file"), self.admin_request())
+        self.assertEqual(media_file_field.widget.template_name, "admin/widgets/file_dropzone.html")
+
+        playlist = Playlist.objects.create(title="Listed playlist", user=self.superuser)
+        playlist.media.add(self.public)
+        listing = str(model_admin.related_playlists(self.public))
+        self.assertIn("View 1 playlist(s)", listing)
+        self.assertIn(f"media__id__exact={self.public.pk}", listing)
+        self.assertNotIn("related-object-list", listing)
+        self.assertNotIn("Listed playlist", listing)
+
+        response = self.client.get(reverse("admin:files_media_change", args=[self.public.pk]))
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("image-dropzone", html)
+        self.assertIn("media-image-cards", html)
+        self.assertIn("media-file-card", html)
+        self.assertIn("file-dropzone", html)
+        self.assertIn('name="media_file"', html)
+        self.assertNotIn("Currently:", html)
+        self.assertNotIn('id="media-file-tab"', html)
+        self.assertEqual(html.count('name="allow_download"'), 1)
+        self.assertEqual(html.count('name="enable_comments"'), 1)
+        self.assertIn("Allow download", html)
+        self.assertIn("Enable comments", html)
+        self.assertIn("media-glance", html)
+        self.assertIn('type="datetime-local"', html)
+        self.assertIn("action__exact=watch", html)
+        self.assertIn("action__exact=like", html)
+        self.assertIn("action__exact=dislike", html)
+        self.assertIn("Click or drop to replace", html)
+        self.assertIn("license-inspect", html)
+        self.assertIn("/admin/files/license/__fk__/change/", html)
+        self.assertNotIn("change_id_license", html)
+        if self.public.license_id:
+            self.assertIn(reverse("admin:files_license_change", args=[self.public.license_id]), html)
+        self.assertIn("View 1 playlist(s)", html)
+        self.assertNotIn("related-object-list", html)
+        self.assertNotIn('name="reported_times"', html)
+        self.assertNotIn("report/moderation action(s)", html)
 
     @override_settings(ALLOW_RATINGS=True)
     def test_rating_category_appears_when_ratings_enabled(self):
@@ -692,11 +912,24 @@ class MediaActionAdminTest(TestCase):
         for field in ("action", "extra_info", "action_date", "remote_ip", "session_key"):
             self.assertIn(field, model_admin.readonly_fields)
 
+        self.report.remote_ip = "203.0.113.10"
+        self.report.save(update_fields=["remote_ip"])
         response = self.client.get(reverse("admin:actions_mediaaction_change", args=[self.report.pk]))
         self.assertEqual(response.status_code, 200)
-        # Model fields render as readonly; object-tools may still use name="action" for the actions select.
-        self.assertContains(response, '<div class="readonly">Report</div>')
-        self.assertContains(response, '<div class="readonly">offensive</div>')
+        self.assertContains(response, "field-display_media")
+        self.assertContains(response, "field-display_user")
+        self.assertContains(response, "field-display_action")
+        self.assertContains(response, "media-metric__inspect")
+        self.assertContains(response, 'title="Inspect"')
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]) + "#reports-tab")
+        self.assertContains(response, reverse("admin:users_user_change", args=[self.superuser.pk]))
+        self.assertContains(response, "fa-flag")
+        self.assertContains(response, "changelist-status-icon__text")
+        self.assertContains(response, ">Report<")
+        self.assertContains(response, 'data-copy-value="offensive"')
+        self.assertContains(response, 'data-copy-value="203.0.113.10"')
+        self.assertContains(response, 'title="Copy"')
+        self.assertContains(response, "fa-copy")
         self.assertNotContains(response, 'name="extra_info"')
         self.assertNotContains(response, 'id="id_action"')
 
@@ -796,8 +1029,11 @@ class MediaActionAdminTest(TestCase):
         self.assertLessEqual(len(preview), 40)
         self.assertTrue(preview.endswith("…"))
         html = str(admin.site._registry[Media].report_actions_table(self.media))
-        self.assertIn("changelist-clipped-text__full", html)
-        self.assertIn("This report explains the problem.", html)
+        self.assertNotIn("This report explains the problem.", html)
+        self.assertLess(html.find(">When<"), html.find(">Action<"))
+        self.assertLess(html.find(">Action<"), html.find(">Inspect<"))
+        self.assertIn("report-actions-table__inspect", html)
+        self.assertIn(">Report<", html)
 
     def test_clipped_admin_text_always_tooltip_for_short_values(self):
         self.assertNotIn("changelist-clipped-text", str(clipped_admin_text("short")))
@@ -967,10 +1203,12 @@ class EncodingAdminTest(TestCase):
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
         self.assertEqual(display, ["get_title", "link_media", "display_status", "has_file", "open_on_site"])
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_change_form_fields_are_read_only(self):
         user = make_user("files_encoding_readonly", is_superuser=True)
         media = create_media(user, title="encoding readonly media")
-        encoding = Encoding.objects.create(media=media, profile=EncodeProfile.objects.first(), status="pending")
+        profile = EncodeProfile.objects.first()
+        encoding = Encoding.objects.create(media=media, profile=profile, status="pending", progress=42, chunk=True)
         model_admin = admin.site._registry[Encoding]
         request = RequestFactory().get("/admin/")
         request.user = user
@@ -978,12 +1216,27 @@ class EncodingAdminTest(TestCase):
         self.assertTrue(model_admin.has_change_permission(request))
         for field in ("profile", "status", "progress", "chunk", "has_file", "link_media"):
             self.assertIn(field, model_admin.readonly_fields)
+        fields = list(dict(model_admin.get_fieldsets(request, obj=encoding))["Encoding"]["fields"])
+        self.assertEqual(
+            fields,
+            ["display_media", "display_profile", "display_chunk", "display_status", "display_progress", "has_file"],
+        )
+        self.assertLess(fields.index("display_chunk"), fields.index("display_status"))
 
         self.client.force_login(user)
         response = self.client.get(reverse("admin:files_encoding_change", args=[encoding.pk]))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, 'name="status"')
         self.assertNotContains(response, 'name="profile"')
+        self.assertContains(response, "media-metric__inspect")
+        self.assertContains(response, 'title="Inspect"')
+        self.assertContains(response, reverse("admin:files_media_change", args=[media.pk]))
+        self.assertContains(response, reverse("admin:files_encodeprofile_change", args=[profile.pk]))
+        self.assertContains(response, "fa-th-large")
+        self.assertContains(response, "fa-clock")
+        self.assertContains(response, "encoding-progress")
+        self.assertContains(response, 'aria-valuenow="42"')
+        self.assertContains(response, "42%")
 
     def test_retry_failed_encodings_action(self):
         user = make_user("files_encoding_retry", is_superuser=True)
@@ -1131,6 +1384,7 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         display = [col for col in response.context["cl"].list_display if col != "action_checkbox"]
         self.assertEqual(display, ["add_date", "title", "user", "open_on_site"])
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_media_count_links_and_change_lists_media(self):
         category = Category.objects.create(title="Linked media category", media_count=1)
         create_media(self.superuser, title="category listed media", category=[category])
@@ -1145,9 +1399,34 @@ class CategoryAdminConfigurationTest(AdminRequestMixin, TestCase):
         self.assertContains(list_response, filtered)
         self.assertContains(list_response, ">1<")
 
+        category.user = self.superuser
+        category.listings_thumbnail = "https://example.com/category.jpg"
+        category.save(update_fields=["user", "listings_thumbnail"])
         change_response = self.client.get(reverse("admin:files_category_change", args=[category.pk]))
         self.assertEqual(change_response.status_code, 200)
         self.assertContains(change_response, "View 1 media item(s)")
+        self.assertContains(change_response, "field-display_user")
+        self.assertContains(change_response, "media-metric__inspect")
+        self.assertContains(change_response, 'title="Inspect"')
+        self.assertContains(change_response, reverse("admin:users_user_change", args=[self.superuser.pk]))
+        self.assertContains(change_response, "field-display_uid")
+        self.assertContains(change_response, f'data-copy-value="{category.uid}"')
+        self.assertContains(change_response, 'title="Copy"')
+        self.assertNotContains(change_response, 'name="uid"')
+        self.assertContains(change_response, "category-images__notice")
+        self.assertContains(change_response, "category-images__priority")
+        self.assertContains(change_response, "Visitors see one image, chosen in this order.")
+        self.assertContains(change_response, "Most-viewed public media")
+        self.assertContains(change_response, "Default image")
+        self.assertContains(change_response, "An uploaded file. It is shown first, and the scheduled task does not replace it.")
+        self.assertContains(change_response, "A scheduled task replaces this with the most-viewed eligible media image")
+        self.assertContains(change_response, "category-image-cards")
+        self.assertContains(change_response, "category-thumbnail-card")
+        self.assertContains(change_response, "image-dropzone")
+        self.assertContains(change_response, "Click or drop to replace")
+        self.assertContains(change_response, "category-listings-card")
+        self.assertContains(change_response, "listings-thumbnail-url")
+        self.assertContains(change_response, 'value="https://example.com/category.jpg"')
         self.assertContains(change_response, filtered)
         self.assertContains(change_response, "related-links-tab")
         self.assertNotContains(change_response, "related-objects-tab")
@@ -1404,6 +1683,7 @@ class PlaylistChannelAdminTest(TestCase):
         channel = Channel.objects.get(user=self.superuser)
         self.assertEqual(self.client.get(reverse("admin:users_channel_change", args=[channel.pk])).status_code, 200)
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_channel_change_shows_related_media_link(self):
         channel = Channel.objects.get(user=self.superuser)
         Media.objects.filter(pk=self.media.pk).update(channel=channel)
@@ -1415,7 +1695,23 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertContains(response, "Related")
         self.assertContains(response, "related-links-tab")
         self.assertNotContains(response, "related-objects-tab")
+        self.assertContains(response, "channel-banner-card")
+        self.assertContains(response, "image-dropzone")
+        self.assertContains(response, "Click or drop to replace")
+        model_admin = admin.site._registry[Channel]
+        request = RequestFactory().get("/admin/")
+        request.user = self.superuser
+        fields = list(dict(model_admin.get_fieldsets(request, obj=channel))["Channel"]["fields"])
+        self.assertEqual(fields[-1], "banner_logo")
+        self.assertIn("display_user", fields)
+        self.assertContains(response, "field-display_user")
+        self.assertContains(response, "media-metric__inspect")
+        self.assertContains(response, 'title="Inspect"')
+        self.assertContains(response, reverse("admin:users_user_change", args=[self.superuser.pk]))
+        banner = model_admin.formfield_for_dbfield(Channel._meta.get_field("banner_logo"), request)
+        self.assertEqual(banner.widget.template_name, "admin/widgets/image_dropzone.html")
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_playlist_change_shows_related_media_link(self):
         response = self.client.get(reverse("admin:files_playlist_change", args=[self.playlist.pk]))
         self.assertEqual(response.status_code, 200)
@@ -1423,6 +1719,11 @@ class PlaylistChannelAdminTest(TestCase):
         self.assertContains(response, f"playlist__id__exact={self.playlist.pk}")
         self.assertContains(response, "related-links-tab")
         self.assertNotContains(response, "related-objects-tab")
+        self.assertContains(response, "field-display_user")
+        self.assertContains(response, "media-metric__inspect")
+        self.assertContains(response, 'title="Inspect"')
+        self.assertContains(response, reverse("admin:users_user_change", args=[self.superuser.pk]))
+        self.assertContains(response, self.superuser.username)
 
     def test_playlist_change_puts_title_before_description(self):
         model_admin = admin.site._registry[Playlist]
@@ -1622,6 +1923,42 @@ class TagAdminTest(TestCase):
         self.assertContains(response, "admintag")
         filtered = reverse("admin:files_media_changelist") + f"?tags__id__exact={self.tag.pk}"
         self.assertContains(response, filtered)
+
+    @override_settings(SECURE_SSL_REDIRECT=False)
+    def test_tag_change_inspects_user_and_uploads_listings_thumbnail(self):
+        from io import BytesIO
+
+        from PIL import Image
+
+        self.tag.user = self.superuser
+        self.tag.listings_thumbnail = "/media/original/tags/existing.jpg"
+        self.tag.save(update_fields=["user", "listings_thumbnail"])
+        url = reverse("admin:files_tag_change", args=[self.tag.pk])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "field-display_user")
+        self.assertContains(response, "media-metric__inspect")
+        self.assertContains(response, 'title="Inspect"')
+        self.assertContains(response, reverse("admin:users_user_change", args=[self.superuser.pk]))
+        self.assertContains(response, "tag-listings-card")
+        self.assertContains(response, "image-dropzone")
+        self.assertContains(response, "Click or drop to replace")
+        self.assertContains(response, "/media/original/tags/existing.jpg")
+
+        buffer = BytesIO()
+        Image.new("RGB", (8, 8), "red").save(buffer, format="JPEG")
+        upload = SimpleUploadedFile("tag-thumb.jpg", buffer.getvalue(), content_type="image/jpeg")
+        response = self.client.post(url, {"title": self.tag.title, "listings_thumbnail": upload})
+        self.assertEqual(response.status_code, 302, response.content.decode()[:500] if response.status_code != 302 else "")
+        self.tag.refresh_from_db()
+        self.assertTrue(self.tag.listings_thumbnail)
+        self.assertNotEqual(self.tag.listings_thumbnail, "/media/original/tags/existing.jpg")
+        self.assertEqual(self.tag.user_id, self.superuser.pk)
+
+        response = self.client.post(url, {"title": self.tag.title, "listings_thumbnail-clear": "on"})
+        self.assertEqual(response.status_code, 302)
+        self.tag.refresh_from_db()
+        self.assertIsNone(self.tag.listings_thumbnail)
 
     def test_tag_changelist_links_user_by_username(self):
         self.tag.user = self.superuser
@@ -2209,27 +2546,35 @@ class MediaRelationshipNavigationTest(TestCase):
         texts = {c.text for c in response.context["cl"].result_list}
         self.assertEqual(texts, {"visible on media change"})
 
+    @override_settings(SECURE_SSL_REDIRECT=False)
     def test_comment_change_shows_linked_user_and_media_once(self):
+        reply = Comment.objects.create(media=self.media, user=self.superuser, text="reply on media change", parent=self.comment)
         model_admin = admin.site._registry[Comment]
         request = RequestFactory().get("/admin/")
         request.user = self.superuser
-        fieldsets = dict(model_admin.get_fieldsets(request, obj=self.comment))
+        fieldsets = dict(model_admin.get_fieldsets(request, obj=reply))
         self.assertEqual(list(fieldsets.keys()), ["Comment"])
         self.assertEqual(
             list(fieldsets["Comment"]["fields"]),
-            ["link_user", "link_media", "text", "parent", "add_date", "uid"],
+            ["add_date", "display_user", "display_media", "text", "display_parent", "display_uid"],
         )
         self.assertNotIn("user", fieldsets["Comment"]["fields"])
         self.assertNotIn("media", fieldsets["Comment"]["fields"])
 
-        response = self.client.get(reverse("admin:files_comment_change", args=[self.comment.pk]))
+        response = self.client.get(reverse("admin:files_comment_change", args=[reply.pk]))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "field-link_user")
-        self.assertContains(response, "field-link_media")
+        self.assertContains(response, "field-display_user")
+        self.assertContains(response, "field-display_media")
+        self.assertContains(response, "field-display_parent")
         self.assertNotContains(response, "field-user")
         self.assertNotContains(response, "field-media")
-        self.assertContains(response, f"{self.superuser.username}</a>")
+        self.assertContains(response, "media-metric__inspect")
+        self.assertContains(response, 'title="Inspect"')
+        self.assertContains(response, reverse("admin:users_user_change", args=[self.superuser.pk]))
         self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertContains(response, reverse("admin:files_comment_change", args=[self.comment.pk]))
+        self.assertContains(response, 'data-copy-value="{}"'.format(reply.uid))
+        self.assertContains(response, 'title="Copy"')
         self.assertNotContains(response, "related-links-tab")
 
     def test_user_change_shows_related_media_link(self):

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% load i18n custom_filters %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+        <div class="auth-card-toolbar">
+            <form class="auth-card-language" method="post" action="{% url 'set_language' %}">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{% block auth_language_next %}{{ request.get_full_path }}{% endblock %}">
+                <label for="auth-card-language">{{ "Language"|custom_translate:request.LANGUAGE_CODE }}</label>
+                <select id="auth-card-language" name="language" onchange="this.form.submit()">
+                    {% get_available_languages as LANGUAGES %}
+                    {% get_language_info_list for LANGUAGES as languages %}
+                    {% for language in languages %}
+                        <option value="{{ language.code }}"{% if language.code == request.LANGUAGE_CODE %} selected{% endif %}>
+                            {{ language.name_local }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <noscript><button type="submit">{{ "Go"|custom_translate:request.LANGUAGE_CODE }}</button></noscript>
+            </form>
+            <div class="auth-card-theme">
+                <label for="auth-card-theme" id="auth-card-theme-label" data-label-dark="{{ "Switch to dark theme"|custom_translate:request.LANGUAGE_CODE }}" data-label-light="{{ "Switch to light theme"|custom_translate:request.LANGUAGE_CODE }}">{{ "Switch to dark theme"|custom_translate:request.LANGUAGE_CODE }}</label>
+                <span class="checkbox-switcher">
+                    <input type="checkbox" id="auth-card-theme">
+                </span>
+            </div>
+        </div>
+
+        <h1>{% block auth_heading %}{% endblock %}</h1>
+        {% block auth_intro %}{% endblock %}
+        {% block auth_actions %}{% endblock %}
+    </div>
+</div>
+<script>
+(function () {
+    var storageKey = 'MediaCMS[mediacms][theme][mode]';
+    var input = document.getElementById('auth-card-theme');
+    var label = document.getElementById('auth-card-theme-label');
+    if (!input || !label) {
+        return;
+    }
+
+    function storedMode() {
+        try {
+            return localStorage.getItem(storageKey);
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function apply(mode) {
+        var dark = mode === 'dark';
+        document.body.classList.toggle('dark_theme', dark);
+        input.checked = dark;
+        label.textContent = dark ? label.getAttribute('data-label-light') : label.getAttribute('data-label-dark');
+    }
+
+    function resolvedMode() {
+        var mode = storedMode();
+        if (mode === 'light' || mode === 'dark') {
+            return mode;
+        }
+        return document.body.classList.contains('dark_theme') ? 'dark' : '{{ DEFAULT_THEME }}';
+    }
+
+    apply(resolvedMode());
+
+    input.addEventListener('change', function () {
+        var mode = input.checked ? 'dark' : 'light';
+        try {
+            localStorage.setItem(storageKey, mode);
+        } catch (error) {}
+        apply(mode);
+        window.dispatchEvent(new CustomEvent('mediacms-theme', { detail: mode }));
+    });
+
+    window.addEventListener('mediacms-theme', function (event) {
+        if (event.detail === 'light' || event.detail === 'dark') {
+            apply(event.detail);
+        }
+    });
+})();
+</script>
+{% endblock %}

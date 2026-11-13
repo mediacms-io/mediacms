@@ -5,41 +5,56 @@
     {% block links %}
         {% spaceless %}
         {% if not is_hidden %}
-        {% if can_change_related %}
+        <span class="related-widget-wrapper__actions">
+        {% if name == "license" and can_change_related or name == "license" and can_view_related %}
+        <a class="license-inspect" id="inspect_id_{{ name }}"
+            {% if license_inspect_url %}href="{{ license_inspect_url }}"{% endif %}
+            data-href-template="{{ change_related_template_url }}"
+            title="{{ "Inspect"|custom_translate:LANGUAGE_CODE }}"
+            aria-label="{{ "Inspect"|custom_translate:LANGUAGE_CODE }}">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <span class="sr-only">{{ "Inspect"|custom_translate:LANGUAGE_CODE }}</span>
+        </a>
+        {% elif can_change_related %}
         <a class="related-widget-wrapper-link change-related" id="change_id_{{ name }}"
             data-href-template="{{ change_related_template_url }}?{{ url_params }}"
             data-popup="yes"
-            title="{% blocktranslate %}Change selected {{ model }}{% endblocktranslate %}">
+            title="{% blocktranslate %}Change selected {{ model }}{% endblocktranslate %}"
+            aria-label="{% blocktranslate %}Change selected {{ model }}{% endblocktranslate %}">
             <i class="fas fa-pencil-alt" aria-hidden="true"></i>
-            <span>{{ "Change"|custom_translate:LANGUAGE_CODE }}</span>
+            <span class="sr-only">{{ "Change"|custom_translate:LANGUAGE_CODE }}</span>
         </a>
         {% endif %}
         {% if can_add_related %}
         <a class="related-widget-wrapper-link add-related" id="add_id_{{ name }}"
             data-popup="yes"
             href="{{ add_related_url }}?{{ url_params }}"
-            title="{% blocktranslate %}Add another {{ model }}{% endblocktranslate %}">
+            title="{% blocktranslate %}Add another {{ model }}{% endblocktranslate %}"
+            aria-label="{% blocktranslate %}Add another {{ model }}{% endblocktranslate %}">
             <i class="fas fa-plus" aria-hidden="true"></i>
-            <span>{{ "Add"|custom_translate:LANGUAGE_CODE }}</span>
+            <span class="sr-only">{{ "Add"|custom_translate:LANGUAGE_CODE }}</span>
         </a>
         {% endif %}
         {% if can_delete_related %}
         <a class="related-widget-wrapper-link delete-related" id="delete_id_{{ name }}"
             data-href-template="{{ delete_related_template_url }}?{{ url_params }}"
             data-popup="yes"
-            title="{% blocktranslate %}Delete selected {{ model }}{% endblocktranslate %}">
+            title="{% blocktranslate %}Delete selected {{ model }}{% endblocktranslate %}"
+            aria-label="{% blocktranslate %}Delete selected {{ model }}{% endblocktranslate %}">
             <i class="fas fa-trash" aria-hidden="true"></i>
-            <span>{{ "Delete"|custom_translate:LANGUAGE_CODE }}</span>
+            <span class="sr-only">{{ "Delete"|custom_translate:LANGUAGE_CODE }}</span>
         </a>
         {% endif %}
-        {% if can_view_related %}
+        {% if can_view_related and not can_change_related and name != "license" %}
           <a class="related-widget-wrapper-link view-related" id="view_id_{{ name }}"
              data-href-template="{{ change_related_template_url }}?{{ view_related_url_params }}"
-             title="{% blocktranslate %}View selected {{ model }}{% endblocktranslate %}">
-            <i class="fas fa-eye" aria-hidden="true"></i>
-            <span>{{ "View"|custom_translate:LANGUAGE_CODE }}</span>
+             title="{% blocktranslate %}View selected {{ model }}{% endblocktranslate %}"
+             aria-label="{% blocktranslate %}View selected {{ model }}{% endblocktranslate %}">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <span class="sr-only">{{ "View"|custom_translate:LANGUAGE_CODE }}</span>
           </a>
         {% endif %}
+        </span>
         {% endif %}
         {% endspaceless %}
     {% endblock %}

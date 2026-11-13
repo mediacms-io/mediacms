@@ -1,0 +1,16 @@
+{% extends "account/auth_card.html" %}
+{% load custom_filters %}
+
+{% block auth_language_next %}{% url 'admin:login' %}{% endblock %}
+
+{% block headtitle %} | {{ "Sign out"|custom_translate:request.LANGUAGE_CODE }}{% endblock headtitle %}
+
+{% block auth_heading %}{{ "Sign out"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
+
+{% block auth_intro %}
+<p>{{ "You have signed out."|custom_translate:request.LANGUAGE_CODE }}</p>
+{% endblock %}
+
+{% block auth_actions %}
+<p><a href="{% url 'admin:login' %}">{{ "Sign in again"|custom_translate:request.LANGUAGE_CODE }}</a></p>
+{% endblock %}

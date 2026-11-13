@@ -221,7 +221,7 @@
                         <ul class="nav nav-pills nav-sidebar flex-column {{ jazzmin_ui.sidebar_list_classes }}" data-widget="treeview" role="menu" data-collapsible="false">
 
                             <li class="nav-item">
-                                <a href="{% url 'admin:index' %}" class="nav-link{% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'dashboard_section' %} active{% endif %}">
+                                <a href="{% url 'admin:index' %}" class="nav-link{% if request.resolver_match.url_name == 'index' or request.resolver_match.url_name == 'dashboard_section' and request.resolver_match.kwargs.section != 'support' %} active{% endif %}">
                                     <i class="nav-icon fas fa-tachometer-alt"></i>
                                     <p>{{ "Dashboard"|custom_translate:LANGUAGE_CODE }}</p>
                                 </a>
@@ -252,6 +252,12 @@
                                     {% endfor %}
                                 {% endfor %}
                             {% else %}
+                                <li class="nav-item px-3 pb-2">
+                                    <div class="d-flex justify-content-between sidebar-tree-controls">
+                                        <button type="button" class="btn btn-link btn-sm p-0" id="sidebar-expand-all">{{ "Expand all"|custom_translate:LANGUAGE_CODE }}</button>
+                                        <button type="button" class="btn btn-link btn-sm p-0" id="sidebar-collapse-all">{{ "Collapse all"|custom_translate:LANGUAGE_CODE }}</button>
+                                    </div>
+                                </li>
                                 {% for app in side_menu_list %}
                                     <li class="nav-item has-treeview">
                                         <a href="#" class="nav-link">
@@ -271,6 +277,12 @@
                                     </li>
                                 {% endfor %}
                             {% endif %}
+                            <li class="nav-item">
+                                <a href="{% url 'admin:dashboard_section' 'support' %}" class="nav-link{% if request.resolver_match.url_name == 'dashboard_section' and request.resolver_match.kwargs.section == 'support' %} active{% endif %}">
+                                    <i class="nav-icon fas fa-life-ring"></i>
+                                    <p>{{ "Get Support"|custom_translate:LANGUAGE_CODE }}</p>
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
@@ -403,6 +415,26 @@
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
+  function setSidebarTree(open) {
+    document.querySelectorAll('#jazzy-sidebar li.nav-item.has-treeview').forEach(function(item) {
+      var list = item.querySelector(':scope > ul.nav-treeview');
+      item.classList.toggle('menu-open', open);
+      item.classList.toggle('menu-is-opening', open);
+      if (list) {
+        list.style.display = open ? 'block' : 'none';
+      }
+    });
+  }
+
+  var expandAll = document.getElementById('sidebar-expand-all');
+  var collapseAll = document.getElementById('sidebar-collapse-all');
+  if (expandAll) {
+    expandAll.addEventListener('click', function() { setSidebarTree(true); });
+  }
+  if (collapseAll) {
+    collapseAll.addEventListener('click', function() { setSidebarTree(false); });
+  }
+
   const breadcrumbItems = document.querySelectorAll('.breadcrumb-item a');
 
   breadcrumbItems.forEach(function(link) {

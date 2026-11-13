@@ -37,10 +37,16 @@
                     <i class="fas fa-chevron-right changelist-filter-chevron" aria-hidden="true"></i>
                     <span class="changelist-filter-summary-label">{{ "Filters"|custom_translate:LANGUAGE_CODE }}</span>
                     {% for chip in active_filters %}
-                        <span class="changelist-filter-chip">{{ chip.title|custom_translate:LANGUAGE_CODE }}: {{ chip.value|custom_translate:LANGUAGE_CODE }}</span>
+                        <span class="changelist-filter-chip">
+                            <i class="{{ chip.icon }}" aria-hidden="true"></i>
+                            {{ chip.title|custom_translate:LANGUAGE_CODE|capfirst }}: {{ chip.value|custom_translate:LANGUAGE_CODE }}
+                        </span>
                     {% endfor %}
                     {% if active_filters %}
-                        <a href="?{{ clear_filters_query }}" class="changelist-filter-clear">{{ "Clear filters"|custom_translate:LANGUAGE_CODE }}</a>
+                        <a href="?{{ clear_filters_query }}" class="btn btn-sm btn-outline-secondary changelist-filter-clear">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                            {{ "Clear filters"|custom_translate:LANGUAGE_CODE }}
+                        </a>
                     {% endif %}
                 </summary>
                 <div class="changelist-filter-grid">

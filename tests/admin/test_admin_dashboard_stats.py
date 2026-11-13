@@ -480,9 +480,129 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(site, "fas fa-microphone")
         self.assertContains(site, "fas fa-user-lock")
         self.assertContains(site, "Health checks")
-        self.assertContains(site, "Configuration")
+        self.assertNotContains(site, "Site name matches PORTAL_NAME")
+        self.assertNotContains(site, "PORTAL_WORKFLOW")
         self.assertContains(site, "Channels")
-        self.assertContains(site, "Site name matches PORTAL_NAME")
-        self.assertContains(site, "PORTAL_NAME")
+        health = self.client.get(reverse("admin:dashboard_section", args=["health"]))
+        configuration = self.client.get(reverse("admin:dashboard_section", args=["configuration"]))
+        system = self.client.get(reverse("admin:dashboard_section", args=["system"]))
+        support = self.client.get(reverse("admin:dashboard_section", args=["support"]))
+        self.assertEqual(health.status_code, 200)
+        self.assertEqual(configuration.status_code, 200)
+        self.assertEqual(system.status_code, 200)
+        self.assertEqual(support.status_code, 200)
+        self.assertContains(health, "Health checks")
+        self.assertContains(health, "Site name matches PORTAL_NAME")
+        self.assertContains(health, "Copy text")
+        self.assertContains(health, "Copy CSV")
+        self.assertContains(health, "Copy Markdown")
+        self.assertContains(configuration, "Configuration")
+        self.assertContains(configuration, "PORTAL_NAME")
+        self.assertContains(configuration, "Copy CSV")
+        self.assertContains(system, "Python")
+        self.assertContains(system, "Copy Markdown")
+        self.assertContains(support, "Get Support")
+        self.assertContains(support, "Download as text")
+        self.assertContains(support, "Download as Markdown")
+        self.assertContains(support, "Missing translation")
+        self.assertContains(support, "Transcoding failure")
+        self.assertContains(support, "Media not viewable")
+        self.assertContains(support, "Emails not sent")
+        self.assertContains(support, "Reverse proxy")
+        self.assertContains(support, "Other / general")
+        self.assertContains(site, "Expand all")
+        self.assertContains(site, "Collapse all")
+        self.assertContains(site, reverse("admin:dashboard_section", args=["support"]))
         self.assertNotContains(library, "Top Videos by Duration")
         self.assertNotContains(moderation, "Needs Review")
+
+    def test_integrations_overview_is_before_site(self):
+        index = self.client.get(reverse("admin:index"))
+        integrations = self.client.get(reverse("admin:dashboard_section", args=["integrations"]))
+        self.assertEqual(index.status_code, 200)
+        self.assertEqual(integrations.status_code, 200)
+        self.assertContains(integrations, "Migrations")
+        self.assertContains(integrations, "Migration records")
+        self.assertContains(integrations, "Pending")
+        self.assertContains(integrations, "Error")
+        self.assertContains(integrations, "Failed")
+        self.assertContains(integrations, "Migration errors")
+        self.assertContains(integrations, "Migration record failures")
+        self.assertContains(integrations, "Health checks")
+        self.assertNotContains(integrations, "Social apps")
+        self.assertNotContains(integrations, "LTI Platforms")
+        self.assertContains(index, "Migrations Pending")
+        self.assertContains(index, "Migration records Failed")
+        self.assertContains(index, "Passing checks")
+        self.assertNotContains(index, "FRONTEND_HOST")
+        self.assertNotContains(index, "ffmpeg")
+        integrations_url = reverse("admin:dashboard_section", args=["integrations"])
+        site_url = reverse("admin:dashboard_section", args=["site"])
+        for response in (index, integrations):
+            content = response.content.decode()
+            self.assertLess(content.find(integrations_url), content.find(site_url))
+        self.assertIn("migrations_in_error", calculate_statistics()["integrations"])
+
+    @override_settings(USE_IDENTITY_PROVIDERS=True, USE_SAML=True, USE_LTI=True)
+    def test_integrations_overview_lists_enabled_objects(self):
+        import importlib
+
+        from django.contrib import admin
+        from django.urls import clear_url_caches, set_urlconf
+
+        import cms.urls
+        from identity_providers.admin import IdentityProviderUserLogAdmin, LoginOptionAdmin
+        from identity_providers.models import IdentityProviderUserLog, LoginOption
+        from saml_auth.admin import SAMLConfigurationAdmin
+        from saml_auth.models import SAMLConfiguration
+
+        def reload_admin_urls():
+            importlib.reload(cms.urls)
+            clear_url_caches()
+            set_urlconf(None)
+
+        registered = []
+        for model, model_admin in (
+            (LoginOption, LoginOptionAdmin),
+            (IdentityProviderUserLog, IdentityProviderUserLogAdmin),
+            (SAMLConfiguration, SAMLConfigurationAdmin),
+        ):
+            if model not in admin.site._registry:
+                admin.site.register(model, model_admin)
+                registered.append(model)
+        reload_admin_urls()
+        invalidate_dashboard_stats_cache()
+        try:
+            response = self.client.get(reverse("admin:dashboard_section", args=["integrations"]))
+            self.assertEqual(response.status_code, 200)
+            self.assertContains(response, "Social apps")
+            self.assertContains(response, "Social accounts")
+            self.assertContains(response, "Login Options")
+            self.assertContains(response, "Active login options")
+            self.assertContains(response, "Identity Provider User Logs")
+            self.assertContains(response, "Identity provider logs (7 days)")
+            self.assertContains(response, "active__exact=1")
+            self.assertContains(response, "SAML Configurations")
+            self.assertContains(response, "LTI Platforms")
+            self.assertContains(response, "LTI Resource Links")
+            self.assertContains(response, "LTI User Mappings")
+            self.assertContains(response, "LTI Role Mappings")
+            self.assertContains(response, "LTI Tool Keys")
+            self.assertContains(response, "LTI Launch Logs")
+            self.assertContains(response, "Successful launches")
+            self.assertContains(response, "Failed launches")
+            self.assertContains(response, "Launches (7 days)")
+            self.assertContains(response, "success__exact=0")
+            self.assertContains(response, reverse("admin:socialaccount_socialapp_changelist"))
+            self.assertContains(response, reverse("admin:identity_providers_loginoption_changelist"))
+            self.assertContains(response, reverse("admin:saml_auth_samlconfiguration_changelist"))
+            self.assertContains(response, reverse("admin:lti_ltiplatform_changelist"))
+            index = self.client.get(reverse("admin:index"))
+            self.assertContains(index, "Social accounts")
+            self.assertContains(index, "LTI Platforms")
+            self.assertContains(index, "Failed launches")
+        finally:
+            for model in registered:
+                admin.site.unregister(model)
+            reload_admin_urls()
+            invalidate_dashboard_stats_cache()

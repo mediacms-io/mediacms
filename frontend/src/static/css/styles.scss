@@ -161,6 +161,47 @@ button {
     margin-top: 1.5em;
   }
 
+  .auth-card-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+
+    form.auth-card-language {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: auto;
+      margin: 0;
+
+      label,
+      select,
+      button {
+        display: inline-block;
+        width: auto;
+        margin: 0;
+      }
+    }
+  }
+
+  .auth-card-theme {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+
+    label {
+      width: auto;
+      margin: 0;
+    }
+
+    .checkbox-switcher {
+      width: 36px;
+      flex: 0 0 36px;
+    }
+  }
+
   h1 {
     display: inline-block;
     width: 100%;

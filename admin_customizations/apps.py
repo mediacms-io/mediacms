@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
 
 
 class AdminCustomizationsConfig(AppConfig):
@@ -13,7 +13,7 @@ class AdminCustomizationsConfig(AppConfig):
         from .admin import calculate_statistics
         from .object_actions import patch_model_admin_object_actions
         from .sidebar import build_workflow_app_list
-        from .views import dashboard_section
+        from .views import dashboard_section, support_bundle_download
 
         patch_model_admin_action_choices()
         patch_model_admin_object_actions()
@@ -43,6 +43,11 @@ class AdminCustomizationsConfig(AppConfig):
 
         def get_urls(self):
             custom = [
+                re_path(
+                    r"^dashboard/support/bundle/(?P<filename>[\w.-]+)$",
+                    self.admin_view(support_bundle_download),
+                    name="support_bundle",
+                ),
                 path(
                     "dashboard/<slug:section>/",
                     self.admin_view(dashboard_section),

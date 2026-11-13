@@ -139,13 +139,14 @@ class FlaggedAppListTest(FlaggedAdminTestCase):
         app_list = self.site.get_app_list(self.admin_request())
         apps = {app["app_label"]: [model["object_name"] for model in app["models"]] for app in app_list}
         labels = [app["app_label"] for app in app_list]
-        self.assertEqual(labels[:5], ["moderation", "library", "processing", "people", "site"])
+        self.assertEqual(labels[:6], ["moderation", "library", "processing", "people", "integrations", "site"])
         self.assertIn("integrations", labels)
         self.assertNotIn("rbac", labels)
         self.assertNotIn("saml_auth", labels)
         self.assertNotIn("socialaccount", labels)
         self.assertIn("RBACGroup", apps["people"])
         self.assertIn("EmailAddress", apps["people"])
+        self.assertEqual(apps["integrations"][0], "IntegrationsOverview")
         self.assertIn("LoginOption", apps["integrations"])
         self.assertIn("IdentityProviderUserLog", apps["integrations"])
         self.assertIn("SAMLConfiguration", apps["integrations"])

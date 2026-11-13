@@ -1,25 +1,24 @@
-{% extends "base.html" %}
+{% extends "account/auth_card.html" %}
+{% load custom_filters %}
 
-{% block headtitle %} | Sign In{% endblock headtitle %}
+{% block headtitle %} | {{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock headtitle %}
 
-{% block innercontent %}
-<div class="user-action-form-wrap">
-    <div class="user-action-form-inner">
+{% block auth_heading %}{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
 
-		<h1>Sign In</h1>
+{% block auth_intro %}
+<p>{{ "If you have not created an account yet, then please"|custom_translate:request.LANGUAGE_CODE }} <a href="{{ signup_url }}">{{ "sign up"|custom_translate:request.LANGUAGE_CODE }}</a> {{ "first."|custom_translate:request.LANGUAGE_CODE }}</p>
+{% endblock %}
 
-		<p>If you have not created an account yet, then please <a href="{{ signup_url }}">sign up</a> first.</p>
-
-		<form class="login" method="POST" action="{% url 'login_system' %}">
-		  {% csrf_token %}
-		  {{ form.as_p }}
-		  {% if redirect_field_value %}
-		  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
-		  {% endif %}
-		  <button class="primaryAction" type="submit">Sign In</button>
-		</form>
-
-    </div>
-</div>
-{% endblock innercontent %}
-
+{% block auth_actions %}
+<form class="login" method="POST" action="{% url 'login_system' %}">
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        {{ form.non_field_errors }}
+    {% endif %}
+    {{ form.as_p }}
+    {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+    {% endif %}
+    <button class="primaryAction" type="submit">{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}</button>
+</form>
+{% endblock %}

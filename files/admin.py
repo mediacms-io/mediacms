@@ -1,15 +1,25 @@
+import contextvars
+import uuid
+from io import BytesIO
+
 from django import forms
 from django.conf import settings
 from django.contrib import admin, messages
+from django.contrib.admin.widgets import RelatedFieldWidgetWrapper
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.db.models import Count
+from django.forms.widgets import FILE_INPUT_CONTRADICTION
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
-from django.utils.html import escape, format_html
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import get_language
+from imagekit.processors import ResizeToFit
+from PIL import Image
 from tinymce.widgets import TinyMCE
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
@@ -23,6 +33,7 @@ from files.admin_helpers import (
     MEDIA_PERMISSION_SOURCE_ICONS,
     MEDIA_STATE_STATUS_ICONS,
     MEDIA_TYPE_STATUS_ICONS,
+    REPORT_ACTION_ICONS,
     TRIM_ACTION_ICONS,
     TRIM_STATUS_ICONS,
     TRIM_STYLE_ICONS,
@@ -32,17 +43,20 @@ from files.admin_helpers import (
     TranslateManyToManyHelpMixin,
     admin_change_link,
     admin_change_url,
+    admin_copy_value,
+    admin_inspect_link,
     admin_changelist_link,
     admin_changelist_url,
     admin_inspect_id,
     admin_open_on_site_link,
+    admin_relation_link,
     admin_status_icon,
     admin_text,
     clipped_admin_text,
-    join_links,
     translated_choice_display,
 )
 from files.frontend_translations import translate_string
+from files.helpers import show_file_size
 from files.integrity import (
     INTEGRITY_CHECKS,
     INTEGRITY_FILTER_PARAM,
@@ -84,6 +98,211 @@ from .models import (
     TranscriptionRequest,
     VideoTrimRequest,
 )
+
+# Set for the duration of a media change form so object links can show Edit or Inspect.
+_media_change_request = contextvars.ContextVar("media_change_request", default=None)
+
+
+class ImageDropzoneWidget(forms.ClearableFileInput):
+    template_name = "admin/widgets/image_dropzone.html"
+
+
+class FileDropzoneWidget(forms.ClearableFileInput):
+    template_name = "admin/widgets/file_dropzone.html"
+
+
+class ListingsThumbnailUrlWidget(forms.TextInput):
+    """Text control for a listings image address, with a preview when it is a URL or path."""
+
+    template_name = "admin/widgets/listings_thumbnail_url.html"
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        text = value.strip() if isinstance(value, str) else ""
+        preview = text if text.startswith(("http://", "https://", "/")) else ""
+        context["widget"]["preview_url"] = preview
+        return context
+
+
+class ListingsThumbnailWidget(forms.ClearableFileInput):
+    """File dropzone whose current value is a stored image URL."""
+
+    template_name = "admin/widgets/listings_thumbnail.html"
+
+    def __init__(self, attrs=None):
+        super().__init__({"accept": "image/*", **(attrs or {})})
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        preview = ""
+        if isinstance(value, str):
+            preview = value
+        elif getattr(value, "url", None):
+            preview = value.url
+        context["widget"]["preview_url"] = preview
+        context["widget"]["is_initial"] = bool(preview)
+        return context
+
+
+def store_listings_thumbnail(uploaded):
+    """Resize an uploaded listing image and return its media URL."""
+    image = ResizeToFit(width=344, height=None).process(Image.open(uploaded))
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+    buffer = BytesIO()
+    image.save(buffer, format="JPEG", quality=85)
+    filename = f"{settings.MEDIA_UPLOAD_DIR}tags/{uuid.uuid4().hex}.jpg"
+    saved = default_storage.save(filename, ContentFile(buffer.getvalue()))
+    return default_storage.url(saved)
+
+
+class ListingsThumbnailFormField(forms.ImageField):
+    """Upload replaces the stored URL. Leaving the control alone keeps it."""
+
+    widget = ListingsThumbnailWidget
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault("required", False)
+        super().__init__(*args, **kwargs)
+
+    def has_changed(self, initial, data):
+        return data not in (None, "")
+
+    def bound_data(self, data, initial):
+        if data in (None, ""):
+            return initial
+        return data
+
+    def clean(self, data, initial=None):
+        if data is FILE_INPUT_CONTRADICTION:
+            raise ValidationError(self.error_messages["contradiction"], code="contradiction")
+        if data is False:
+            return None
+        if not data:
+            return initial or None
+        uploaded = super().clean(data)
+        return store_listings_thumbnail(uploaded)
+
+
+def format_thumbnail_clock(seconds):
+    """Seconds as a zero-padded clock with one decimal: 00:01:05.0."""
+    if seconds in (None, ""):
+        return ""
+    tenths = int(round(float(seconds) * 10))
+    if tenths < 0:
+        tenths = 0
+    whole, frac = divmod(tenths, 10)
+    hours, whole = divmod(whole, 3600)
+    minutes, secs = divmod(whole, 60)
+    return f"{hours:02d}:{minutes:02d}:{secs:02d}.{frac}"
+
+
+def parse_thumbnail_clock(value):
+    """Clock text or a seconds number. Raises ValueError when it is not a time."""
+    text = str(value).strip()
+    if not text:
+        return None
+    if ":" not in text:
+        return round(float(text), 1)
+    parts = text.split(":")
+    if len(parts) < 2 or len(parts) > 3:
+        raise ValueError(text)
+    seconds = float(parts[-1])
+    minutes = int(parts[-2])
+    hours = int(parts[0]) if len(parts) == 3 else 0
+    if minutes < 0 or minutes > 59 or seconds < 0 or seconds >= 60 or hours < 0:
+        raise ValueError(text)
+    return round(hours * 3600 + minutes * 60 + seconds, 1)
+
+
+class ThumbnailTimeWidget(forms.TextInput):
+    template_name = "admin/widgets/thumbnail_time.html"
+
+    def __init__(self, duration=0, attrs=None):
+        self.duration = duration or 0
+        defaults = {
+            "placeholder": "00:00:00.0",
+            "autocomplete": "off",
+            "spellcheck": "false",
+            "inputmode": "decimal",
+        }
+        super().__init__({**defaults, **(attrs or {})})
+
+    def format_value(self, value):
+        if value in (None, ""):
+            return ""
+        try:
+            seconds = value if isinstance(value, (int, float)) else parse_thumbnail_clock(value)
+        except (TypeError, ValueError):
+            return value
+        return format_thumbnail_clock(seconds)
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        context["widget"]["duration"] = self.duration
+        return context
+
+
+class ThumbnailTimeFormField(forms.FloatField):
+    def to_python(self, value):
+        if value in self.empty_values:
+            return None
+        try:
+            if isinstance(value, (int, float)) and not isinstance(value, bool):
+                return round(float(value), 1)
+            return parse_thumbnail_clock(value)
+        except (TypeError, ValueError):
+            raise ValidationError("Enter a time as 00:00:00.0.", code="invalid")
+
+
+class MediaAdminForm(forms.ModelForm):
+    class Meta:
+        model = Media
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        field = self.fields.get("thumbnail_time")
+        if isinstance(field, ThumbnailTimeFormField):
+            field.widget.duration = self.instance.duration or 0
+        help_texts = dict(self._meta.help_texts or {})
+        help_texts.setdefault("display_listable", "Whether it will appear on listings")
+        for name, source in (
+            ("display_friendly_token", "friendly_token"),
+            ("display_uid", "uid"),
+            ("display_md5sum", "md5sum"),
+            ("display_media_info", "media_info"),
+            ("display_search", "search"),
+        ):
+            help_text = Media._meta.get_field(source).help_text
+            if help_text:
+                help_texts.setdefault(name, help_text)
+        self._meta.help_texts = help_texts
+
+    def clean_thumbnail_time(self):
+        value = self.cleaned_data.get("thumbnail_time")
+        if value is None:
+            return None
+        if value <= 0:
+            raise ValidationError("Enter a time greater than 0.")
+        duration = self.instance.duration or 0
+        if value > duration:
+            raise ValidationError(
+                "Enter a time no later than the video duration (%(duration)s).",
+                params={"duration": format_thumbnail_clock(duration)},
+            )
+        return value
+
+
+class LicenseInspectWidgetWrapper(RelatedFieldWidgetWrapper):
+    """Related-object wrapper that links the current license for inspection."""
+
+    def get_context(self, name, value, attrs):
+        context = super().get_context(name, value, attrs)
+        if value not in (None, ""):
+            context["license_inspect_url"] = reverse("admin:files_license_change", args=[value])
+        return context
+
 
 # Open reports plus moderation audit events shown on the Media "Reports" tab.
 MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
@@ -167,13 +386,23 @@ class CommentAdmin(admin.ModelAdmin):
     list_select_related = ("user", "media")
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
-    readonly_fields = ("link_user", "link_media", "parent", "add_date", "uid")
+    readonly_fields = (
+        "link_user",
+        "link_media",
+        "parent",
+        "add_date",
+        "uid",
+        "display_user",
+        "display_media",
+        "display_parent",
+        "display_uid",
+    )
     exclude = ("media", "user")
     fieldsets = (
         (
             "Comment",
             {
-                "fields": ("link_user", "link_media", "text", "parent", "add_date", "uid"),
+                "fields": ("add_date", "display_user", "display_media", "text", "display_parent", "display_uid"),
                 "classes": ("tab",),
             },
         ),
@@ -194,6 +423,12 @@ class CommentAdmin(admin.ModelAdmin):
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
 
+    @admin.display(description="User")
+    def display_user(self, obj):
+        if not obj.user_id:
+            return "—"
+        return admin_inspect_link(obj.user, obj.user.username)
+
     @admin.display(description="Media", ordering="media__title")
     def link_media(self, obj):
         if not obj.media_id:
@@ -206,9 +441,27 @@ class CommentAdmin(admin.ModelAdmin):
             clipped_admin_text(title),
         )
 
+    @admin.display(description="Media")
+    def display_media(self, obj):
+        if not obj.media_id:
+            return "—"
+        return admin_inspect_link(obj.media, clipped_admin_text(obj.media.title, always_tooltip=True))
+
+    @admin.display(description="Parent")
+    def display_parent(self, obj):
+        if not obj.parent_id:
+            return "—"
+        return admin_inspect_link(obj.parent, clipped_admin_text(obj.parent.text, always_tooltip=True))
+
+    @admin.display(description="Uid")
+    def display_uid(self, obj):
+        return admin_copy_value(obj.uid)
+
 
 class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToManyHelpMixin, admin.ModelAdmin):
+    form = MediaAdminForm
     search_fields = ["title", "user__username", "friendly_token"]
+    change_form_template = "admin/files/media/change_form.html"
     change_list_template = "admin/files/media/change_list.html"
     # Full column set; get_list_display() hides optional ones unless opted-in or filtered.
     list_display = [
@@ -216,7 +469,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         "display_title",
         "link_user",
         "display_media_type",
-        "duration",
+        "display_duration",
         "display_state",
         "is_reviewed",
         "display_encoding_status",
@@ -231,7 +484,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
     # Hidden by default; shown via column chooser and/or when a related filter is active.
     optional_list_columns = (
         ("link_user", "User", ()),
-        ("duration", "Duration", ()),
+        ("display_duration", "Duration", ()),
         ("is_reviewed", "Is reviewed", ("is_reviewed__exact",)),
         ("featured", "Featured", ("featured__exact",)),
         ("get_comments_count", "Comments", ()),
@@ -420,7 +673,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
     readonly_fields = (
         "link_user",
         "link_channel",
-        "listable",
+        "display_listable",
         "display_media_type",
         "display_encoding_status",
         "duration",
@@ -436,14 +689,21 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         "md5sum",
         "media_info",
         "search",
-        "views",
-        "likes",
-        "dislikes",
+        "display_uid",
+        "display_friendly_token",
+        "display_md5sum",
+        "display_media_info",
+        "display_search",
+        "display_views",
+        "display_likes",
+        "display_dislikes",
+        "reported_times",
+        "display_current_poster",
+        "display_current_thumbnail",
         "report_actions_table",
         "related_comments",
         "related_encodings",
         "related_actions",
-        "related_reports",
         "related_permissions",
         "related_playlists",
         "related_trim_requests",
@@ -459,61 +719,50 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         Object tabs come first, then Reports (Media-only), then Related
         (one-to-many changelist links).
         """
-        media_file_fields = [
-            "media_file",
-            "display_media_type",
-            "display_encoding_status",
-            "duration",
-            "size",
-            "video_height",
-            "hls_file",
-            "preview_file_path",
-            "poster",
-            "thumbnail",
-            "sprites",
-        ]
-        if getattr(settings, "USE_WHISPER_TRANSCRIBE", False):
-            media_file_fields.extend(
-                [
-                    "allow_whisper_transcribe",
-                    "allow_whisper_transcribe_and_translate",
-                ]
-            )
-
+        media_type = getattr(obj, "media_type", "") if obj is not None else ""
         content_fields = [
             "title",
             "description",
-            "link_user",
-            "link_channel",
             "license",
             "tags",
             "category",
         ]
         if getattr(settings, "ALLOW_RATINGS", False):
             content_fields.append("rating_category")
+        content_fields.append("media_file")
+        if media_type in ("video", "audio") and getattr(settings, "USE_WHISPER_TRANSCRIBE", False):
+            content_fields.extend(
+                [
+                    "allow_whisper_transcribe",
+                    "allow_whisper_transcribe_and_translate",
+                ]
+            )
         content_fields.extend(
             [
+                "display_current_poster",
                 "uploaded_poster",
+                "display_current_thumbnail",
                 "uploaded_thumbnail",
-                "thumbnail_time",
             ]
         )
+        if obj is None or media_type == "video":
+            content_fields.append("thumbnail_time")
 
         return (
             (
                 "Content",
                 {
                     "fields": tuple(content_fields),
-                    "classes": ("tab",),
+                    "classes": ("tab", "media-content"),
                 },
             ),
             (
                 "Publishing",
                 {
                     "fields": (
+                        "display_listable",
                         "state",
                         "is_reviewed",
-                        "listable",
                         "featured",
                         "user_featured",
                         "add_date",
@@ -535,25 +784,17 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
                 },
             ),
             (
-                "Media file",
-                {
-                    "fields": tuple(media_file_fields),
-                    "classes": ("tab",),
-                    "description": "Original upload and generated derivatives. Most values here are produced by the media pipeline.",
-                },
-            ),
-            (
                 "Details",
                 {
                     "fields": (
-                        "views",
-                        "likes",
-                        "dislikes",
-                        "uid",
-                        "friendly_token",
-                        "md5sum",
-                        "media_info",
-                        "search",
+                        "display_views",
+                        "display_likes",
+                        "display_dislikes",
+                        "display_uid",
+                        "display_friendly_token",
+                        "display_md5sum",
+                        "display_media_info",
+                        "display_search",
                     ),
                     "classes": ("tab",),
                     "description": "Identifiers and engagement counters.",
@@ -579,13 +820,216 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
                         "related_encodings",
                         "related_permissions",
                         "related_actions",
-                        "related_reports",
                     ),
                     "classes": ("tab", "related-links-tab"),
                     "description": "Links to filtered admin lists for related one-to-many records.",
                 },
             ),
         )
+
+    def changeform_view(self, request, object_id=None, form_url="", extra_context=None):
+        token = _media_change_request.set(request)
+        try:
+            response = super().changeform_view(request, object_id, form_url, extra_context)
+        except Exception:
+            _media_change_request.reset(token)
+            raise
+        if getattr(response, "is_rendered", True) or not hasattr(response, "add_post_render_callback"):
+            _media_change_request.reset(token)
+        else:
+
+            def _reset(rendered):
+                _media_change_request.reset(token)
+                return rendered
+
+            response.add_post_render_callback(_reset)
+        return response
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == "add_date":
+            # One datetime-local control instead of Django's split date and time widgets.
+            kwargs["form_class"] = forms.DateTimeField
+            kwargs["widget"] = forms.DateTimeInput(attrs={"type": "datetime-local", "step": "1"}, format="%Y-%m-%dT%H:%M:%S")
+            kwargs["input_formats"] = ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%dT%H:%M"]
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and db_field.name in ("uploaded_poster", "uploaded_thumbnail"):
+            formfield.widget = ImageDropzoneWidget()
+        if formfield and db_field.name == "media_file":
+            formfield.widget = FileDropzoneWidget()
+        if formfield and db_field.name == "license" and isinstance(formfield.widget, RelatedFieldWidgetWrapper):
+            formfield.widget.__class__ = LicenseInspectWidgetWrapper
+        if formfield and db_field.name == "thumbnail_time":
+            formfield.__class__ = ThumbnailTimeFormField
+            formfield.widget = ThumbnailTimeWidget()
+        return formfield
+
+    def render_change_form(self, request, context, add=False, change=False, form_url="", obj=None):
+        context["media_glance_cards"] = self._glance_cards(obj)
+        return super().render_change_form(request, context, add, change, form_url, obj)
+
+    def _glance_cards(self, obj):
+        """Readonly facts above every tab.
+
+        Type-agnostic placards stay in a fixed order. Type-specific metrics follow them,
+        so a video's duration never shifts State, User, or the other shared cards.
+        """
+        if not obj or not obj.pk:
+            return []
+        cards = [
+            {"label": "Media type", "value": self.display_media_type(obj)},
+            {"label": "State", "value": self.display_state(obj)},
+            {"label": "Is reviewed", "value": self._yes_no_status(obj.is_reviewed, "fas fa-check-circle", "fas fa-times-circle")},
+            {"label": "Featured", "value": self._yes_no_status(obj.featured, "fas fa-star", "fas fa-star")},
+            {"label": "User featured", "value": self._yes_no_status(obj.user_featured, "fas fa-user-check", "fas fa-user")},
+            {"label": "Listable", "value": self.display_listable(obj)},
+            {"label": "User", "value": self._placard_inspect(obj.user, obj.user.username if obj.user_id else None)},
+            {"label": "Channel", "value": self._placard_inspect(obj.channel, str(obj.channel) if obj.channel_id else None)},
+            {"label": "Allow download", "value": self._yes_no_status(obj.allow_download, "fas fa-download", "fas fa-ban")},
+            {"label": "Enable comments", "value": self._yes_no_status(obj.enable_comments, "fas fa-comments", "fas fa-comment-slash")},
+        ]
+        media_type = obj.media_type
+        if media_type in ("video", "audio"):
+            cards.append({"label": "Duration", "value": self._format_duration(obj.duration)})
+        if media_type == "video" and (obj.video_height or 0) > 1:
+            cards.append({"label": "Resolution", "value": f"{obj.video_height}p"})
+        size = obj.size or self._file_size_label(obj)
+        if size:
+            cards.append({"label": "Size", "value": size})
+        if media_type == "video":
+            cards.append({"label": "Encoding status", "value": self.display_encoding_status(obj)})
+        return cards
+
+    def _placard_inspect(self, related, name):
+        """Name plus an icon-only Inspect link. The tooltip carries the word."""
+        if related is None or not getattr(related, "pk", None):
+            return "—"
+        label = admin_text(None, "Inspect")
+        return format_html(
+            '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">'
+            '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
+            name or str(related),
+            admin_change_url(related),
+            label,
+            label,
+        )
+
+    def _yes_no_status(self, enabled, on_icon, off_icon):
+        if enabled:
+            return admin_status_icon(on_icon, admin_text(None, "Yes"), modifier="listable")
+        return admin_status_icon(off_icon, admin_text(None, "No"), modifier="not-listable")
+
+    def _file_size_label(self, obj):
+        media_file = getattr(obj, "media_file", None)
+        if not media_file:
+            return ""
+        try:
+            size = show_file_size(media_file.size)
+        except (OSError, ValueError):
+            return ""
+        return size or ""
+
+    @admin.display(description="Duration", ordering="duration")
+    def display_duration(self, obj):
+        """Brief length in the cell. The full clock time is the tooltip."""
+        if not obj or obj.media_type not in ("video", "audio"):
+            # An empty string is replaced by the admin dash, so return a blank cell.
+            return mark_safe("<span></span>")
+        brief = self._format_duration_brief(obj.duration)
+        clock = self._format_duration_clock(obj.duration)
+        return format_html('<span title="{}">{}</span>', clock, brief)
+
+    @staticmethod
+    def _format_duration_brief(seconds):
+        """Largest whole unit: 15s, 15m, 4h, or 2d."""
+        total = max(int(seconds or 0), 0)
+        if total < 60:
+            return f"{total}s"
+        if total < 3600:
+            return f"{total // 60}m"
+        if total < 86400:
+            return f"{total // 3600}h"
+        return f"{total // 86400}d"
+
+    @staticmethod
+    def _format_duration_clock(seconds):
+        """Clock time with leading zero groups omitted: 0:15, 15:00, 4:00:00, 2:00:00:00."""
+        total = max(int(seconds or 0), 0)
+        days, remainder = divmod(total, 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, secs = divmod(remainder, 60)
+        if days:
+            return f"{days}:{hours:02d}:{minutes:02d}:{secs:02d}"
+        if hours:
+            return f"{hours}:{minutes:02d}:{secs:02d}"
+        return f"{minutes}:{secs:02d}"
+
+    @staticmethod
+    def _format_duration(seconds):
+        return MediaAdmin._format_duration_clock(seconds)
+
+    def _engagement_count(self, obj, count, action):
+        """Counter plus an Inspect link to this media's actions of that type."""
+        if not obj or not obj.pk:
+            return "—"
+        label = admin_text(None, "Inspect")
+        url = admin_changelist_url(MediaAction, media__id__exact=obj.pk, action__exact=action)
+        return format_html(
+            '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">'
+            '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
+            count or 0,
+            url,
+            label,
+            label,
+        )
+
+    @admin.display(description="Uid")
+    def display_uid(self, obj):
+        return admin_copy_value(obj.uid)
+
+    @admin.display(description="Friendly token")
+    def display_friendly_token(self, obj):
+        return admin_copy_value(obj.friendly_token)
+
+    @admin.display(description="Md5sum")
+    def display_md5sum(self, obj):
+        return admin_copy_value(obj.md5sum)
+
+    @admin.display(description="Media info")
+    def display_media_info(self, obj):
+        return admin_copy_value(obj.media_info)
+
+    @admin.display(description="Search")
+    def display_search(self, obj):
+        return admin_copy_value(obj.search)
+
+    @admin.display(description="Views")
+    def display_views(self, obj):
+        return self._engagement_count(obj, obj.views, "watch")
+
+    @admin.display(description="Likes")
+    def display_likes(self, obj):
+        return self._engagement_count(obj, obj.likes, "like")
+
+    @admin.display(description="Dislikes")
+    def display_dislikes(self, obj):
+        return self._engagement_count(obj, obj.dislikes, "dislike")
+
+    def _current_image(self, url):
+        if not url:
+            return "—"
+        return format_html('<img class="media-image-preview" src="{}" alt="">', url)
+
+    @admin.display(description="Poster")
+    def display_current_poster(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return self._current_image(obj.poster_url)
+
+    @admin.display(description="Thumbnail")
+    def display_current_thumbnail(self, obj):
+        if not obj or not obj.pk:
+            return "—"
+        return self._current_image(obj.thumbnail_url)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request).select_related("user", "channel")
@@ -607,7 +1051,11 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
     def link_user(self, obj):
         if not obj.user_id:
             return "—"
-        return admin_change_link(obj.user, clipped_admin_text(obj.user.username, always_tooltip=True))
+        label = clipped_admin_text(obj.user.username, always_tooltip=True)
+        request = _media_change_request.get()
+        if request is not None:
+            return admin_relation_link(obj.user, request, label)
+        return admin_change_link(obj.user, label)
 
     @admin.display(description="Media type", ordering="media_type")
     def display_media_type(self, obj):
@@ -643,7 +1091,12 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
 
     @admin.display(description="Channel")
     def link_channel(self, obj):
-        return admin_change_link(obj.channel) if obj.channel_id else "—"
+        if not obj.channel_id:
+            return "—"
+        request = _media_change_request.get()
+        if request is not None:
+            return admin_relation_link(obj.channel, request)
+        return admin_change_link(obj.channel)
 
     @admin.display(description="Comments", ordering="_comments_count")
     def get_comments_count(self, obj):
@@ -688,89 +1141,59 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         count = obj.mediaactions.count()
         return admin_changelist_link(MediaAction, admin_text(None, "View {count} action(s)", count=count), media__id__exact=obj.pk)
 
-    @admin.display(description="Reports")
-    def related_reports(self, obj):
-        if not obj.pk:
-            return "—"
-        count = obj.mediaactions.filter(action__in=MEDIA_REPORT_TAB_ACTIONS).count()
-        return admin_changelist_link(
-            MediaAction,
-            admin_text(
-                None,
-                "View {count} report/moderation action(s) (reported_times={reported_times})",
-                count=count,
-                reported_times=obj.reported_times,
-            ),
-            media__id__exact=obj.pk,
-        )
-
     @admin.display(description="Report & moderation actions")
     def report_actions_table(self, obj):
-        """HTML table of report + moderation MediaActions with admin drill-downs."""
+        """Timestamp, then the action icon and name, for report and moderation MediaActions."""
         if not obj or not obj.pk:
             return "—"
 
         lang = get_language() or "en"
-        actions = MediaAction.objects.filter(media=obj, action__in=MEDIA_REPORT_TAB_ACTIONS).select_related("user").order_by("-action_date")
-        changelist = admin_changelist_url(MediaAction, media__id__exact=obj.pk)
-        header = format_html(
-            '<p style="margin-bottom:0.75em;"><a href="{}">{}</a> · <a href="{}">{}</a></p>',
-            changelist,
-            admin_text(lang, "Open all MediaActions for this media"),
-            admin_changelist_url(MediaAction, media__id__exact=obj.pk, action__exact="report"),
-            admin_text(lang, "Open reports only"),
-        )
+        actions = MediaAction.objects.filter(media=obj, action__in=MEDIA_REPORT_TAB_ACTIONS).order_by("-action_date")
         if not actions.exists():
-            return mark_safe(f"{header}<p>{escape(admin_text(lang, 'No report or moderation actions yet.'))}</p>")
+            return admin_text(lang, "No report or moderation actions yet.")
 
+        inspect_label = admin_text(lang, "Inspect")
         rows = []
-        view_label = admin_text(lang, "View")
         for action in actions:
-            user_cell = admin_change_link(action.user, action.user.username) if action.user_id else escape(action.session_key or admin_text(lang, "anonymous"))
-            action_url = admin_change_url(action)
             raw_label = action.get_action_display() if hasattr(action, "get_action_display") else action.action
-            action_label = escape(admin_text(lang, raw_label))
-            extra = clipped_admin_text(action.extra_info)
-            when = escape(action.action_date.strftime("%Y-%m-%d %H:%M") if action.action_date else "")
-            ip = escape(action.remote_ip or "—")
+            label = admin_text(lang, raw_label)
+            icon, modifier = REPORT_ACTION_ICONS.get(action.action, ("fas fa-question-circle", "unknown"))
+            when = action.action_date.strftime("%Y-%m-%d %H:%M") if action.action_date else "—"
+            change_url = admin_change_url(action)
             rows.append(
                 format_html(
-                    "<tr>" '<td><a href="{}">{}</a></td>' "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" "<td>{}</td>" '<td><a class="btn btn-xs btn-primary" href="{}">{}</a></td>' "</tr>",
-                    action_url,
-                    action_label,
-                    user_cell,
-                    extra or "—",
+                    "<tr><td>{}</td><td>{}</td><td class=\"report-actions-table__inspect\">{}</td></tr>",
                     when,
-                    ip,
-                    action_url,
-                    view_label,
+                    format_html('<a href="{}">{}</a>', change_url, admin_status_icon(icon, label, modifier=modifier)),
+                    format_html(
+                        '<a class="report-actions-table__inspect" href="{}" title="{}" aria-label="{}">'
+                        '<i class="fas fa-search" aria-hidden="true"></i></a>',
+                        change_url,
+                        inspect_label,
+                        inspect_label,
+                    ),
                 )
             )
 
-        table = format_html(
-            '<table class="table table-sm table-striped">' "<thead><tr>" "<th>{}</th><th>{}</th><th>{}</th><th>{}</th><th>{}</th><th></th>" "</tr></thead><tbody>{}</tbody></table>",
-            admin_text(lang, "Action"),
-            admin_text(lang, "User"),
-            admin_text(lang, "Extra info"),
+        return format_html(
+            '<table class="table table-sm table-striped report-actions-table"><thead><tr>'
+            "<th>{}</th><th>{}</th>"
+            '<th class="report-actions-table__inspect"><i class="fas fa-search" aria-hidden="true" title="{}"></i>'
+            '<span class="sr-only">{}</span></th>'
+            "</tr></thead><tbody>{}</tbody></table>",
             admin_text(lang, "When"),
-            admin_text(lang, "IP"),
+            admin_text(lang, "Action"),
+            inspect_label,
+            inspect_label,
             mark_safe("".join(str(row) for row in rows)),
         )
-        return mark_safe(f"{header}{table}")
 
     @admin.display(description="Playlists")
     def related_playlists(self, obj):
         if not obj.pk:
             return "—"
-        playlists = list(obj.playlist_set.all()[:20])
-        if not playlists:
-            return "—"
-        links = [admin_change_link(playlist, playlist.title) for playlist in playlists]
-        extra = obj.playlist_set.count() - len(playlists)
-        result = join_links(links)
-        if extra > 0:
-            return format_html("{} ({})", result, admin_text(None, "+{extra} more", extra=extra))
-        return result
+        count = obj.playlist_set.count()
+        return admin_changelist_link(Playlist, admin_text(None, "View {count} playlist(s)", count=count), media__id__exact=obj.pk)
 
     @admin.display(description="Trim requests")
     def related_trim_requests(self, obj):
@@ -1324,7 +1747,7 @@ class CategoryAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     optional_columns_session_key = "mediacms_category_admin_optional_columns"
     list_filter = []
     ordering = ("-add_date",)
-    readonly_fields = ("user", "related_media", "lti_platform", "lti_context_id")
+    readonly_fields = ("user", "uid", "display_user", "display_uid", "related_media", "lti_platform", "lti_context_id")
     change_form_template = 'admin/files/category/change_form.html'
 
     def _optional_column_keys(self):
@@ -1416,13 +1839,21 @@ class CategoryAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         extra_context["category_column_chooser_preserved_qsl"] = list(preserved.items())
         return super().changelist_view(request, extra_context=extra_context)
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if formfield and db_field.name == "thumbnail":
+            formfield.widget = ImageDropzoneWidget()
+        elif formfield and db_field.name == "listings_thumbnail":
+            formfield.widget = ListingsThumbnailUrlWidget()
+        return formfield
+
     def get_fieldsets(self, request, obj=None):
         fieldsets = [
             (
                 "General",
                 {
-                    "fields": ("uid", "title", "description", "user", "thumbnail", "listings_thumbnail"),
-                    "classes": ("tab",),
+                    "fields": ("display_uid", "title", "description", "display_user", "thumbnail", "listings_thumbnail"),
+                    "classes": ("tab", "category-fields"),
                 },
             ),
         ]
@@ -1476,6 +1907,18 @@ class CategoryAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         )
         return fieldsets
 
+    @admin.display(description="User")
+    def display_user(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_inspect_link(obj.user, obj.user.username)
+
+    @admin.display(description="Uid")
+    def display_uid(self, obj):
+        if not obj or not obj.uid:
+            return "—"
+        return admin_copy_value(obj.uid)
+
     @admin.display(description="Media")
     def related_media(self, obj):
         if not obj.pk:
@@ -1498,13 +1941,13 @@ class TagAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     optional_list_columns = (("related_media_count", "Media count", ()),)
     optional_columns_session_key = "mediacms_tag_admin_optional_columns"
     list_select_related = ("user",)
-    readonly_fields = ("link_user", "related_media")
+    readonly_fields = ("link_user", "display_user", "related_media")
     fieldsets = (
         (
             "General",
             {
-                "fields": ("title", "link_user", "listings_thumbnail"),
-                "classes": ("tab",),
+                "fields": ("title", "display_user", "listings_thumbnail"),
+                "classes": ("tab", "tag-fields"),
             },
         ),
         (
@@ -1596,9 +2039,20 @@ class TagAdmin(OpenOnSiteMixin, admin.ModelAdmin):
             return 0
         return Media.objects.filter(tags=obj).count()
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == "listings_thumbnail":
+            return ListingsThumbnailFormField(label=db_field.verbose_name, help_text=db_field.help_text)
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="User")
+    def display_user(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_inspect_link(obj.user, obj.user.username)
 
     @admin.display(description="Media")
     def related_media(self, obj):
@@ -1790,7 +2244,19 @@ class EncodingAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     list_filter = ["chunk", "profile", "status"]
     search_fields = ["media__title", "media__friendly_token"]
     list_select_related = ("media", "profile")
-    readonly_fields = ("profile", "status", "progress", "chunk", "has_file", "link_media")
+    readonly_fields = (
+        "profile",
+        "status",
+        "progress",
+        "chunk",
+        "has_file",
+        "link_media",
+        "display_media",
+        "display_profile",
+        "display_chunk",
+        "display_status",
+        "display_progress",
+    )
     exclude = ("media",)
     actions = ["retry_failed_encodings"]
     action_form = GroupedActionForm
@@ -1802,7 +2268,7 @@ class EncodingAdmin(OpenOnSiteMixin, admin.ModelAdmin):
         (
             "Encoding",
             {
-                "fields": ("link_media", "profile", "status", "progress", "chunk", "has_file"),
+                "fields": ("display_media", "display_profile", "display_chunk", "display_status", "display_progress", "has_file"),
                 "classes": ("tab",),
             },
         ),
@@ -1898,6 +2364,34 @@ class EncodingAdmin(OpenOnSiteMixin, admin.ModelAdmin):
             admin_change_url(obj.media),
             title,
             clipped_admin_text(title, always_tooltip=True),
+        )
+
+    @admin.display(description="Media")
+    def display_media(self, obj):
+        if not obj.media_id:
+            return "—"
+        return admin_inspect_link(obj.media, clipped_admin_text(obj.media.title, always_tooltip=True))
+
+    @admin.display(description="Profile")
+    def display_profile(self, obj):
+        if not obj.profile_id:
+            return "—"
+        return admin_inspect_link(obj.profile, obj.profile.name)
+
+    @admin.display(description="Progress")
+    def display_progress(self, obj):
+        progress = max(0, min(int(obj.progress or 0), 100))
+        return format_html(
+            '<div class="encoding-progress">'
+            '<div class="progress" role="progressbar" aria-valuenow="{}" aria-valuemin="0" aria-valuemax="100" aria-label="{}%">'
+            '<div class="progress-bar" style="width: {}%;"></div>'
+            "</div>"
+            '<span class="encoding-progress__value">{}%</span>'
+            "</div>",
+            progress,
+            progress,
+            progress,
+            progress,
         )
 
     @admin.display(description="Chunk", ordering="chunk")
@@ -2059,16 +2553,16 @@ class PlaylistAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     )
     optional_columns_session_key = "mediacms_playlist_admin_optional_columns"
     list_select_related = ("user",)
-    list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter)]
+    list_filter = ["add_date", ("user", admin.RelatedOnlyFieldListFilter), ("media", admin.RelatedOnlyFieldListFilter)]
     ordering = ("-add_date",)
     date_hierarchy = "add_date"
-    readonly_fields = ("uid", "friendly_token", "link_user", "related_media")
+    readonly_fields = ("uid", "friendly_token", "link_user", "display_user", "related_media")
     exclude = ("user",)
     fieldsets = (
         (
             "Playlist",
             {
-                "fields": ("title", "description", "link_user", "friendly_token", "uid"),
+                "fields": ("title", "description", "display_user", "friendly_token", "uid"),
                 "classes": ("tab",),
             },
         ),
@@ -2156,6 +2650,12 @@ class PlaylistAdmin(OpenOnSiteMixin, admin.ModelAdmin):
     @admin.display(description="User", ordering="user__username")
     def link_user(self, obj):
         return admin_change_link(obj.user, obj.user.username if obj.user_id else None)
+
+    @admin.display(description="User")
+    def display_user(self, obj):
+        if not obj or not obj.user_id:
+            return "—"
+        return admin_inspect_link(obj.user, obj.user.username)
 
     @admin.display(description="Media")
     def related_media(self, obj):

@@ -1,0 +1,6 @@
+{% load custom_filters %}
+<div class="card-tools dashboard-copy-tools">
+    <button type="button" class="btn btn-sm btn-outline-secondary dashboard-copy-btn js-copy-table" data-format="text">{{ "Copy text"|custom_translate:LANGUAGE_CODE }}</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary dashboard-copy-btn js-copy-table" data-format="csv">{{ "Copy CSV"|custom_translate:LANGUAGE_CODE }}</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary dashboard-copy-btn js-copy-table" data-format="markdown">{{ "Copy Markdown"|custom_translate:LANGUAGE_CODE }}</button>
+</div>

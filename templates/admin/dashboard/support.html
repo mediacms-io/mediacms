@@ -1,0 +1,61 @@
+{% extends "admin/dashboard/section_base.html" %}
+{% load custom_filters %}
+
+{% block dashboard_section_content %}
+<div class="col-12">
+    <div class="card card-outline card-primary">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-download mr-2" aria-hidden="true"></i>{{ "Download support bundle"|custom_translate:LANGUAGE_CODE }}</h3>
+        </div>
+        <div class="card-body">
+            <p>{{ "This file is safe to paste into a GitHub issue. Secrets are omitted or redacted."|custom_translate:LANGUAGE_CODE }}</p>
+            <a class="btn btn-lg btn-primary mr-2 mb-2" href="{% url 'admin:support_bundle' filename=support_bundle_txt %}" download="{{ support_bundle_txt }}"><i class="fas fa-file-alt mr-1" aria-hidden="true"></i>{{ "Download as text"|custom_translate:LANGUAGE_CODE }}</a>
+            <a class="btn btn-lg btn-outline-primary mb-2" href="{% url 'admin:support_bundle' filename=support_bundle_md %}" download="{{ support_bundle_md }}"><i class="fas fa-file-code mr-1" aria-hidden="true"></i>{{ "Download as Markdown"|custom_translate:LANGUAGE_CODE }}</a>
+        </div>
+    </div>
+</div>
+
+<div class="col-12">
+    <div class="card card-outline card-info">
+        <div class="card-header">
+            <h3 class="card-title">{{ "Where to ask"|custom_translate:LANGUAGE_CODE }}</h3>
+        </div>
+        <div class="card-body">
+            <p>{{ "Search discussions first, then open a GitHub issue for bugs and attach the support bundle."|custom_translate:LANGUAGE_CODE }}</p>
+            <ul class="mb-0">
+                {% for link in support_links %}
+                    <li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label|custom_translate:LANGUAGE_CODE }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="col-12">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ "Example reports"|custom_translate:LANGUAGE_CODE }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for example in support_examples %}
+                    <div class="col-lg-6 mb-3">
+                        <div class="card card-outline card-secondary h-100 mb-0">
+                            <div class="card-header">
+                                <h3 class="card-title">{{ example.title|custom_translate:LANGUAGE_CODE }}</h3>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-2"><a href="{{ example.doc_url }}" target="_blank" rel="noopener noreferrer">{{ example.doc_label|custom_translate:LANGUAGE_CODE }}</a></p>
+                                <pre class="d-none" id="support-example-{{ example.id }}-text">{{ example.text }}</pre>
+                                <pre class="support-example mb-2" id="support-example-{{ example.id }}-md">{{ example.markdown }}</pre>
+                                <button type="button" class="btn btn-sm btn-outline-secondary dashboard-copy-btn js-copy-block" data-copy-target="#support-example-{{ example.id }}-text">{{ "Copy text"|custom_translate:LANGUAGE_CODE }}</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary dashboard-copy-btn js-copy-block" data-copy-target="#support-example-{{ example.id }}-md">{{ "Copy Markdown"|custom_translate:LANGUAGE_CODE }}</button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

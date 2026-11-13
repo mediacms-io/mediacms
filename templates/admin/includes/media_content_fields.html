@@ -1,0 +1,90 @@
+{% load custom_filters %}
+{% for line in fieldset %}
+    {% with name=line.fields.0 %}
+        {% if name != "display_current_poster" and name != "uploaded_poster" and name != "display_current_thumbnail" and name != "uploaded_thumbnail" and name != "thumbnail_time" and name != "media_file" and name != "allow_whisper_transcribe" and name != "allow_whisper_transcribe_and_translate" %}
+            {% include "admin/includes/fieldset_line.html" %}
+        {% endif %}
+    {% endwith %}
+{% endfor %}
+<section class="media-file-card">
+    <h3 class="media-image-card__title">{{ "Media file"|custom_translate:LANGUAGE_CODE }}</h3>
+    {% for line in fieldset %}
+        {% with name=line.fields.0 %}
+            {% if name == "media_file" or name == "allow_whisper_transcribe" or name == "allow_whisper_transcribe_and_translate" %}
+                <div class="media-file-card__field field-{{ name }}">
+                    {% for field in line %}
+                        {% if name != "media_file" %}
+                            <label for="id_{{ field.field.name }}">{{ field.field.label|capfirst|custom_translate:LANGUAGE_CODE }}</label>
+                        {% endif %}
+                        {% if field.is_readonly %}
+                            <div class="readonly">{{ field.contents|custom_translate:LANGUAGE_CODE }}</div>
+                        {% else %}
+                            {{ field.field }}
+                        {% endif %}
+                        {% if field.field.help_text %}
+                            <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
+                        {% endif %}
+                        {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    {% endfor %}
+</section>
+<div class="media-image-cards">
+    <section class="media-image-card">
+        <h3 class="media-image-card__title">{{ "Poster"|custom_translate:LANGUAGE_CODE }}</h3>
+        {% for line in fieldset %}
+            {% with name=line.fields.0 %}
+                {% if name == "display_current_poster" or name == "uploaded_poster" %}
+                    <div class="media-image-card__field field-{{ name }}">
+                        {% for field in line %}
+                            {% if field.is_readonly %}
+                                <div class="readonly">{{ field.contents|custom_translate:LANGUAGE_CODE }}</div>
+                            {% else %}
+                                {{ field.field }}
+                                {% if field.field.help_text %}
+                                    <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
+                                {% endif %}
+                                {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        {% endfor %}
+    </section>
+    <section class="media-image-card">
+        <h3 class="media-image-card__title">{{ "Thumbnail"|custom_translate:LANGUAGE_CODE }}</h3>
+        {% for line in fieldset %}
+            {% with name=line.fields.0 %}
+                {% if name == "display_current_thumbnail" or name == "uploaded_thumbnail" %}
+                    <div class="media-image-card__field field-{{ name }}">
+                        {% for field in line %}
+                            {% if field.is_readonly %}
+                                <div class="readonly">{{ field.contents|custom_translate:LANGUAGE_CODE }}</div>
+                            {% else %}
+                                {{ field.field }}
+                                {% if field.field.help_text %}
+                                    <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
+                                {% endif %}
+                                {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                {% elif name == "thumbnail_time" %}
+                    <div class="media-image-card__time field-{{ name }}">
+                        {% for field in line %}
+                            <label for="id_{{ field.field.name }}">{{ field.field.label|capfirst|custom_translate:LANGUAGE_CODE }}</label>
+                            {{ field.field }}
+                            {% if field.field.help_text %}
+                                <div class="help-block">{{ field.field.help_text|custom_translate:LANGUAGE_CODE|safe }}</div>
+                            {% endif %}
+                            {% if line.errors %}<div class="help-block text-red">{{ line.errors }}</div>{% endif %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        {% endfor %}
+    </section>
+</div>

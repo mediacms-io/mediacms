@@ -44,7 +44,7 @@ def _group(name, app_label, models, icon=None):
 
 
 def build_workflow_app_list(raw_app_list):
-    """Rebuild admin app_list into Moderation / Library / Processing / People / Site / Integrations."""
+    """Rebuild admin app_list into Moderation / Library / Processing / People / Integrations / Site."""
     index = {}
     for app in raw_app_list:
         for model in app.get("models", []):
@@ -159,25 +159,6 @@ def build_workflow_app_list(raw_app_list):
     if group:
         groups.append(group)
 
-    site_models = []
-    _extend(
-        site_models,
-        index,
-        [
-            ("files", "Page"),
-            ("files", "License"),
-            ("files", "EncodeProfile"),
-            ("files", "Language"),
-            ("files", "MediaPermission"),
-            ("sites", "Site"),
-        ],
-    )
-    if site_models:
-        site_models.insert(0, _queue_link("Overview", "SiteOverview", "/admin/dashboard/site/"))
-    group = _group("Site", "site", site_models)
-    if group:
-        groups.append(group)
-
     integrations_models = []
     if getattr(settings, "USE_IDENTITY_PROVIDERS", False):
         _extend(
@@ -213,7 +194,34 @@ def build_workflow_app_list(raw_app_list):
             ("migrationservice", "MigrationRecord"),
         ],
     )
+    if integrations_models:
+        integrations_models.insert(
+            0,
+            _queue_link("Overview", "IntegrationsOverview", "/admin/dashboard/integrations/"),
+        )
     group = _group("Integrations", "integrations", integrations_models)
+    if group:
+        groups.append(group)
+
+    site_models = []
+    _extend(
+        site_models,
+        index,
+        [
+            ("files", "Page"),
+            ("files", "License"),
+            ("files", "EncodeProfile"),
+            ("files", "Language"),
+            ("files", "MediaPermission"),
+            ("sites", "Site"),
+        ],
+    )
+    if site_models:
+        site_models.insert(0, _queue_link("Overview", "SiteOverview", "/admin/dashboard/site/"))
+        site_models.insert(1, _queue_link("Health", "SiteHealth", "/admin/dashboard/health/"))
+        site_models.insert(2, _queue_link("Configuration", "SiteConfiguration", "/admin/dashboard/configuration/"))
+        site_models.insert(3, _queue_link("System", "SiteSystem", "/admin/dashboard/system/"))
+    group = _group("Site", "site", site_models)
     if group:
         groups.append(group)
 

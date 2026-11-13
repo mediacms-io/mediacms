@@ -3,10 +3,18 @@
 <details class="{{ chooser_class }} admin-column-chooser card card-outline card-secondary mb-3"{% if columns|any_column_checked %} open{% endif %}>
     <summary class="card-header py-2">
         <strong>{{ "Columns"|custom_translate:LANGUAGE_CODE }}</strong>
-        <span class="text-muted small ml-2">{{ "Optional columns are hidden by default. Related filters can force a column on."|custom_translate:LANGUAGE_CODE }}</span>
+        <span class="text-muted small admin-column-chooser-hint">{{ "Optional columns are hidden by default. Related filters can force a column on."|custom_translate:LANGUAGE_CODE }}</span>
+        <button type="submit"
+                form="{{ chooser_class }}-form"
+                name="{{ reset_param }}"
+                value="1"
+                class="btn btn-sm btn-outline-secondary admin-column-chooser-reset">
+            <i class="fas fa-undo" aria-hidden="true"></i>
+            {{ "Reset columns"|custom_translate:LANGUAGE_CODE }}
+        </button>
     </summary>
     <div class="card-body py-2">
-        <form method="get" action="" class="admin-column-chooser-form {{ chooser_class }}-form">
+        <form id="{{ chooser_class }}-form" method="get" action="" class="admin-column-chooser-form {{ chooser_class }}-form">
             <input type="hidden" name="{{ set_param }}" value="1">
             {% for key, value in preserved %}
             <input type="hidden" name="{{ key }}" value="{{ value }}">
@@ -18,13 +26,15 @@
                            name="{{ col_param }}"
                            value="{{ column.key }}"
                            {% if column.checked %}checked{% endif %}>
-                    {{ column.label }}{% if column.filter_forced %} *{% endif %}
+                    {% with column_icon=column.key|column_key_icon %}
+                        {% if column_icon %}<i class="{{ column_icon }}" aria-hidden="true"></i>{% endif %}
+                    {% endwith %}
+                    <span>{{ column.label }}{% if column.filter_forced %} *{% endif %}</span>
                 </label>
                 {% endfor %}
             </div>
             <div class="admin-column-chooser-actions">
                 <button type="submit" class="btn btn-sm btn-primary">{{ "Apply columns"|custom_translate:LANGUAGE_CODE }}</button>
-                <button type="submit" name="{{ reset_param }}" value="1" class="btn btn-sm btn-outline-secondary">{{ "Reset columns"|custom_translate:LANGUAGE_CODE }}</button>
             </div>
         </form>
     </div>

@@ -78,7 +78,19 @@ export const ThemeProvider = ({ children }) => {
     }
     storeMode(storageKey, themeMode);
     setLogo(logos[themeMode]);
+    window.dispatchEvent(new CustomEvent('mediacms-theme', { detail: themeMode }));
   }, [themeMode]);
+
+  useEffect(() => {
+    function onTheme(event) {
+      const mode = event.detail;
+      if ('light' === mode || 'dark' === mode) {
+        setThemeMode(mode);
+      }
+    }
+    window.addEventListener('mediacms-theme', onTheme);
+    return () => window.removeEventListener('mediacms-theme', onTheme);
+  }, []);
 
   const value = {
     logo,
