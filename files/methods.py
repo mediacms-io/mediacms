@@ -104,6 +104,164 @@ def is_mediacms_editor(user):
     return editor
 
 
+def record_moderation_action(user, media, action, extra_info=None):
+    """Create a moderator/server-emitted MediaAction audit event.
+
+    These actions are not creatable through the public save_user_action pipeline.
+    """
+    from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
+
+    valid = {name for name, _label in MODERATION_MEDIA_ACTIONS}
+    if action not in valid:
+        return None
+
+    actor = user if user is not None and getattr(user, "is_authenticated", False) else None
+    return MediaAction.objects.create(
+        user=actor,
+        media=media,
+        action=action,
+        extra_info=extra_info or "",
+    )
+
+
+def clear_media_reports(media_qs, user=None):
+    """Delete report MediaAction rows, reset reported_times, and log report_cleared.
+
+    Returns the number of media items processed.
+    """
+    from actions.models import MediaAction
+
+    media_ids = list(media_qs.values_list("pk", flat=True))
+    if not media_ids:
+        return 0
+
+    processed = 0
+    for media in models.Media.objects.filter(pk__in=media_ids):
+        reports = MediaAction.objects.filter(media=media, action="report")
+        report_count = reports.count()
+        reasons = [reason for reason in reports.exclude(extra_info__isnull=True).exclude(extra_info="").values_list("extra_info", flat=True)[:5]]
+        had_reports = report_count > 0 or media.reported_times > 0
+        reports.delete()
+        if media.reported_times != 0:
+            media.reported_times = 0
+            media.save(update_fields=["reported_times"])
+        if had_reports:
+            summary = f"cleared {report_count} report(s)"
+            if reasons:
+                joined = "; ".join(str(r)[:80] for r in reasons)
+                summary = f"{summary}: {joined}"[:500]
+            record_moderation_action(user, media, "report_cleared", extra_info=summary)
+        processed += 1
+    return processed
+
+
+def confirm_media_reports(media_qs, user=None):
+    """Set media private in response to reports and log report_confirmed.
+
+    Reports and reported_times are left in place. Returns the number of media items updated.
+    """
+    count = 0
+    for media in media_qs:
+        media.state = "private"
+        media.save()
+        record_moderation_action(
+            user,
+            media,
+            "report_confirmed",
+            extra_info=f"set private; reported_times={media.reported_times}",
+        )
+        count += 1
+    return count
+
+
+def set_media_reviewed(media, is_reviewed, user=None):
+    """Set media.is_reviewed and log media_reviewed / media_unreviewed when it changes.
+
+    Returns True when the reviewed flag changed.
+    """
+    new_value = bool(is_reviewed)
+    if media.is_reviewed is new_value:
+        return False
+    media.is_reviewed = new_value
+    media.save()
+    record_moderation_action(
+        user,
+        media,
+        "media_reviewed" if new_value else "media_unreviewed",
+    )
+    return True
+
+
+def _original_media_file_path(media):
+    """Return the on-disk path for media.media_file, or None."""
+    try:
+        if not media.media_file:
+            return None
+        return media.media_file.path
+    except (ValueError, NotImplementedError, OSError):
+        return None
+
+
+def _encoding_rows_for_original_delete_gate(media):
+    """Non-chunk mp4/webm encodings excluding preview — same set as encoding_status."""
+    from .models.utils import PREVIEW_PROFILE_NAME
+
+    return media.encodings.filter(chunk=False).filter(Q(profile__extension="mp4") | Q(profile__extension="webm")).exclude(profile__name=PREVIEW_PROFILE_NAME)
+
+
+def can_delete_original_media_file(media):
+    """Whether the original upload may be deleted while keeping encodings.
+
+    Returns (eligible: bool, reason: str). reason is empty when eligible.
+    """
+    if media.media_type not in ("video", "audio"):
+        return False, "only video/audio with encodings can delete the original"
+
+    path = _original_media_file_path(media)
+    if not path or not os.path.isfile(path):
+        return False, "original file missing on disk"
+
+    if media.encoding_status != "success":
+        return False, f"encoding status is {media.encoding_status or 'unknown'}, not success"
+
+    encodings = _encoding_rows_for_original_delete_gate(media)
+    if not encodings.filter(status="success").exists():
+        return False, "no successful encodings found"
+
+    incomplete = encodings.filter(status__in=["pending", "running", "fail"])
+    if incomplete.exists():
+        statuses = sorted(set(incomplete.values_list("status", flat=True)))
+        return False, f"encodings still incomplete or failed ({', '.join(statuses)})"
+
+    return True, ""
+
+
+def delete_original_media_file(media, user=None):
+    """Delete the original upload from disk if eligible; keep Media/encodings.
+
+    Does not clear the FileField (required field). Logs original_deleted.
+    Returns (deleted: bool, reason: str).
+    """
+    eligible, reason = can_delete_original_media_file(media)
+    if not eligible:
+        return False, reason
+
+    path = _original_media_file_path(media)
+    filename = helpers.get_file_name(path) if path else ""
+    if not helpers.rm_file(path):
+        return False, "original file missing on disk"
+
+    summary = f"deleted original file: {filename}"[:500]
+    record_moderation_action(user, media, "original_deleted", extra_info=summary)
+    return True, ""
+
+
+def media_has_original_file(media):
+    """True when the original media_file exists on disk."""
+    path = _original_media_file_path(media)
+    return bool(path and os.path.isfile(path))
+
+
 def can_edit_category(user, category):
     """Whether this user may change a category's title, description or thumbnail.
 

@@ -17,7 +17,7 @@ from django.core.files import File
 from django.db import DatabaseError
 from django.db.models import Q
 
-from actions.models import USER_MEDIA_ACTIONS, MediaAction
+from actions.models import PUBLIC_USER_MEDIA_ACTIONS, MediaAction
 from users.models import User
 
 from .backends import FFmpegBackend
@@ -58,7 +58,7 @@ from .models.utils import PREVIEW_PROFILE_NAME
 
 logger = get_task_logger(__name__)
 
-VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
+VALID_USER_ACTIONS = [action for action, name in PUBLIC_USER_MEDIA_ACTIONS]
 
 ERRORS_LIST = [
     "Output file is empty, nothing was encoded",

@@ -5,6 +5,11 @@ Django Admin for LTI models
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
+from admin_customizations.action_choices import (
+    GroupedActionForm,
+    build_grouped_action_choices,
+)
+
 from .models import (
     LTILaunchLog,
     LTIPlatform,
@@ -158,6 +163,10 @@ class LTIToolKeysAdmin(admin.ModelAdmin):
 
     list_display = ['key_id', 'created_at', 'updated_at']
     readonly_fields = ['key_id', 'created_at', 'updated_at', 'public_key_display']
+    action_form = GroupedActionForm
+    action_groups = [
+        ["regenerate_keys"],
+    ]
 
     fieldsets = (
         ('Key Information', {'fields': ('key_id', 'created_at', 'updated_at')}),
@@ -175,13 +184,20 @@ class LTIToolKeysAdmin(admin.ModelAdmin):
 
     public_key_display.short_description = 'Public Key (JWK)'
 
+    @admin.action(description="Regenerate RSA keys")
     def regenerate_keys(self, request, queryset):
         """Regenerate keys for selected instances"""
         for key_obj in queryset:
             key_obj.generate_keys()
             self.message_user(request, f"Keys regenerated for {key_obj.key_id}", messages.SUCCESS)
 
-    regenerate_keys.short_description = 'Regenerate RSA keys'
+    def get_action_choices(self, request, default_choices=None):
+        return build_grouped_action_choices(
+            self.get_actions(request),
+            self.action_groups,
+            opts=self.opts,
+            language_code=getattr(request, "LANGUAGE_CODE", None),
+        )
 
     def has_add_permission(self, request):
         """Only allow one key pair - disable manual add if exists"""

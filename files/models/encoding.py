@@ -72,7 +72,7 @@ class Encoding(models.Model):
 
     size = models.CharField(max_length=20, blank=True)
 
-    status = models.CharField(max_length=20, choices=MEDIA_ENCODING_STATUS, default="pending")
+    status = models.CharField(max_length=20, choices=MEDIA_ENCODING_STATUS, default="pending", db_index=True)
 
     temp_file = models.CharField(max_length=400, blank=True)
 

@@ -3,13 +3,24 @@ from django.db import models
 from files.models import Media
 from users.models import User
 
-USER_MEDIA_ACTIONS = (
+PUBLIC_USER_MEDIA_ACTIONS = (
     ("like", "Like"),
     ("dislike", "Dislike"),
     ("watch", "Watch"),
     ("report", "Report"),
     ("rate", "Rate"),
 )
+
+# Moderator/server-emitted audit events — not creatable via public save_user_action.
+MODERATION_MEDIA_ACTIONS = (
+    ("report_cleared", "Report cleared"),
+    ("report_confirmed", "Report confirmed"),
+    ("media_reviewed", "Media reviewed"),
+    ("media_unreviewed", "Media unreviewed"),
+    ("original_deleted", "Original deleted"),
+)
+
+USER_MEDIA_ACTIONS = PUBLIC_USER_MEDIA_ACTIONS + MODERATION_MEDIA_ACTIONS
 
 
 class MediaAction(models.Model):
@@ -46,7 +57,10 @@ class MediaAction(models.Model):
         return self.action
 
     class Meta:
+        verbose_name = "Media action"
+        verbose_name_plural = "Media actions"
         indexes = [
             models.Index(fields=["user", "action", "-action_date"]),
             models.Index(fields=["session_key", "action"]),
+            models.Index(fields=["action", "-action_date"]),
         ]

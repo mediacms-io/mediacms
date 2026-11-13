@@ -34,6 +34,17 @@ class StaticPagesTest(TestCase):
         self.assertContains(response, "<h1>About our portal</h1>")
         self.assertContains(response, "<p>We host lectures</p>")
 
+    def test_admin_written_terms_page_replaces_the_default(self):
+        Page.objects.create(slug="tos", title="Terms", description="<p>Demo terms apply</p>")
+        response = self.client.get("/tos")
+        self.assertTemplateUsed(response, "cms/page.html")
+        self.assertContains(response, "<h1>Terms</h1>")
+        self.assertContains(response, "<p>Demo terms apply</p>")
+        self.assertContains(response, "<title>Terms - MediaCMS</title>")
+        # Terms stays on the dedicated sidebar link. It is not duplicated as a CMS extra.
+        extras = response.content.decode().split("mainMenuExtraItems:", 1)[1].split("belowNavMenu", 1)[0]
+        self.assertNotIn('link: "/tos"', extras)
+
     def test_custom_page_is_served_by_its_slug(self):
         page = Page.objects.create(slug="faq", title="Frequent questions", description="Ask away")
         response = self.client.get(page.get_absolute_url())
@@ -41,6 +52,13 @@ class StaticPagesTest(TestCase):
         self.assertTemplateUsed(response, "cms/page.html")
         self.assertEqual(response.context["page"], page)
         self.assertContains(response, "Ask away")
+        self.assertContains(response, "<title>Frequent questions - MediaCMS</title>")
+        self.assertContains(response, 'mainMenuExtraItems:')
+        self.assertContains(response, 'link: "/faq"')
+        self.assertContains(response, 'text: "Frequent questions"')
+        # About stays in the dedicated navMenuItems list, not CMS extras.
+        extras = response.content.decode().split("mainMenuExtraItems:", 1)[1].split("belowNavMenu", 1)[0]
+        self.assertNotIn('link: "/about"', extras)
 
     def test_unknown_slug_renders_the_not_found_template(self):
         response = self.client.get("/no-such-page")

@@ -1,11 +1,11 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{% block headtitle %}About - {{PORTAL_NAME}}{% endblock headtitle %}
+{% block headtitle %}{{ page.title }} - {{PORTAL_NAME}}{% endblock headtitle %}
 
 {% block headermeta %}
 {% load custom_filters %}
-<meta property="og:title" content="About - {{PORTAL_NAME}}">
+<meta property="og:title" content="{{ page.title }} - {{PORTAL_NAME}}">
 <meta property="og:type" content="website">
 <meta property="og:description" content="">
 
@@ -27,10 +27,10 @@
     {
 		"@type": "ListItem",
 		"position": 2,
-        "name": "About",
+        "name": "{{ page.title|escapejs }}",
         "item": {
-			"@type": "AboutPage",
-	        "@id": "{{FRONTEND_HOST}}/about"
+			"@type": "WebPage",
+	        "@id": "{{FRONTEND_HOST}}/{{ page.slug }}"
 	    }
     }]
 }

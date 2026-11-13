@@ -86,6 +86,19 @@ class PlaylistTests(TestCase):
 
         self.assertEqual([pm.media for pm in playlist.playlistmedia_set.all()], [self.second, self.first])
 
+    def test_resequence_media_closes_ordering_gaps(self):
+        playlist = self.make_playlist()
+        third = create_media(self.user, title="playlist third")
+        PlaylistMedia.objects.create(playlist=playlist, media=self.first, ordering=1)
+        PlaylistMedia.objects.create(playlist=playlist, media=self.second, ordering=2)
+        PlaylistMedia.objects.create(playlist=playlist, media=third, ordering=3)
+
+        PlaylistMedia.objects.filter(playlist=playlist, media=self.second).delete()
+        playlist.resequence_media()
+
+        orderings = list(playlist.playlistmedia_set.order_by("ordering").values_list("media__title", "ordering"))
+        self.assertEqual(orderings, [("playlist first", 1), ("playlist third", 2)])
+
     def test_set_ordering_rejects_invalid_values_and_foreign_media(self):
         playlist = self.make_playlist()
         PlaylistMedia.objects.create(playlist=playlist, media=self.first)

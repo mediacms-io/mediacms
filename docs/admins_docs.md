@@ -537,6 +537,106 @@ to be written
 
 ## 7. Django admin dashboard
 
+The Django admin index (`/admin/`) includes a Jazzmin dashboard with site metrics and deep links into changelists. Use the cards for triage, then finish the work with filters, inline edits, or the Actions dropdown.
+
+Admin UI language follows Django’s locale detection (language cookie, then browser `Accept-Language`, then `LANGUAGE_CODE`). Use the globe icon in the admin navbar to override the browser language; the choice is stored in the `django_language` cookie and also applies to the main site.
+
+### Dashboard → changelist map
+
+| Card | Opens | What to do next |
+|------|--------|-----------------|
+| Needs Review / Unreviewed | Media list with `is_reviewed=No` | Select rows → **Mark as reviewed**, or toggle **Is reviewed** inline and click Save |
+| Reported Media | Media list with Reports = Has reports | Review the media, then **Clear reports** and/or **Set state: private/public** |
+| Above Threshold | Media list with Reports = Above threshold | Same as above; these items may already have been auto-set to private |
+| Recent reports | Media change page `#reports-tab` | Read **Extra info** (reason); triage via **Clear reports** / confirm actions |
+| Pending user approvals | Users with `is_approved=No` (when enabled) | Select → **Approve selected users**, or toggle **Is approved** inline |
+| Encoding queue | Media with Encoding queue = In queue | Monitor status; use **Generate missing encoding(s)** if needed |
+| Channels / Categories / Playlists | Matching changelists | Inspect counts from the System section |
+| Recent Report Clears | Media change page `#reports-tab` | Inspect recently cleared reports (`report_cleared` audit actions) |
+| Recent confirmed reports | Media change page `#reports-tab` | Inspect recently confirmed reports (`report_confirmed` audit actions) |
+| Recent Media Reviews | Media change page `#reports-tab` | Inspect recently approved/reviewed media (`media_reviewed` audit actions) |
+| Most Commented / Most Disliked Media | Media change page | Triage high-engagement or contested media |
+| Top Commenters / Likers / Dislikers / Reporters | User change page | Identify highly active users by comment and MediaAction counts |
+
+### Media changelist moderation actions
+
+Available from the Actions dropdown (requires change permission; **Clear reports** / report triage / delete-original are available to MediaCMS editors, managers, and superusers):
+
+- Mark as reviewed / Mark as unreviewed
+- Confirm reports: set private (hides from public listings; keeps report rows as evidence; owner can still view)
+- Clear reports (deletes report actions and resets `reported_times`)
+- Clear reports, keep private / Clear reports, set public
+- Set state: public / private / unlisted
+- Enable / disable download
+- Enable / disable comments
+- Feature / Unfeature
+- Generate missing encoding(s) / Force re-encode
+- Regenerate thumbnails / sprites / preview / HLS / Refresh derivatives
+- Change owner (intermediate form; enter new username)
+- Delete original media file (typed confirmation; encoding-success gate)
+
+Boolean fields **Is reviewed**, **Featured**, **Allow download**, and **Enable comments** are also editable inline on the list. After changing them, use the list **Save** button. Visibility (`state`) is action-only so `listable` stays consistent with encoding and review status.
+
+### Report triage workflow
+
+1. Users report media → `reported_times` increments; at `REPORTED_TIMES_THRESHOLD` MediaCMS auto-sets **private**.
+2. Admin reviews from Reported Media / Recent Reports.
+3. Choose a path:
+   - **Confirm reports: set private** — hide from public, keep reports for evidence
+   - **Clear reports, keep private** — wipe reports, stay private
+   - **Clear reports, set public** — wipe reports and restore public visibility
+   - **Delete** the Media object (hard delete) if it must be removed entirely
+
+Private still allows the owner (and editors / shares / RBAC) to open the media. There is no owner-blocking quarantine without schema changes.
+
+### Delete original media file
+
+Removes the uploaded source file from disk while keeping the Media row and encodings. Requirements before confirm:
+
+- Media type is video or audio
+- Original file exists on disk
+- `encoding_status` is `success`
+- At least one successful non-preview encoding exists
+- No non-preview encodings are `pending` / `running` / `fail`
+
+Confirmation page lists eligible vs blocked items. Type **`I am sure`** to proceed. After deletion, a moderation audit `MediaAction` with `action=original_deleted` is recorded. Re-encode / new thumbs / sprites / trim / transcription need the original and will fail until re-upload. EncodingAdmin also has **Retry failed encodings**.
+
+### Filters, search, and sorting
+
+- Media: filter by state, review, encoding, reports, media type, downloads, comments, category, channel, user; search title, uploader username, or friendly token; date hierarchy on upload date
+- Media actions: filter by action type, date, and media; search includes report reason (`extra_info`)
+- Comments: search text, uploader, and media title; filter by media/user; date hierarchy
+- Users: filter by active/roles (and approval when required); deactivate/reactivate via Actions
+- Encoding: search by media title/token; filter by media
+
+### Related objects on Media / User / Playlist
+
+Admin change pages expose relationships so you can navigate without guessing filters:
+
+- **Media**: Jazzmin **Reports** tab with `reported_times` plus a table of report and moderation `MediaAction`s (`report`, `report_cleared`, `media_reviewed`, `media_unreviewed`, `original_deleted`) with drill-downs to each action/user. Separate inlines for comments (deletable), encodings, subtitles, and sharing permissions. A **Related objects** section links to filtered comments, encodings, actions/reports, trim/transcription requests, and lists playlists that include the media. Use **Clear reports** actions to reset open reports and `reported_times`.
+- **Comments / encodings / actions / subtitles / trim / transcription**: media (and user where relevant) columns link to the parent change page; media filters accept deep links from Media.
+- **Playlist**: membership is editable via a Playlist media inline (ordering + media).
+- **User / Channel**: related links open filtered media, channels, playlists, or comments changelists (`?user__id__exact=` / `?channel__id__exact=`).
+
+### Moderation audit events
+
+Moderator workflows write additional `MediaAction` rows (not creatable via the public like/report API):
+
+| Action | When |
+|--------|------|
+| `report_cleared` | Reports are cleared (admin Actions or API reset); `extra_info` summarizes count and reasons |
+| `media_reviewed` | Media is marked reviewed (admin Actions, inline save, or editor API `type=review`) |
+| `media_unreviewed` | Media is marked unreviewed |
+| `original_deleted` | Original upload deleted from disk via admin action; `extra_info` notes filename |
+
+Open `report` rows are still deleted on clear so `reported_times` and the reports API stay consistent; the `report_cleared` event is the audit trail.
+
+### Notes
+
+- There is no separate MediaReport model. Reports are `MediaAction` rows with `action=report` plus `Media.reported_times`.
+- Clearing reports from admin is allowed for editors/managers (slightly broader than the public API, which is superuser-only).
+- Public listings still require `state=public`, successful encoding, and `is_reviewed=True` (`listable`).
+
 ## 8. On portal workflow
 Who can publish content, how content appears on public listings.Difference between statuses (private, unlisted, public)
 
@@ -845,6 +945,8 @@ By default the video player and media items are now having rounded corners, on l
 ### 20.1 Set a default language
 
 By default MediaCMS is available in a number of languages. To set the default language, edit `settings.py` and set LANGUAGE_CODE to the code of one of the languages.
+
+Logged-in admins can also override the detected language from the globe menu in the Django admin navbar (Jazzmin `language_chooser`). That posts to `/i18n/setlang/` and sets the `django_language` cookie, which takes precedence over the browser language for both admin and the public site. The public site still has `/setlanguage` for the same cookie-based override.
 
 ### 20.2 Remove existing languages
 To limit the number of languages that are shown as available, remove them from the LANGUAGES list in `settings.py` or comment them. Only what is there is shown.

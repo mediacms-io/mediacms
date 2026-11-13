@@ -1,0 +1,5 @@
+{% load i18n %}
+{% if inline_admin_formset.formset.related_truncated %}
+<p class="help related-inline-overflow mb-2">{{ inline_admin_formset.formset.related_overflow_note }}</p>
+{% endif %}
+{% include "admin/edit_inline/tabular.html" %}

@@ -1,0 +1,49 @@
+{% load i18n static jazzmin custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% if result_hidden_fields %}
+<div class="hiddenfields">
+    {% for item in result_hidden_fields %}{{ item }}{% endfor %}
+</div>
+{% endif %}
+
+{% if results %}
+    <div class="card">
+        <div class="card-body table-responsive p-0">
+            <table id="result_list" class="table table-striped">
+                <thead>
+                    <tr>
+                        {% for header in result_headers %}
+                        <th class="{% header_class header forloop %}" tabindex="0" rowspan="1" colspan="1">
+                            <div class="text">
+                                {% if header.sortable %}
+                                    <a href="{{ header.url_primary }}">{{ header.text|custom_translate:LANGUAGE_CODE }}</a>
+                                {% else %}
+                                    <span>{{ header.text|custom_translate:LANGUAGE_CODE }}</span>
+                                {% endif %}
+                                {% if header.sorted %}
+                                    <a href="{{ header.url_remove }}">
+                                        <div style="margin-top: .2em;" class="fa fa-times float-right"> </div>
+                                    </a>
+                                    {% if header.ascending %}
+                                        <i style="margin-top: .2em;" class="fa fa-sort-alpha-down"> </i>
+                                    {% else %}
+                                        <i style="margin-top: .2em;" class="fa fa-sort-alpha-up"> </i>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr role="row" class="{% cycle 'even' 'odd' %}">
+                        {% for item in result %}{{ item }}{% endfor %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}

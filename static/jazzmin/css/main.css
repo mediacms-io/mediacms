@@ -81,6 +81,104 @@ div.inline-related {
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
 }
 
+/*
+ * Jazzmin applies Bootstrap input chrome but drops Django's compact tabular widths,
+ * and .text-nowrap on the inline table inherits into cells so raw-id / ordering
+ * inputs grow huge and clip behind .inline-group overflow.
+ * Use auto layout so short columns shrink-wrap; cap raw-id/number inputs explicitly.
+ */
+.tabular table.text-nowrap {
+    table-layout: auto;
+    width: auto;
+    max-width: 100%;
+    white-space: normal !important;
+}
+
+.tabular .vForeignKeyRawIdAdminField {
+    width: 5rem;
+    max-width: 5rem;
+    flex: 0 0 auto;
+}
+
+.tabular .vIntegerField,
+.tabular input[type="number"].vIntegerField {
+    width: 4rem;
+    max-width: 4rem;
+}
+
+.tabular th.column-ordering,
+.tabular td.field-ordering {
+    width: 5.5rem;
+    white-space: nowrap;
+}
+
+.tabular th.column-action_date,
+.tabular td.field-action_date,
+.tabular th.column-update_date,
+.tabular td.field-update_date,
+.tabular th.column-created_at,
+.tabular td.field-created_at {
+    white-space: nowrap;
+}
+
+/* Shrink-wrap short Encoding / Subtitle columns so leftover space isn't trapped between them */
+.tabular th.column-profile,
+.tabular td.field-profile,
+.tabular th.column-status,
+.tabular td.field-status,
+.tabular th.column-progress,
+.tabular td.field-progress,
+.tabular th.column-chunk,
+.tabular td.field-chunk,
+.tabular th.column-language,
+.tabular td.field-language,
+.tabular th.column-permission,
+.tabular td.field-permission,
+.tabular th.column-source,
+.tabular td.field-source {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.tabular th.column-user,
+.tabular td.field-user,
+.tabular th.column-owner_user,
+.tabular td.field-owner_user {
+    white-space: nowrap;
+}
+
+.tabular th.original,
+.tabular td.original {
+    width: 2rem;
+}
+
+.tabular td.delete,
+.tabular th:last-child {
+    width: 4.5rem;
+    white-space: nowrap;
+}
+
+.tabular td.field-media > div {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.tabular td.field-media > div > strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tabular td.field-ordering > div {
+    display: flex;
+    align-items: center;
+}
+
 td.djn-td,
 th.djn-th {
     padding: 10px;
@@ -121,6 +219,32 @@ tr.djn-tr>.original {
     padding: 5px;
     text-align: center;
     color: white;
+}
+
+.object-tools .object-tools-actions {
+    width: 100%;
+    margin-block-start: 0.5rem;
+}
+
+.object-tools .object-tools-actions-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    width: 100%;
+}
+
+.object-tools .object-tools-actions-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+}
+
+.object-tools .object-tools-actions-go {
+    flex: 0 0 auto;
+    min-width: 3.5rem;
+    padding: 0.35rem 0.9rem;
+    font-weight: 600;
 }
 
 .jazzmin-avatar {
@@ -179,6 +303,53 @@ table.dataTable thead .sorting_desc_disabled::after {
 .select2-container--default .select2-selection--single .select2-selection__arrow {
     right: 5px !important;
     top: unset !important;
+}
+
+/*
+ * Select2 4.1 multi chips: AdminLTE styles assume blue chips + white text, but the
+ * stock Select2 stylesheet keeps a light-gray chip and absolute-positions the
+ * remove control, which yields white-on-gray text and an overlapping ×.
+ */
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #007bff !important;
+    border: 1px solid #006fe6 !important;
+    color: #fff !important;
+    padding: 0 0.55rem 0 1.35rem !important;
+    margin-top: 0.31rem;
+    position: relative;
+    line-height: 1.6rem;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+    color: #fff !important;
+    padding: 0;
+    cursor: default;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 1.15rem;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.35) !important;
+    border-radius: 0;
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    font-size: 1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover,
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove:focus {
+    background: rgba(0, 0, 0, 0.15) !important;
+    color: #fff !important;
 }
 
 .select2-results__option {
@@ -948,4 +1119,183 @@ body.jazzmin-login-page {
 .navigator-top-nav + #content-main {
     float: left;
     width: 100%;
+}
+
+/* Changelist zones: search, filters, and bulk Actions */
+#changelist-search {
+    margin-block-end: 0.75rem;
+}
+
+#changelist .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    margin-block: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    background-color: #f8f9fa;
+}
+
+#changelist .actions label,
+#changelist .actions .changelist-actions-select {
+    margin: 0;
+    /* Keep the select sized to its content so Go sits next to it */
+    flex: 0 1 auto;
+    min-width: 0;
+}
+
+#changelist .actions select,
+#changelist .actions .select2-container {
+    min-width: 14rem;
+    max-width: 100%;
+    width: auto;
+}
+
+#changelist .actions .changelist-actions-go {
+    flex: 0 0 auto;
+    margin: 0;
+    min-width: 4.5rem;
+    padding: 0.5rem 1.35rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#changelist .actions .changelist-list-editable-save {
+    flex: 0 0 auto;
+    margin: 0;
+    margin-inline-start: auto;
+    min-width: 7rem;
+    padding: 0.55rem 1.75rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+#changelist .actions .changelist-list-editable-save:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+#changelist .actions .action-counter,
+#changelist .actions .all,
+#changelist .actions .question,
+#changelist .actions .clear {
+    margin-inline-start: 0.5rem;
+}
+
+#changelist .change-list-actions-bottom .actions {
+    margin-block-start: 0.75rem;
+}
+
+/*
+ * Change-form tab groups:
+ * - default object tabs keep theme styling
+ * - Related (links/counts) uses teal
+ * - related-object inlines use warm slate
+ */
+#jazzy-tabs.nav-tabs .nav-item:has(> .related-links-tab),
+#jazzy-tabs.nav-tabs .nav-item:has(> .related-objects-tab) {
+    margin-inline-start: 0.15rem;
+}
+
+#jazzy-tabs.nav-tabs .nav-item:has(> .related-links-tab) {
+    margin-inline-start: 0.85rem;
+    padding-inline-start: 0.85rem;
+    border-inline-start: 1px solid #ced4da;
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-links-tab,
+#jazzy-tabs .nav.flex-column .nav-link.related-links-tab {
+    color: #146c7a;
+    background-color: rgba(20, 108, 122, 0.1);
+    border-color: rgba(20, 108, 122, 0.2);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-links-tab:hover,
+#jazzy-tabs .nav.flex-column .nav-link.related-links-tab:hover {
+    color: #0f5661;
+    background-color: rgba(20, 108, 122, 0.18);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-links-tab.active,
+#jazzy-tabs .nav.flex-column .nav-link.related-links-tab.active {
+    color: #fff;
+    background-color: #146c7a;
+    border-color: #146c7a;
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-objects-tab,
+#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab {
+    color: #5b5348;
+    background-color: rgba(91, 83, 72, 0.1);
+    border-color: rgba(91, 83, 72, 0.18);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-objects-tab:hover,
+#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab:hover {
+    color: #433d35;
+    background-color: rgba(91, 83, 72, 0.18);
+}
+
+#jazzy-tabs.nav-tabs .nav-link.related-objects-tab.active,
+#jazzy-tabs .nav.flex-column .nav-link.related-objects-tab.active {
+    color: #fff;
+    background-color: #5b5348;
+    border-color: #5b5348;
+}
+
+#changelist-filter {
+    border-inline-start: 1px solid #dee2e6;
+    padding-inline-start: 1rem;
+}
+
+#changelist-filter h2,
+#changelist-filter h3 {
+    font-weight: 600;
+}
+
+/* Dashboard card title icon spacing (logical, RTL-safe) */
+.dashboard .card-title > i,
+.card-title > i.me-2 {
+    margin-inline-end: 0.5rem;
+}
+
+/* LTR isolation for IDs, tokens, and usernames in RTL UIs */
+.media-id,
+.media-id-input,
+code.media-id {
+    direction: ltr;
+    unicode-bidi: isolate;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.media-id-input {
+    display: block;
+    width: 100%;
+    max-width: 28rem;
+    margin-block-start: 0.5rem;
+}
+
+.confirm-token-list {
+    margin: 0.5rem 0;
+    padding-inline-start: 1.25rem;
+}
+
+.admin-confirm-page .errornote p {
+    margin-block: 0.35rem;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }

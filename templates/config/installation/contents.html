@@ -16,6 +16,16 @@ MediaCMS.contents = {
                 icon: 'alternate_email',
             }
         ],
+        mainMenuExtraItems: [
+            {% for page in CMS_SIDEBAR_PAGES %}
+            {
+                text: "{{ page.title|escapejs }}",
+                link: "/{{ page.slug|escapejs }}",
+                icon: 'article',
+                className: 'nav-item-cms-page nav-item-cms-page-{{ page.slug|escapejs }}',
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
         belowNavMenu: null,
         footer: {% if SIDEBAR_FOOTER_TEXT %}'{{ SIDEBAR_FOOTER_TEXT|escapejs }}'{% else %}'Powered by <a href="//mediacms.io" title="mediacms.io" target="_blank">mediacms.io</a>'{% endif %},
     },

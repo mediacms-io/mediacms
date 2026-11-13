@@ -4,6 +4,10 @@ from cms.version import VERSION
 
 from .frontend_translations import get_translation, get_translation_strings
 from .methods import is_mediacms_editor, is_mediacms_manager
+from .models import Page
+
+# Pages that already have dedicated frontend routes / sidebar entries.
+_SIDEBAR_RESERVED_PAGE_SLUGS = frozenset({"about", "tos", "contact", "setlanguage"})
 
 
 def stuff(request):
@@ -12,6 +16,7 @@ def stuff(request):
     ret["FRONTEND_HOST"] = request.build_absolute_uri('/').rstrip('/')
     ret["DEFAULT_THEME"] = settings.DEFAULT_THEME
     ret["PORTAL_NAME"] = settings.PORTAL_NAME
+    ret["CMS_SIDEBAR_PAGES"] = list(Page.objects.exclude(slug__in=_SIDEBAR_RESERVED_PAGE_SLUGS).order_by("title").only("slug", "title"))
 
     ret["PORTAL_LOGO_DARK_SVG"] = getattr(settings, 'PORTAL_LOGO_DARK_SVG', "")
     ret["PORTAL_LOGO_DARK_PNG"] = getattr(settings, 'PORTAL_LOGO_DARK_PNG', "")

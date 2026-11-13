@@ -587,6 +587,13 @@ MIGRATION_API_TIMEOUT = 60
 MIGRATION_DOWNLOAD_TIMEOUT = 60 * 30
 MIGRATION_MAX_RETRIES = 5
 
+# Enable Jazzmin's navbar language dropdown. Selection posts to Django's
+# /i18n/setlang/ and sets the django_language cookie, which LocaleMiddleware
+# prefers over Accept-Language — so users can override the browser language
+# for both admin and the main site.
+JAZZMIN_SETTINGS = {
+    "language_chooser": True,
+}
 JAZZMIN_UI_TWEAKS = {"theme": "flatly"}
 
 USE_ROUNDED_CORNERS = True
@@ -598,6 +605,12 @@ ALLOW_CUSTOM_MEDIA_URLS = False
 ALLOW_MEDIA_REPLACEMENT = False
 
 ALLOW_ANONYMOUS_USER_LISTING = True
+
+# Whether the populate_fake_media management command may run.
+# None means follow DEBUG after settings are fully loaded (off in production,
+# on when DEBUG is True). Override explicitly via local_settings or the
+# ALLOW_POPULATE_FAKE_MEDIA environment variable.
+ALLOW_POPULATE_FAKE_MEDIA = None
 
 # Who can see the members page
 # valid choices are all, editors, admins
@@ -668,6 +681,10 @@ try:
         from .dev_settings import *  # noqa
 except ImportError:
     pass
+
+# Resolve after local_settings / DEVELOPMENT_MODE may have changed DEBUG.
+if ALLOW_POPULATE_FAKE_MEDIA is None:
+    ALLOW_POPULATE_FAKE_MEDIA = bool(DEBUG)
 
 
 if GLOBAL_LOGIN_REQUIRED:

@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% load i18n l10n admin_urls custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+
+{% block content %}
+<div id="content-main" class="admin-confirm-page">
+    <h1>{{ "Change media owner"|custom_translate:LANGUAGE_CODE }}</h1>
+
+    <p>{{ "Change the owner of the selected media. Related owner permissions update."|custom_translate:LANGUAGE_CODE }}</p>
+
+    <h2>{{ "Selected media"|custom_translate:LANGUAGE_CODE }}</h2>
+    <ul>
+        {% for media in media_items %}
+        <li>
+            <strong>{{ media.title|truncatechars:60 }}</strong>
+            (<code class="media-id" dir="ltr">{{ media.friendly_token }}</code>) —
+            {{ "Current owner"|custom_translate:LANGUAGE_CODE }}:
+            <span class="media-id" dir="ltr">{{ media.user.username }}</span>
+        </li>
+        {% empty %}
+        <li>{{ "No media selected."|custom_translate:LANGUAGE_CODE }}</li>
+        {% endfor %}
+    </ul>
+
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="{{ action_name }}">
+        <input type="hidden" name="apply" value="1">
+        {% for media in media_items %}
+        <input type="hidden" name="{{ action_checkbox_name }}" value="{{ media.pk|unlocalize }}">
+        {% endfor %}
+
+        <div>
+            <label for="id_new_owner">{{ "New owner username"|custom_translate:LANGUAGE_CODE }}:</label>
+            <input type="text" name="new_owner" id="id_new_owner" class="media-id-input" dir="ltr" value="{{ new_owner }}" required autocomplete="off" spellcheck="false">
+        </div>
+        <div class="submit-row" style="margin-top: 1em;">
+            <input type="submit" class="default" value="{{ "Change owner"|custom_translate:LANGUAGE_CODE }}">
+            <a href="{{ cancel_url }}" class="button cancel-link">{{ "Cancel"|custom_translate:LANGUAGE_CODE }}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

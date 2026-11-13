@@ -9,13 +9,17 @@ from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 from rest_framework.authtoken.models import Token, TokenProxy
 
+from actions.models import MediaAction
 from files.models import (
     Category,
     Comment,
     EncodeProfile,
     Encoding,
     Language,
+    License,
+    MediaPermission,
     Page,
+    Playlist,
     Subtitle,
     Tag,
     TinyMCEMedia,
@@ -33,6 +37,7 @@ from lti.models import (
 )
 from migrationservice.models import MigrationRecord, MigrationService
 from rbac.models import RBACGroup
+from users.models import Channel
 
 PASSWORD = "admin-smoke-password"
 
@@ -74,15 +79,20 @@ def build_instances(superuser):
         EncodeProfile: profile,
         Comment: Comment.objects.create(media=media, user=superuser, text="smoke comment"),
         media.__class__: media,
+        MediaAction: MediaAction.objects.create(user=superuser, media=media, action="like"),
         Encoding: Encoding.objects.create(media=media, profile=profile, status="success"),
         Category: category,
+        Playlist: Playlist.objects.create(title="admin smoke playlist", user=superuser),
+        MediaPermission: MediaPermission.objects.create(media=media, user=superuser, owner_user=superuser, permission="owner"),
         Page: Page.objects.create(slug="smoke-page", title="Smoke page", description="<p>hi</p>"),
         Tag: Tag.objects.create(title="smoketag"),
+        License: License.objects.create(title="Smoke license", description="smoke"),
         Subtitle: Subtitle.objects.create(language=language, media=media, user=superuser, subtitle_file=SimpleUploadedFile("smoke.vtt", VTT)),
         Language: language,
         VideoTrimRequest: VideoTrimRequest.objects.create(media=media, video_action="replace", timestamps=[{"startTime": 0, "endTime": 1}]),
         TranscriptionRequest: TranscriptionRequest.objects.create(media=media),
         superuser.__class__: superuser,
+        Channel: Channel.objects.get(user=superuser),
         LTIPlatform: platform,
         LTIResourceLink: resource_link,
         LTIUserMapping: LTIUserMapping.objects.create(platform=platform, lti_user_id="lti-sub", user=superuser),
