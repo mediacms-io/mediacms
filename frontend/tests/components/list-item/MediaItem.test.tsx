@@ -70,7 +70,11 @@ describe('components/list-item', () => {
 
             const thumb = root.querySelector('a.item-thumb') as HTMLAnchorElement;
             expect(thumb.getAttribute('href')).toBe('/view?m=abc123');
-            expect(thumb.style.backgroundImage).toContain('https://cdn.example.com/sunset.jpg');
+            if (Component === MediaItemVideo) {
+                expect(thumb.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example.com/sunset.jpg');
+            } else {
+                expect(thumb.style.backgroundImage).toContain('https://cdn.example.com/sunset.jpg');
+            }
 
             const authorLink = root.querySelector('.item-meta .item-author a') as HTMLAnchorElement;
             expect(authorLink.getAttribute('href')).toMatch(/^https:\/\/example\.com\/+user\/ann$/);
@@ -190,7 +194,12 @@ describe('components/list-item', () => {
             expect(root.querySelector('a.item-thumb')).toBeNull();
             expect(root.querySelector('.item-edit-icon')).toBeNull();
             expect(root.querySelector('.item-main h3 > span')?.textContent).toBe('Sunset');
-            expect((root.querySelector('div.item-thumb') as HTMLElement).style.backgroundImage).toContain('sunset.jpg');
+            const thumb = root.querySelector('div.item-thumb') as HTMLElement;
+            if (Component === MediaItemVideo) {
+                expect(thumb.querySelector('img')?.getAttribute('src')).toBe('https://cdn.example.com/sunset.jpg');
+            } else {
+                expect(thumb.style.backgroundImage).toContain('sunset.jpg');
+            }
 
             act(() => (root.querySelector('h3') as HTMLElement).click());
             expect(onCheckboxChange).toHaveBeenCalledWith({ target: { checked: true } });
@@ -236,6 +245,22 @@ describe('components/list-item', () => {
     });
 
     describe('MediaItemVideo', () => {
+        test.each([
+            [false, 344, 612, true],
+            [true, 344, 612, true],
+            [false, 344, 194, false],
+            [false, 344, 344, false],
+        ])('fits a portrait thumbnail in both video card modes (%s, %s × %s)', (embed, width, height, fits) => {
+            if (embed) enterSelectMediaMode();
+            const { container, unmount } = renderIntoContainer(<MediaItemVideo {...baseProps} preview_thumbnail="" />);
+            const thumb = container.querySelector(embed ? 'div.item-thumb img' : 'a.item-thumb img') as HTMLImageElement;
+            expect(thumb.getAttribute('alt')).toBe('');
+            Object.defineProperties(thumb, { naturalWidth: { value: width }, naturalHeight: { value: height } });
+            act(() => thumb.dispatchEvent(new Event('load')));
+            expect(thumb.classList.contains('is-portrait')).toBe(fits);
+            unmount();
+        });
+
         test('Renders video preview from preview thumbnail', () => {
             const { container, unmount } = renderIntoContainer(
                 <MediaItemVideo {...baseProps} preview_thumbnail="/media/preview.gif" />

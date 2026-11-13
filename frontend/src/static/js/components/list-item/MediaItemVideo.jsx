@@ -14,6 +14,7 @@ export function MediaItemVideo(rawProps) {
 
   const [titleComponentOrig, descriptionComponent, thumbnailUrl, UnderThumbWrapperOrig, editMediaComponent, metaComponents, viewMediaComponent] =
     useMediaItem({ ...props, type });
+  const [portraitThumbnailUrl, setPortraitThumbnailUrl] = React.useState(null);
 
   // In embed mode, override components to remove links
   const ItemTitle = ({ title }) => (
@@ -43,41 +44,36 @@ export function MediaItemVideo(rawProps) {
   }
 
   function thumbnailComponent() {
-    if (isSelectMediaMode) {
-      // In select media mode, render thumbnail without link
-      return (
-        <div
-          key="item-thumb"
-          className={'item-thumb' + (!thumbnailUrl ? ' no-thumb' : '')}
-          style={!thumbnailUrl ? null : { backgroundImage: "url('" + thumbnailUrl + "')" }}
-        >
-          {props.inPlaylistView ? null : (
-            <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
-          )}
-          {props.inPlaylistView || props.inPlaylistPage ? null : (
-            <MediaItemVideoPreviewer url={props.preview_thumbnail} />
-          )}
-        </div>
-      );
-    }
-
-    const attr = {
-      href: props.link,
-      title: props.title,
-      tabIndex: '-1',
-      'aria-hidden': true,
-      className: 'item-thumb' + (!thumbnailUrl ? ' no-thumb' : ''),
-      style: !thumbnailUrl ? null : { backgroundImage: "url('" + thumbnailUrl + "')" },
-    };
-
-    return (
-      <a key="item-thumb" {...attr}>
+    const className = 'item-thumb' + (!thumbnailUrl ? ' no-thumb' : '');
+    const children = (
+      <>
+        {thumbnailUrl ? (
+          <img
+            key={thumbnailUrl}
+            className={'item-video-thumb' + (portraitThumbnailUrl === thumbnailUrl ? ' is-portrait' : '')}
+            src={thumbnailUrl}
+            alt=""
+            onLoad={({ currentTarget }) => {
+              setPortraitThumbnailUrl(currentTarget.naturalHeight > currentTarget.naturalWidth ? thumbnailUrl : null);
+            }}
+          />
+        ) : null}
         {props.inPlaylistView ? null : (
           <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
         )}
         {props.inPlaylistView || props.inPlaylistPage ? null : (
           <MediaItemVideoPreviewer url={props.preview_thumbnail} />
         )}
+      </>
+    );
+
+    if (isSelectMediaMode) {
+      return <div key="item-thumb" className={className}>{children}</div>;
+    }
+
+    return (
+      <a key="item-thumb" href={props.link} title={props.title} tabIndex={-1} aria-hidden="true" className={className}>
+        {children}
       </a>
     );
   }
