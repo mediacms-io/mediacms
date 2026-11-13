@@ -1,0 +1,119 @@
+{% load custom_filters %}
+<div class="col-12 mb-3">
+    <div class="card card-outline card-secondary">
+        <div class="card-header">
+            <h3 class="card-title">{{ "Database backup"|custom_translate:LANGUAGE_CODE }}</h3>
+        </div>
+        <div class="card-body">
+            <p class="mb-3">{{ "Does not export non-audit media actions (watch, like, dislike, and similar). Only reports and audit records are exported. Failed encodings, trim requests, and caption requests are not exported. Sessions, notifications, and operational logs are not exported."|custom_translate:LANGUAGE_CODE }}</p>
+            <p class="mb-3">{{ "The download is a gzipped JSON fixture named mediacms-database-backup-YYYY-MM-DD-HHMM.json.gz. Uploaded media files are not included, only their stored paths."|custom_translate:LANGUAGE_CODE }}</p>
+            {% if request.user.is_superuser %}
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'admin:database_backup' %}"><i class="fas fa-download mr-1" aria-hidden="true"></i>{{ "Download a database backup"|custom_translate:LANGUAGE_CODE }}</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+<div class="col-12 mb-3">
+    <details class="card card-outline card-secondary database-restore mb-0">
+        <summary class="card-header">
+            <h3 class="card-title">{{ "Database restore"|custom_translate:LANGUAGE_CODE }}</h3>
+            <i class="fas fa-plus restore-closed" aria-hidden="true"></i>
+            <i class="fas fa-minus restore-open" aria-hidden="true"></i>
+        </summary>
+        <div class="card-body">
+            <p>{{ "Does not export non-audit media actions (watch, like, dislike, and similar). Only reports and audit records are exported. Failed encodings, trim requests, and caption requests are not exported. Sessions, notifications, and operational logs are not exported."|custom_translate:LANGUAGE_CODE }}</p>
+            <p>{{ "Restore reads a backup downloaded from the card above. Permissions and content types stay as created by migrations, so use a backup from this version of MediaCMS. Uploaded media files are not in the backup; the stored paths are written, and those files need to be on this server."|custom_translate:LANGUAGE_CODE }}</p>
+            <p class="mb-3">{{ "An initial installation has exactly one superuser, the default channel created for that account, the shipped categories and encode profiles or none of them, and one site record. Every other model must be empty. Permissions, content types, and the session used to open this page do not count."|custom_translate:LANGUAGE_CODE }}</p>
+            {% if not request.user.is_superuser %}
+                <p class="mb-0">{{ "Only a superuser can restore a database backup."|custom_translate:LANGUAGE_CODE }}</p>
+            {% elif database_restore.enabled %}
+                <p>{{ "This database is an initial installation. Choose a mediacms-database-backup-YYYY-MM-DD-HHMM.json.gz file. The restore replaces this installation, then asks you to sign in with an account from the backup."|custom_translate:LANGUAGE_CODE }}</p>
+                <form method="post" enctype="multipart/form-data" action="{% url 'admin:database_restore' %}" onsubmit="return confirm('{{ 'Replace this installation with the uploaded backup?'|custom_translate:LANGUAGE_CODE|escapejs }}');">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="database-backup-file">{{ "Backup file"|custom_translate:LANGUAGE_CODE }}</label>
+                        <input id="database-backup-file" class="form-control-file" type="file" name="backup_file" accept=".gz,application/gzip" required>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" type="submit"><i class="fas fa-upload mr-1" aria-hidden="true"></i>{{ "Restore database backup"|custom_translate:LANGUAGE_CODE }}</button>
+                </form>
+            {% else %}
+                <p>{{ "Database restore is turned off until this database is an initial installation."|custom_translate:LANGUAGE_CODE }}</p>
+                <ul class="mb-0">
+                    {% for blocker in database_restore.blockers %}
+                        <li>{% admin_detail blocker %}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
+    </details>
+</div>
+<div class="col-12 mb-3">
+    <div class="card card-outline {% if stats.database.health_counts.fail %}card-danger{% elif stats.database.health_counts.warn %}card-warning{% else %}card-secondary{% endif %}">
+        <div class="card-header">
+            <h3 class="card-title">{{ "Health checks"|custom_translate:LANGUAGE_CODE }}</h3>
+            {% include "admin/dashboard/_copy_tools.html" %}
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ "Status"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Check"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Detail"|custom_translate:LANGUAGE_CODE }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for check in stats.database.health_checks %}
+                        <tr>
+                            <td>
+                                {% if check.status == "ok" %}
+                                    <span class="badge badge-success">{{ "OK"|custom_translate:LANGUAGE_CODE }}</span>
+                                {% elif check.status == "warn" %}
+                                    <span class="badge badge-warning">{{ "Warning"|custom_translate:LANGUAGE_CODE }}</span>
+                                {% elif check.status == "fail" %}
+                                    <span class="badge badge-danger">{{ "Fail"|custom_translate:LANGUAGE_CODE }}</span>
+                                {% else %}
+                                    <span class="badge badge-info">{{ "Info"|custom_translate:LANGUAGE_CODE }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ check.label|custom_translate:LANGUAGE_CODE }}</td>
+                            <td>{% admin_detail check %}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="col-12">
+    <div class="card card-outline card-secondary">
+        <div class="card-header">
+            <h3 class="card-title">{{ "Database"|custom_translate:LANGUAGE_CODE }}</h3>
+            {% include "admin/dashboard/_copy_tools.html" %}
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0 database-metrics">
+                <thead>
+                    <tr>
+                        <th>{{ "Group"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Name"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Value"|custom_translate:LANGUAGE_CODE }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stats.database.rows %}
+                        <tr>
+                            <td>{{ item.group|custom_translate:LANGUAGE_CODE }}</td>
+                            <td>{{ item.label|custom_translate:LANGUAGE_CODE }}</td>
+                            <td>{% if item.translate_value %}<code>{{ item.value|custom_translate:LANGUAGE_CODE }}</code>{% else %}<code>{{ item.value }}</code>{% endif %}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -57,6 +57,8 @@ def iter_status_health_checks():
                 "label": target["label"],
                 "status": _FAILURE_STATUS,
                 "detail": target["problem"].format(count=count),
+                "detail_template": target["problem"],
+                "detail_kwargs": {"count": count},
                 "link": link,
             }
         else:
@@ -65,5 +67,7 @@ def iter_status_health_checks():
                 "label": target["label"],
                 "status": "ok",
                 "detail": target["ok"],
+                "detail_template": target["ok"],
+                "detail_kwargs": {},
                 "link": link,
             }

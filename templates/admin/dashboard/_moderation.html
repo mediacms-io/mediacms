@@ -117,7 +117,7 @@
                                                     <tr>
                                                         <td title="{{ report.extra_info|default:'' }}">
                                                             {% if report.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' report.media_id %}#reports-tab">{{ report.media__title|truncatechars:30|default:'-' }}</a>
+                                                                <a href="{% url 'admin:files_media_change' report.media_id %}#audit-log-tab">{{ report.media__title|truncatechars:30|default:'-' }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
@@ -153,7 +153,7 @@
                                 <div class="card card-outline card-danger">
                                     <div class="card-header">
                                         <h3 class="card-title">
-                                            <a href="{% url 'admin:actions_mediaaction_changelist' %}">{{ "Recent report audit actions"|custom_translate:LANGUAGE_CODE }}</a>
+                                            <a href="{% url 'admin:actions_mediaaction_changelist' %}">{{ "Recent report actions"|custom_translate:LANGUAGE_CODE }}</a>
                                         </h3>
                                     </div>
                                     <div class="card-body p-0">
@@ -172,7 +172,7 @@
                                                     <tr>
                                                         <td title="{{ audit.extra_info|default:'' }}">
                                                             {% if audit.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' audit.media_id %}#reports-tab">{{ audit.media__title|truncatechars:30|default:'-' }}</a>
+                                                                <a href="{% url 'admin:files_media_change' audit.media_id %}#audit-log-tab">{{ audit.media__title|truncatechars:30|default:'-' }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}
@@ -271,7 +271,7 @@
                                                     <tr>
                                                         <td>
                                                             {% if approval.media_id %}
-                                                                <a href="{% url 'admin:files_media_change' approval.media_id %}#reports-tab">{{ approval.media__title|truncatechars:30|default:'-' }}</a>
+                                                                <a href="{% url 'admin:files_media_change' approval.media_id %}#audit-log-tab">{{ approval.media__title|truncatechars:30|default:'-' }}</a>
                                                             {% else %}
                                                                 -
                                                             {% endif %}

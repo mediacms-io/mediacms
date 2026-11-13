@@ -9,6 +9,7 @@ from admin_customizations.action_choices import (
     GroupedActionForm,
     build_grouped_action_choices,
 )
+from files.admin_helpers import admin_text
 
 from .models import (
     LTILaunchLog,
@@ -189,7 +190,11 @@ class LTIToolKeysAdmin(admin.ModelAdmin):
         """Regenerate keys for selected instances"""
         for key_obj in queryset:
             key_obj.generate_keys()
-            self.message_user(request, f"Keys regenerated for {key_obj.key_id}", messages.SUCCESS)
+            self.message_user(
+                request,
+                admin_text(getattr(request, "LANGUAGE_CODE", None), "Keys regenerated for {key_id}", key_id=key_obj.key_id),
+                messages.SUCCESS,
+            )
 
     def get_action_choices(self, request, default_choices=None):
         return build_grouped_action_choices(

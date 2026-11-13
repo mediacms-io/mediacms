@@ -14,7 +14,14 @@ from django.urls import reverse
 
 import users.admin
 from actions.models import MediaAction
-from files.admin import MEDIA_REPORT_TAB_ACTIONS, CategoryAdminForm, MediaAdminForm, PageAdminForm, format_thumbnail_clock, parse_thumbnail_clock
+from files.admin import (
+    MEDIA_REPORT_TAB_ACTIONS,
+    CategoryAdminForm,
+    MediaAdminForm,
+    PageAdminForm,
+    format_thumbnail_clock,
+    parse_thumbnail_clock,
+)
 from files.admin_helpers import ADMIN_CLIPPED_TEXT_LENGTH, clipped_admin_text
 from files.methods import (
     can_delete_original_media_file,
@@ -415,7 +422,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
     def test_reports_tab_shows_report_and_moderation_actions(self):
         model_admin = admin.site._registry[Media]
         fieldsets = model_admin.get_fieldsets(self.admin_request(), obj=self.public)
-        reports_fieldsets = [options for name, options in fieldsets if name == "Reports"]
+        reports_fieldsets = [options for name, options in fieldsets if name == "Audit log"]
         self.assertEqual(len(reports_fieldsets), 1)
         self.assertEqual(reports_fieldsets[0]["fields"], ("reported_times", "report_actions_table"))
         self.assertIn("tab", reports_fieldsets[0]["classes"])
@@ -463,7 +470,7 @@ class MediaAdminTest(AdminRequestMixin, TestCase):
         fieldsets = dict(model_admin.get_fieldsets(self.admin_request(), obj=self.public))
         self.assertEqual(
             list(fieldsets.keys()),
-            ["Content", "Publishing", "Sharing", "Details", "Reports", "Related"],
+            ["Content", "Publishing", "Sharing", "Details", "Audit log", "Related"],
         )
         self.assertEqual(fieldsets["Content"]["fields"][0], "title")
         self.assertNotIn("link_user", fieldsets["Content"]["fields"])
@@ -921,7 +928,7 @@ class MediaActionAdminTest(TestCase):
         self.assertContains(response, "field-display_action")
         self.assertContains(response, "media-metric__inspect")
         self.assertContains(response, 'title="Inspect"')
-        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]) + "#reports-tab")
+        self.assertContains(response, reverse("admin:files_media_change", args=[self.media.pk]) + "#audit-log-tab")
         self.assertContains(response, reverse("admin:users_user_change", args=[self.superuser.pk]))
         self.assertContains(response, "fa-flag")
         self.assertContains(response, "changelist-status-icon__text")
@@ -1055,11 +1062,11 @@ class MediaActionAdminTest(TestCase):
         self.assertIn("delete_selected", choice_values)
 
         html = str(model_admin.link_media(self.report))
-        self.assertIn("#reports-tab", html)
+        self.assertIn("#audit-log-tab", html)
         self.assertIn('title="reported media"', html)
         like = MediaAction.objects.create(user=self.superuser, media=self.media, action="like")
         like_html = str(model_admin.link_media(like))
-        self.assertNotIn("#reports-tab", like_html)
+        self.assertNotIn("#audit-log-tab", like_html)
 
     def test_changelist_header_sort_links_replace_prior_sorts(self):
         response = self.client.get(reverse("admin:actions_mediaaction_changelist"))

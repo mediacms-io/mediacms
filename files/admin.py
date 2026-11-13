@@ -43,11 +43,11 @@ from files.admin_helpers import (
     TranslateManyToManyHelpMixin,
     admin_change_link,
     admin_change_url,
-    admin_copy_value,
-    admin_inspect_link,
     admin_changelist_link,
     admin_changelist_url,
+    admin_copy_value,
     admin_inspect_id,
+    admin_inspect_link,
     admin_open_on_site_link,
     admin_relation_link,
     admin_status_icon,
@@ -304,7 +304,9 @@ class LicenseInspectWidgetWrapper(RelatedFieldWidgetWrapper):
         return context
 
 
-# Open reports plus moderation audit events shown on the Media "Reports" tab.
+# Open reports plus moderation audit events shown on the Media "Audit log" tab.
+# Jazzmin tab id is unicode_slugify("Audit log") + "-tab".
+MEDIA_AUDIT_LOG_TAB = "audit-log-tab"
 MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
 
 
@@ -716,7 +718,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
     def get_fieldsets(self, request, obj=None):
         """Organize the change form into purpose-based Jazzmin tabs.
 
-        Object tabs come first, then Reports (Media-only), then Related
+        Object tabs come first, then Audit log (Media-only), then Related
         (one-to-many changelist links).
         """
         media_type = getattr(obj, "media_type", "") if obj is not None else ""
@@ -801,11 +803,11 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
                 },
             ),
             (
-                "Reports",
+                "Audit log",
                 {
                     "fields": ("reported_times", "report_actions_table"),
                     "classes": ("tab",),
-                    "description": "Open reports and related moderation audit events. Use Clear reports actions to reset counters.",
+                    "description": "The log lists reports and other staff actions. Staff actions include review, delete original, refresh metadata, and integrity warning. Clear reports only resets the report counter.",
                 },
             ),
             (
@@ -905,8 +907,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
             return "—"
         label = admin_text(None, "Inspect")
         return format_html(
-            '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">'
-            '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
+            '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">' '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
             name or str(related),
             admin_change_url(related),
             label,
@@ -974,8 +975,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         label = admin_text(None, "Inspect")
         url = admin_changelist_url(MediaAction, media__id__exact=obj.pk, action__exact=action)
         return format_html(
-            '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">'
-            '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
+            '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">' '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
             count or 0,
             url,
             label,
@@ -1141,7 +1141,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         count = obj.mediaactions.count()
         return admin_changelist_link(MediaAction, admin_text(None, "View {count} action(s)", count=count), media__id__exact=obj.pk)
 
-    @admin.display(description="Report & moderation actions")
+    @admin.display(description="Audit log")
     def report_actions_table(self, obj):
         """Timestamp, then the action icon and name, for report and moderation MediaActions."""
         if not obj or not obj.pk:
@@ -1150,7 +1150,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
         lang = get_language() or "en"
         actions = MediaAction.objects.filter(media=obj, action__in=MEDIA_REPORT_TAB_ACTIONS).order_by("-action_date")
         if not actions.exists():
-            return admin_text(lang, "No report or moderation actions yet.")
+            return admin_text(lang, "No audit log entries yet.")
 
         inspect_label = admin_text(lang, "Inspect")
         rows = []
@@ -1166,8 +1166,7 @@ class MediaAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, TranslateManyToMan
                     when,
                     format_html('<a href="{}">{}</a>', change_url, admin_status_icon(icon, label, modifier=modifier)),
                     format_html(
-                        '<a class="report-actions-table__inspect" href="{}" title="{}" aria-label="{}">'
-                        '<i class="fas fa-search" aria-hidden="true"></i></a>',
+                        '<a class="report-actions-table__inspect" href="{}" title="{}" aria-label="{}">' '<i class="fas fa-search" aria-hidden="true"></i></a>',
                         change_url,
                         inspect_label,
                         inspect_label,

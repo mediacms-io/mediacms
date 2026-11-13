@@ -13,6 +13,7 @@
         <a href="{% url 'admin:dashboard_section' 'health' %}" class="btn btn-sm {% if dashboard_section == 'health' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-heartbeat mr-1" aria-hidden="true"></i>{{ "Health"|custom_translate:LANGUAGE_CODE }}</a>
         <a href="{% url 'admin:dashboard_section' 'configuration' %}" class="btn btn-sm {% if dashboard_section == 'configuration' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-cog mr-1" aria-hidden="true"></i>{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</a>
         <a href="{% url 'admin:dashboard_section' 'system' %}" class="btn btn-sm {% if dashboard_section == 'system' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-server mr-1" aria-hidden="true"></i>{{ "System"|custom_translate:LANGUAGE_CODE }}</a>
+        <a href="{% url 'admin:dashboard_section' 'database' %}" class="btn btn-sm {% if dashboard_section == 'database' %}btn-primary{% else %}btn-outline-primary{% endif %}"><i class="fas fa-database mr-1" aria-hidden="true"></i>{{ "Database"|custom_translate:LANGUAGE_CODE }}</a>
     </div>
     <div class="dashboard-switcher-refresh">
         {% if dashboard_stats.generated_at %}
@@ -30,7 +31,7 @@
         width: 100%;
     }
     .dashboard-switcher-refresh {
-        margin-left: auto;
+        margin-inline-start: auto;
         display: flex;
         align-items: center;
         gap: 0.75rem;

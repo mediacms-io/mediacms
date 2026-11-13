@@ -3671,3 +3671,128 @@ html.theme-darkly .change-form .card-outline {
     background: none;
     color: var(--primary);
 }
+
+/*
+ * AdminLTE places the sidebar with physical left offsets. dir=rtl moves an
+ * absolutely positioned sidebar to the right, but the header and content keep
+ * margin-left, so the sidebar covers the language switcher. These rules keep
+ * the sidebar on the right and mirror its arrows and indents.
+ */
+html[dir="rtl"] .main-sidebar,
+html[dir="rtl"] .main-sidebar::before {
+    left: auto;
+    right: 0;
+}
+
+@media (min-width: 768px) {
+    html[dir="rtl"] body:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav) .content-wrapper,
+    html[dir="rtl"] body:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav) .main-footer,
+    html[dir="rtl"] body:not(.sidebar-mini-md):not(.sidebar-mini-xs):not(.layout-top-nav) .main-header {
+        margin-left: 0;
+        margin-right: 250px;
+    }
+
+    html[dir="rtl"] .sidebar-mini.sidebar-collapse .content-wrapper,
+    html[dir="rtl"] .sidebar-mini.sidebar-collapse .main-footer,
+    html[dir="rtl"] .sidebar-mini.sidebar-collapse .main-header,
+    html[dir="rtl"] .sidebar-mini-md.sidebar-collapse .content-wrapper,
+    html[dir="rtl"] .sidebar-mini-md.sidebar-collapse .main-footer,
+    html[dir="rtl"] .sidebar-mini-md.sidebar-collapse .main-header,
+    html[dir="rtl"] .sidebar-mini-xs.sidebar-collapse .content-wrapper,
+    html[dir="rtl"] .sidebar-mini-xs.sidebar-collapse .main-footer,
+    html[dir="rtl"] .sidebar-mini-xs.sidebar-collapse .main-header {
+        margin-left: 0 !important;
+        margin-right: 4.6rem !important;
+    }
+}
+
+html[dir="rtl"] .sidebar-collapse .main-sidebar,
+html[dir="rtl"] .sidebar-collapse .main-sidebar::before {
+    margin-left: 0;
+    margin-right: -250px;
+}
+
+html[dir="rtl"] .sidebar-mini.sidebar-collapse .main-sidebar,
+html[dir="rtl"] .sidebar-mini.sidebar-collapse .main-sidebar::before,
+html[dir="rtl"] .sidebar-mini-md.sidebar-collapse .main-sidebar,
+html[dir="rtl"] .sidebar-mini-md.sidebar-collapse .main-sidebar::before,
+html[dir="rtl"] .sidebar-mini-xs.sidebar-collapse .main-sidebar,
+html[dir="rtl"] .sidebar-mini-xs.sidebar-collapse .main-sidebar::before {
+    margin-right: 0;
+}
+
+@media (max-width: 767.98px) {
+    html[dir="rtl"] .main-sidebar,
+    html[dir="rtl"] .main-sidebar::before {
+        margin-left: 0;
+        margin-right: -250px;
+    }
+
+    html[dir="rtl"] .sidebar-open .main-sidebar,
+    html[dir="rtl"] .sidebar-open .main-sidebar::before {
+        margin-right: 0;
+    }
+
+    html[dir="rtl"] .content-wrapper,
+    html[dir="rtl"] .main-footer,
+    html[dir="rtl"] .main-header {
+        margin-right: 0;
+    }
+}
+
+html[dir="rtl"] .main-header .navbar-nav.ml-auto {
+    margin-left: 0 !important;
+    margin-right: auto !important;
+}
+
+html[dir="rtl"] .brand-link .brand-image {
+    float: right;
+    margin-left: 0.5rem;
+    margin-right: 0.8rem;
+}
+
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar,
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar .nav-treeview {
+    padding-inline-start: 0;
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar .nav-link {
+    width: auto;
+    max-width: 100%;
+    text-align: right;
+}
+
+html[dir="rtl"] .nav-sidebar .nav-link > p > .right,
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar .nav-link i.right {
+    right: auto;
+    left: 1rem;
+    transform: scaleX(-1);
+}
+
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar .menu-is-opening > .nav-link i.right,
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar .menu-open > .nav-link i.right {
+    transform: scaleX(-1) rotate(90deg);
+}
+
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar > .nav-item > .nav-link {
+    padding-left: 1.75rem;
+    padding-right: 0.5rem;
+}
+
+html[dir="rtl"] #jazzy-sidebar .nav-sidebar .nav-treeview > .nav-item > .nav-link {
+    padding-left: 0.5rem;
+    padding-right: 1.75rem;
+}
+
+html[dir="rtl"] .content-wrapper > .content.border-bottom h1.border-right {
+    border-right: 0 !important;
+    border-left: 1px solid #dee2e6 !important;
+    margin-right: 0 !important;
+    margin-left: 1rem !important;
+    padding-right: 0 !important;
+    padding-left: 1rem !important;
+}

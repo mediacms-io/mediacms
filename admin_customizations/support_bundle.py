@@ -8,6 +8,7 @@ from admin_customizations.admin import (
     get_site_configuration_status,
     get_site_health_checks,
 )
+from admin_customizations.database_stats import get_database_statistics
 from admin_customizations.runtime_info import get_system_runtime_rows
 
 BUNDLE_NOTE = "This file is safe to paste into a GitHub issue. Secrets are omitted or redacted."
@@ -55,9 +56,14 @@ def _markdown_table(headers, records):
     return "\n".join([header, separator, *body])
 
 
-def _warning_records():
+def _warning_records(database_stats=None):
     records = []
     for check in get_site_health_checks():
+        if check["status"] in ("fail", "warn"):
+            records.append((check["status"], check["label"], check["detail"]))
+    if database_stats is None:
+        database_stats = get_database_statistics()
+    for check in database_stats.get("health_checks", []):
         if check["status"] in ("fail", "warn"):
             records.append((check["status"], check["label"], check["detail"]))
     return records
@@ -81,9 +87,11 @@ def support_bundle_format(filename):
 def render_support_bundle(fmt):
     """Build a text or Markdown dump of warnings, settings, and runtime facts."""
     generated = timezone.now().isoformat()
-    warnings = _warning_records()
+    database_stats = get_database_statistics()
+    warnings = _warning_records(database_stats)
     configuration = [(item["label"], item["value"]) for item in get_site_configuration_status()]
     runtime = [(item["group"], item["label"], item["value"]) for item in get_system_runtime_rows()]
+    database = [(item["group"], item["label"], item["value"]) for item in database_stats["rows"]]
     if fmt == "md":
         warning_body = _markdown_table(("Status", "Check", "Detail"), warnings) if warnings else "_No warnings or failures._"
         document = "\n\n".join(
@@ -97,6 +105,8 @@ def render_support_bundle(fmt):
                 _markdown_table(("Setting", "Value"), configuration),
                 "## Runtime",
                 _markdown_table(("Group", "Name", "Value"), runtime),
+                "## Database",
+                _markdown_table(("Group", "Name", "Value"), database),
             ]
         )
         return f"{document}\n"
@@ -112,6 +122,8 @@ def render_support_bundle(fmt):
             _tsv(("Setting", "Value"), configuration),
             "Runtime",
             _tsv(("Group", "Name", "Value"), runtime),
+            "Database",
+            _tsv(("Group", "Name", "Value"), database),
         ]
     )
     return f"{document}\n"

@@ -100,8 +100,7 @@ def admin_inspect_link(obj, text=None, fragment=None):
     label = admin_text(None, "Inspect")
     name = text if text is not None else str(obj)
     return format_html(
-        '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">'
-        '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
+        '<span class="media-metric">{} <a class="media-metric__inspect" href="{}" title="{}" aria-label="{}">' '<i class="fas fa-search" aria-hidden="true"></i></a></span>',
         name,
         admin_change_url(obj, fragment=fragment),
         label,

@@ -11,16 +11,21 @@ from django.urls import NoReverseMatch, reverse
 from django.utils import timezone
 
 from actions.models import MODERATION_MEDIA_ACTIONS, MediaAction
+from admin_customizations.database_stats import get_database_statistics
 from admin_customizations.deployment_health import (
     deployment_configuration_rows,
     frontend_host_parts,
     iter_deployment_health_checks,
     iter_media_storage_health_checks,
 )
-from admin_customizations.processing_stats import get_migration_status_groups, get_processing_status_groups
+from admin_customizations.processing_stats import (
+    get_migration_status_groups,
+    get_processing_status_groups,
+)
 from admin_customizations.runtime_info import get_system_runtime_rows
 from admin_customizations.status_health import iter_status_health_checks
 from files.admin_helpers import MEDIA_ACTION_ICONS
+from files.integrity import qs_duplicate_md5, qs_duplicate_name
 from files.models import (
     Category,
     Comment,
@@ -55,7 +60,7 @@ _REPORT_AUDIT_EXCLUDED = ("media_reviewed", "metadata_refresh", "integrity_warni
 REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in _REPORT_AUDIT_EXCLUDED)
 REPORT_AUDIT_ACTION_LABELS = dict(MODERATION_MEDIA_ACTIONS)
 
-DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v13"
+DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v15"
 DASHBOARD_STATS_CACHE_TTL = 60
 
 
@@ -93,6 +98,7 @@ def calculate_statistics(*, force_refresh=False):
         "system": get_system_statistics(media_stats=media_stats, extra_checks=integrations["health_checks"]),
         "processing": {"status_groups": get_processing_status_groups()},
         "integrations": integrations,
+        "database": get_database_statistics(),
     }
     cache.set(DASHBOARD_STATS_CACHE_KEY, stats, DASHBOARD_STATS_CACHE_TTL)
     return stats
@@ -135,10 +141,11 @@ def _count_health(checks):
     }
 
 
-def _integration_check(check_id, label, problem, ok_detail, count, link):
+def _integration_check(check_id, label, problem, ok_detail, count, link, ok_kwargs=None):
     if count:
-        return _health_check(check_id, label, "warn", problem.format(count=count), link=link, group="integrations")
-    return _health_check(check_id, label, "ok", ok_detail, link=link, group="integrations")
+        kwargs = {"count": count} if "{count}" in problem else None
+        return _health_check(check_id, label, "warn", problem, link=link, group="integrations", detail_kwargs=kwargs)
+    return _health_check(check_id, label, "ok", ok_detail, link=link, group="integrations", detail_kwargs=ok_kwargs)
 
 
 def get_integrations_health_checks(migration_groups):
@@ -187,9 +194,10 @@ def get_integrations_health_checks(migration_groups):
                 "identity_providers",
                 "Identity Providers",
                 "No identity providers are configured.",
-                f"{provider_count} identity provider(s) configured.",
+                "{count} identity provider(s) configured.",
                 0 if provider_count else 1,
                 _changelist_url(SocialApp),
+                ok_kwargs={"count": provider_count},
             )
         )
         checks.append(
@@ -197,9 +205,10 @@ def get_integrations_health_checks(migration_groups):
                 "active_login_options",
                 "Active login options",
                 "No active login options.",
-                f"{active_logins} active login option(s).",
+                "{count} active login option(s).",
                 0 if active_logins else 1,
                 _changelist_url(LoginOption, "active__exact=1"),
+                ok_kwargs={"count": active_logins},
             )
         )
 
@@ -212,9 +221,10 @@ def get_integrations_health_checks(migration_groups):
                 "saml_configuration",
                 "SAML Configurations",
                 "SAML is enabled but no configurations exist.",
-                f"{saml_count} SAML configuration(s).",
+                "{count} SAML configuration(s).",
                 0 if saml_count else 1,
                 _changelist_url(SAMLConfiguration),
+                ok_kwargs={"count": saml_count},
             )
         )
 
@@ -229,9 +239,10 @@ def get_integrations_health_checks(migration_groups):
                 "lti_platforms",
                 "LTI Platforms",
                 "LTI is enabled but no platforms exist.",
-                f"{platforms} LTI platform(s).",
+                "{count} LTI platform(s).",
                 0 if platforms else 1,
                 _changelist_url(LTIPlatform),
+                ok_kwargs={"count": platforms},
             )
         )
         checks.append(
@@ -239,9 +250,10 @@ def get_integrations_health_checks(migration_groups):
                 "lti_tool_keys",
                 "LTI Tool Keys",
                 "LTI is enabled but no tool keys exist.",
-                f"{tool_keys} LTI tool key(s).",
+                "{count} LTI tool key(s).",
                 0 if tool_keys else 1,
                 _changelist_url(LTIToolKeys),
+                ok_kwargs={"count": tool_keys},
             )
         )
         checks.append(
@@ -468,6 +480,8 @@ def get_media_statistics():
     media_stats["unreviewed"] = aggregates["unreviewed"]
     media_stats["total_likes"] = aggregates["total_likes"]
     media_stats["total_dislikes"] = aggregates["total_dislikes"]
+    media_stats["duplicate_md5"] = qs_duplicate_md5().count()
+    media_stats["duplicate_names"] = qs_duplicate_name().count()
 
     recent_upload_values = ("id", "title", "add_date", "friendly_token", "user_id", "user__username")
     media_stats["recent_by_type"] = {
@@ -717,17 +731,31 @@ _SYSTEM_CHECK_IDS = frozenset(
         "media_root_access",
         "hls_dir_access",
         "temp_dir_access",
-        "media_subdirs_access",
+        "media_subdir_original",
+        "media_subdir_encoded",
+        "media_subdir_uploads",
+        "media_subdir_chunks",
     }
 )
 
 
-def _health_check(check_id, label, status, detail, link=None, group=None):
+def _health_check(check_id, label, status, detail, link=None, group=None, detail_kwargs=None, detail_template=None):
+    detail_kwargs = dict(detail_kwargs or {})
+    template = detail if detail_template is None else detail_template
+    if detail_kwargs and detail_template is None:
+        try:
+            rendered = template.format(**detail_kwargs)
+        except (KeyError, ValueError, IndexError):
+            rendered = detail
+    else:
+        rendered = detail
     return {
         "id": check_id,
         "label": label,
         "status": status,
-        "detail": detail,
+        "detail": rendered,
+        "detail_template": template,
+        "detail_kwargs": detail_kwargs,
         "link": link,
         "group": group,
     }
@@ -763,8 +791,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                     "site_name",
                     "Site name matches PORTAL_NAME",
                     "ok",
-                    f'Site.name and PORTAL_NAME are both "{portal_name}".',
+                    'Site.name and PORTAL_NAME are both "{name}".',
                     link=site_change_url,
+                    detail_kwargs={"name": portal_name},
                 )
             )
         else:
@@ -773,8 +802,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                     "site_name",
                     "Site name matches PORTAL_NAME",
                     "warn",
-                    f'Site.name is "{site.name}" but PORTAL_NAME is "{portal_name}".',
+                    'Site.name is "{site_name}" but PORTAL_NAME is "{portal_name}".',
                     link=site_change_url,
+                    detail_kwargs={"site_name": site.name, "portal_name": portal_name},
                 )
             )
 
@@ -795,8 +825,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                     "site_domain",
                     "Site domain matches FRONTEND_HOST",
                     "ok",
-                    f'Site.domain and FRONTEND_HOST both resolve to "{frontend_host}".',
+                    'Site.domain and FRONTEND_HOST both resolve to "{host}".',
                     link=site_change_url,
+                    detail_kwargs={"host": frontend_host},
                 )
             )
         else:
@@ -805,8 +836,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                     "site_domain",
                     "Site domain matches FRONTEND_HOST",
                     "warn",
-                    f'Site.domain is "{site.domain}" but FRONTEND_HOST host is "{frontend_host}".',
+                    'Site.domain is "{domain}" but FRONTEND_HOST host is "{host}".',
                     link=site_change_url,
+                    detail_kwargs={"domain": site.domain, "host": frontend_host},
                 )
             )
 
@@ -842,7 +874,8 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "allowed_hosts",
                 "ALLOWED_HOSTS includes FRONTEND_HOST",
                 "ok",
-                f'ALLOWED_HOSTS includes "{frontend_host}".',
+                'ALLOWED_HOSTS includes "{host}".',
+                detail_kwargs={"host": frontend_host},
             )
         )
     else:
@@ -851,7 +884,8 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "allowed_hosts",
                 "ALLOWED_HOSTS includes FRONTEND_HOST",
                 "fail",
-                f'FRONTEND_HOST host "{frontend_host}" is not present in ALLOWED_HOSTS.',
+                'FRONTEND_HOST host "{host}" is not present in ALLOWED_HOSTS.',
+                detail_kwargs={"host": frontend_host},
             )
         )
 
@@ -864,7 +898,8 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "frontend_https",
                 "FRONTEND_HOST uses HTTPS",
                 "info",
-                f'FRONTEND_HOST scheme is "{frontend_scheme or "missing"}" (acceptable for local/debug).',
+                "FRONTEND_HOST scheme is missing (acceptable for local/debug)." if not frontend_scheme else 'FRONTEND_HOST scheme is "{scheme}" (acceptable for local/debug).',
+                detail_kwargs={"scheme": frontend_scheme} if frontend_scheme else None,
             )
         )
     else:
@@ -894,7 +929,8 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "cache",
                 "Cache / Redis reachable",
                 "fail",
-                cache_error or "Cache backend probe failed.",
+                "Cache backend probe failed: {error}." if cache_error else "Cache backend probe failed.",
+                detail_kwargs={"error": cache_error} if cache_error else None,
             )
         )
 
@@ -905,8 +941,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "encode_profiles",
                 "Active encode profiles",
                 "ok",
-                f"{active_profiles} active encode profile(s).",
+                "{count} active encode profile(s).",
                 link=reverse("admin:files_encodeprofile_changelist"),
+                detail_kwargs={"count": active_profiles},
             )
         )
     else:
@@ -927,8 +964,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "superusers",
                 "Active superuser exists",
                 "ok",
-                f"{superusers} active superuser(s).",
+                "{count} active superuser(s).",
                 link=reverse("admin:users_user_changelist") + "?is_superuser__exact=1",
+                detail_kwargs={"count": superusers},
             )
         )
     else:
@@ -943,17 +981,35 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
         )
 
     default_from = (getattr(settings, "DEFAULT_FROM_EMAIL", "") or "").strip()
-    if not default_from or default_from.endswith("@mediacms.io"):
+    if not default_from:
         checks.append(
             _health_check(
                 "email_from",
                 "DEFAULT_FROM_EMAIL configured",
                 "warn",
-                f'DEFAULT_FROM_EMAIL is "{default_from or "(empty)"}". Update it for production mail.',
+                "DEFAULT_FROM_EMAIL is empty. Update it for production mail.",
+            )
+        )
+    elif default_from.endswith("@mediacms.io"):
+        checks.append(
+            _health_check(
+                "email_from",
+                "DEFAULT_FROM_EMAIL configured",
+                "warn",
+                'DEFAULT_FROM_EMAIL is "{email}". Update it for production mail.',
+                detail_kwargs={"email": default_from},
             )
         )
     else:
-        checks.append(_health_check("email_from", "DEFAULT_FROM_EMAIL configured", "ok", f'DEFAULT_FROM_EMAIL is "{default_from}".'))
+        checks.append(
+            _health_check(
+                "email_from",
+                "DEFAULT_FROM_EMAIL configured",
+                "ok",
+                'DEFAULT_FROM_EMAIL is "{email}".',
+                detail_kwargs={"email": default_from},
+            )
+        )
 
     email_use_tls = bool(getattr(settings, "EMAIL_USE_TLS", False))
     email_use_ssl = bool(getattr(settings, "EMAIL_USE_SSL", False))
@@ -1002,8 +1058,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
                 "encoding_failures",
                 "Encoding failures",
                 "warn",
-                f"{failed} media item(s) have failed encodings.",
+                "{count} media item(s) have failed encodings.",
                 link=reverse("admin:files_media_changelist") + "?encoding_queue=fail",
+                detail_kwargs={"count": failed},
             )
         )
     else:
@@ -1013,8 +1070,9 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
             "encoding_queue",
             "Encoding queue",
             "info" if queue else "ok",
-            f"{queue} media item(s) pending or running.",
+            "{count} media item(s) pending or running.",
             link=reverse("admin:files_media_changelist") + "?encoding_queue=yes",
+            detail_kwargs={"count": queue},
         )
     )
 

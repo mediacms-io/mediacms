@@ -11,6 +11,8 @@ from files.integrity import (
     INTEGRITY_FILTER_PARAM,
     get_integrity_check,
     inject_integrity_faults,
+    qs_duplicate_md5,
+    qs_duplicate_name,
     qs_listable_mismatch,
     qs_nonvideo_has_encodings,
     qs_nonvideo_not_success,
@@ -100,6 +102,33 @@ class IntegrityQueryTests(TestCase):
             subtitle_file=SimpleUploadedFile("caption.vtt", b"WEBVTT\n\n00:00:00.000 --> 00:00:01.000\nHi\n"),
         )
         self.assertNotIn(video.pk, qs_transcription_success_no_subtitle().values_list("pk", flat=True))
+
+    def test_duplicate_md5_is_case_insensitive_and_ignores_blanks(self):
+        first = create_media(self.user, title="hash one")
+        second = create_media(self.user, title="hash two")
+        unique = create_media(self.user, title="hash unique")
+        blank = create_media(self.user, title="hash blank")
+        type(first).objects.filter(pk=first.pk).update(md5sum="AbC123")
+        type(second).objects.filter(pk=second.pk).update(md5sum="abc123")
+        type(unique).objects.filter(pk=unique.pk).update(md5sum="only-once")
+        type(blank).objects.filter(pk=blank.pk).update(md5sum="")
+
+        ids = set(qs_duplicate_md5().values_list("pk", flat=True))
+        self.assertEqual(ids, {first.pk, second.pk})
+
+    def test_duplicate_name_matches_exact_title_ignoring_case(self):
+        first = create_media(self.user, title="Lecture One")
+        second = create_media(self.user, title="lecture one")
+        spaced = create_media(self.user, title="Lecture One ")
+        blank_a = create_media(self.user, title="blank name a")
+        blank_b = create_media(self.user, title="blank name b")
+        type(blank_a).objects.filter(pk__in=[blank_a.pk, blank_b.pk]).update(title="")
+
+        ids = set(qs_duplicate_name().values_list("pk", flat=True))
+        self.assertEqual(ids, {first.pk, second.pk})
+        self.assertNotIn(spaced.pk, ids)
+        self.assertNotIn(blank_a.pk, ids)
+        self.assertNotIn(blank_b.pk, ids)
 
     def test_stale_encoding_running(self):
         video = create_media(self.user, filename=SMALL_VIDEO, title="stale running", encoding_status="running")

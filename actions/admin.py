@@ -18,6 +18,7 @@ from files.admin_helpers import (
     admin_copy_value,
     admin_inspect_link,
     admin_status_icon,
+    admin_text,
     clipped_admin_text,
     translated_choice_display,
 )
@@ -46,8 +47,9 @@ class MediaActionChangeList(ChangeList):
         return ordering
 
 
-# Keep in sync with files.admin.MEDIA_REPORT_TAB_ACTIONS (avoid importing files.admin here).
+# Keep in sync with files.admin.MEDIA_REPORT_TAB_ACTIONS and MEDIA_AUDIT_LOG_TAB.
 MEDIA_REPORT_TAB_ACTIONS = ("report",) + tuple(name for name, _label in MODERATION_MEDIA_ACTIONS)
+MEDIA_AUDIT_LOG_TAB = "audit-log-tab"
 
 
 @admin.register(MediaAction)
@@ -199,7 +201,7 @@ class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelA
     def display_media(self, obj):
         if not obj.media_id:
             return "—"
-        fragment = "reports-tab" if obj.action in MEDIA_REPORT_TAB_ACTIONS else None
+        fragment = MEDIA_AUDIT_LOG_TAB if obj.action in MEDIA_REPORT_TAB_ACTIONS else None
         return admin_inspect_link(obj.media, clipped_admin_text(obj.media.title, always_tooltip=True), fragment=fragment)
 
     @admin.display(description="User")
@@ -221,7 +223,7 @@ class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelA
         if not obj.media_id:
             return "—"
         title = obj.media.title
-        fragment = "reports-tab" if obj.action in MEDIA_REPORT_TAB_ACTIONS else None
+        fragment = MEDIA_AUDIT_LOG_TAB if obj.action in MEDIA_REPORT_TAB_ACTIONS else None
         return format_html(
             '<a href="{}" title="{}">{}</a>',
             admin_change_url(obj.media, fragment=fragment),
@@ -249,7 +251,11 @@ class MediaActionAdmin(OpenOnSiteMixin, TranslateChoiceLabelsMixin, admin.ModelA
         media_ids = queryset.filter(action="report").values_list("media_id", flat=True).distinct()
         media_qs = Media.objects.filter(pk__in=media_ids)
         count = clear_media_reports(media_qs, user=request.user)
-        self.message_user(request, f"Cleared reports for {count} media item(s).", messages.SUCCESS)
+        self.message_user(
+            request,
+            admin_text(getattr(request, "LANGUAGE_CODE", None), "Cleared reports for {count} media item(s).", count=count),
+            messages.SUCCESS,
+        )
 
     actions = [clear_reports_for_related_media]
 

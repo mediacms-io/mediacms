@@ -77,6 +77,8 @@ _CHOICE_ICON_OVERRIDES = {
     ("reported", "threshold"): "fas fa-exclamation-triangle",
     ("reported", "clean"): "fas fa-check",
     ("missing_metadata", "1"): "fas fa-exclamation-circle",
+    ("integrity", "duplicate_md5"): "fas fa-fingerprint",
+    ("integrity", "duplicate_name"): "fas fa-font",
 }
 # Choice value -> icon, used when the filter field does not override it.
 _VALUE_ICONS = {}

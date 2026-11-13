@@ -50,9 +50,8 @@ def _count_labels(count, unit, short, language_code):
     return full, mid, compact
 
 
-def _same(language_code, text):
-    label = _phrase(language_code, text)
-    return label, label, label
+def _widths(language_code, full, mid, short):
+    return _phrase(language_code, full), _phrase(language_code, mid), _phrase(language_code, short)
 
 
 def _calendar_months(start, end):
@@ -81,7 +80,7 @@ def describe_relative_when(value, now=None, language_code=None):
     iso = local_value.isoformat()
 
     if delta_seconds < 60:
-        full, mid, short = _same(language_code, "recently")
+        full, mid, short = _widths(language_code, "recently", "recent", "now")
     elif delta_seconds < 3600:
         count = max(1, int(delta_seconds // 60))
         full, mid, short = _count_labels(count, "minute", "m", language_code)
@@ -91,14 +90,14 @@ def describe_relative_when(value, now=None, language_code=None):
     else:
         day_delta = (local_now.date() - local_value.date()).days
         if day_delta <= 0:
-            full, mid, short = _same(language_code, "today")
+            full, mid, short = _widths(language_code, "today", "tod.", "tdy")
         elif day_delta == 1:
-            full, mid, short = _same(language_code, "yesterday")
+            full, mid, short = _widths(language_code, "yesterday", "yest.", "yday")
         elif day_delta < 7:
             weekday = local_value.weekday()
-            full = _phrase(language_code, f"last {_WEEKDAYS[weekday]}")
-            mid = _phrase(language_code, _WEEKDAY_SHORT[weekday])
-            short = mid
+            name = _WEEKDAYS[weekday]
+            abbr = _WEEKDAY_SHORT[weekday]
+            full, mid, short = _widths(language_code, f"last {name}", f"last {abbr}", f"l{abbr}")
         elif day_delta < 30:
             count = max(1, day_delta // 7)
             full, mid, short = _count_labels(count, "week", "w", language_code)
@@ -109,7 +108,7 @@ def describe_relative_when(value, now=None, language_code=None):
             if months < 12:
                 full, mid, short = _count_labels(months, "month", "mo", language_code)
             elif months < 24:
-                full, mid, short = _same(language_code, "last year")
+                full, mid, short = _widths(language_code, "last year", "last yr", "1y")
             else:
                 full, mid, short = _count_labels(months // 12, "year", "y", language_code)
 
@@ -136,6 +135,20 @@ def relative_when(value):
 @register.filter
 def custom_translate(string, lang_code):
     return translate_string(lang_code, string)
+
+
+@register.simple_tag
+def translate_link(language_code, sentence, link_text, url):
+    """Translate a sentence that contains ``{link}`` and put the link text in the anchor."""
+    from django.utils.html import format_html
+
+    text = translate_string(language_code, sentence) or sentence
+    label = translate_string(language_code, link_text) or link_text
+    anchor = format_html('<a href="{}">{}</a>', url, label)
+    try:
+        return format_html(text, link=anchor) if "{link}" not in text else format_html(text.replace("{link}", "{}"), anchor)
+    except (KeyError, ValueError, IndexError):
+        return format_html("{} {}", text, anchor)
 
 
 @register.filter
@@ -233,3 +246,15 @@ def single_sort_url(url):
         else:
             query.append((key, value))
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment))
+
+
+@register.simple_tag
+def admin_detail(check):
+    """Translate a health-check detail template, then fill its placeholders."""
+    from files.admin_helpers import admin_text
+
+    if not isinstance(check, dict):
+        return check or ""
+    template = check.get("detail_template") or check.get("detail") or ""
+    kwargs = check.get("detail_kwargs") or {}
+    return admin_text(get_language(), template, **kwargs)

@@ -13,7 +13,12 @@ class AdminCustomizationsConfig(AppConfig):
         from .admin import calculate_statistics
         from .object_actions import patch_model_admin_object_actions
         from .sidebar import build_workflow_app_list
-        from .views import dashboard_section, support_bundle_download
+        from .views import (
+            dashboard_section,
+            database_backup_download,
+            database_restore_upload,
+            support_bundle_download,
+        )
 
         patch_model_admin_action_choices()
         patch_model_admin_object_actions()
@@ -47,6 +52,16 @@ class AdminCustomizationsConfig(AppConfig):
                     r"^dashboard/support/bundle/(?P<filename>[\w.-]+)$",
                     self.admin_view(support_bundle_download),
                     name="support_bundle",
+                ),
+                path(
+                    "dashboard/database/backup/",
+                    self.admin_view(database_backup_download),
+                    name="database_backup",
+                ),
+                path(
+                    "dashboard/database/restore/",
+                    self.admin_view(database_restore_upload),
+                    name="database_restore",
                 ),
                 path(
                     "dashboard/<slug:section>/",

@@ -24,6 +24,7 @@ def _raw_app_list(models):
 
 
 class BuildWorkflowAppListTest(TestCase):
+    @override_settings(USE_LTI=False)
     def test_groups_models_by_workflow(self):
         raw = _raw_app_list(
             [
@@ -60,8 +61,8 @@ class BuildWorkflowAppListTest(TestCase):
         self.assertEqual(apps["people"][0], "PeopleOverview")
         self.assertEqual(apps["people"][1:], ["User", "EmailAddress"])
         self.assertEqual(
-            apps["site"][:5],
-            ["SiteOverview", "SiteHealth", "SiteConfiguration", "SiteSystem", "Page"],
+            apps["site"][:6],
+            ["SiteOverview", "SiteHealth", "SiteConfiguration", "SiteSystem", "SiteDatabase", "Page"],
         )
         self.assertEqual(apps["integrations"][0], "IntegrationsOverview")
         self.assertEqual(apps["integrations"][1:], ["MigrationService"])

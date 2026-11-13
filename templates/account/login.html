@@ -6,7 +6,7 @@
 {% block auth_heading %}{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
 
 {% block auth_intro %}
-<p>{{ "If you have not created an account yet, then please"|custom_translate:request.LANGUAGE_CODE }} <a href="{{ signup_url }}">{{ "sign up"|custom_translate:request.LANGUAGE_CODE }}</a> {{ "first."|custom_translate:request.LANGUAGE_CODE }}</p>
+<p>{% translate_link request.LANGUAGE_CODE "If you have not created an account yet, then please {link} first." "sign up" signup_url %}</p>
 {% endblock %}
 
 {% block auth_actions %}

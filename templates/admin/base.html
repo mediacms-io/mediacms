@@ -52,7 +52,7 @@
     {% block extrastyle %} {% endblock %}
     {% block extrahead %} {% endblock %}
 </head>
-<body class="hold-transition{% if not jazzmin_settings.show_sidebar %} no-sidebar{% else %} sidebar-mini{% endif %} {% sidebar_status request %} {% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %} {{ jazzmin_ui.body_classes }}" data-admin-utc-offset="{% now "Z" %}">
+<body class="hold-transition{% if not jazzmin_settings.show_sidebar %} no-sidebar{% else %} sidebar-mini{% endif %} {% sidebar_status request %} {% if is_popup %}popup {% endif %}{% block bodyclass %}{% endblock %} {{ jazzmin_ui.body_classes }}" data-admin-utc-offset="{% now "Z" %}" data-users-label="{{ 'Users'|custom_translate:LANGUAGE_CODE }}">
 
 <div class="wrapper">
 
@@ -236,7 +236,7 @@
 
                             {% if jazzmin_settings.navigation_expanded %}
                                 {% for app in side_menu_list %}
-                                    <li class="nav-header">{{ app.name|custom_translate:LANGUAGE_CODE }}</li>
+                                    <li class="nav-header" data-app-label="{{ app.app_label }}">{{ app.name|custom_translate:LANGUAGE_CODE }}</li>
                                     {% for model in app.models %}
                                         <li class="nav-item">
                                             {% if model.url %}
@@ -291,7 +291,7 @@
         {% endblock %}
     {% endif %}
 
-    <div class="content-wrapper" {% if is_popup %}style="margin-left:0px; padding-top: 20px;"{% endif %}>
+    <div class="content-wrapper" {% if is_popup %}style="margin-left:0; margin-right:0; padding-top: 20px;"{% endif %}>
         {% block page_content %}
             {% if not is_popup %}
             <div class="content border-bottom mb-2">
@@ -436,22 +436,21 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   const breadcrumbItems = document.querySelectorAll('.breadcrumb-item a');
+  const usersLabel = document.body.getAttribute('data-users-label') || 'Users';
 
   breadcrumbItems.forEach(function(link) {
     if (link.getAttribute('href') === '/admin/account/') {
       link.setAttribute('href', '/admin/users/');
-      link.textContent = 'Users';
+      link.textContent = usersLabel;
     }
 
     if (link.getAttribute('href') === '/admin/rbac/') {
       link.setAttribute('href', '/admin/users/');
-      link.textContent = 'Users';
+      link.textContent = usersLabel;
     }
   });
 
-  const identityProvidersHeader = Array.from(document.querySelectorAll('.nav-header')).find(
-    header => header.textContent.trim() === 'Identity_Providers'
-  );
+  const identityProvidersHeader = document.querySelector('.nav-header[data-app-label="identity_providers"]');
 
   if (identityProvidersHeader) {
     identityProvidersHeader.style.display = 'none';

@@ -137,7 +137,7 @@ class MediaStorageHealthTests(TestCase):
         with tempfile.TemporaryDirectory() as root:
             with self._override_tree(root):
                 checks = _checks()
-            for check_id in ("media_root_access", "hls_dir_access", "temp_dir_access", "media_subdirs_access"):
+            for check_id in ("media_root_access", "hls_dir_access", "temp_dir_access", "media_subdir_original", "media_subdir_encoded", "media_subdir_uploads", "media_subdir_chunks"):
                 self.assertEqual(checks[check_id]["status"], "ok", checks[check_id]["detail"])
 
     def test_missing_paths_fail_or_warn(self):
@@ -156,8 +156,10 @@ class MediaStorageHealthTests(TestCase):
         self.assertIn("missing", checks["media_root_access"]["detail"])
         self.assertEqual(checks["temp_dir_access"]["status"], "fail")
         self.assertEqual(checks["hls_dir_access"]["status"], "warn")
-        self.assertEqual(checks["media_subdirs_access"]["status"], "warn")
-        self.assertIn("original", checks["media_subdirs_access"]["detail"])
+        self.assertEqual(checks["media_subdir_original"]["status"], "warn")
+        self.assertIn("is missing", checks["media_subdir_original"]["detail"])
+        self.assertNotIn("reason", checks["media_subdir_original"]["detail_kwargs"])
+        self.assertNotIn("failures", checks["media_subdir_original"]["detail_kwargs"])
 
     def test_probe_not_writable(self):
         with tempfile.TemporaryDirectory() as root:
@@ -187,6 +189,9 @@ class MediaStorageHealthTests(TestCase):
             "media_root_access",
             "hls_dir_access",
             "temp_dir_access",
-            "media_subdirs_access",
+            "media_subdir_original",
+            "media_subdir_encoded",
+            "media_subdir_uploads",
+            "media_subdir_chunks",
         ):
             self.assertIn(check_id, checks)

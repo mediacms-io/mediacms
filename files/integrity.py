@@ -12,6 +12,7 @@ from typing import Callable, Iterable, Optional
 
 from django.conf import settings
 from django.db.models import Count, Exists, OuterRef, Q, QuerySet
+from django.db.models.functions import Lower
 from django.urls import reverse
 from django.utils import timezone
 
@@ -91,6 +92,31 @@ def qs_transcription_success_no_subtitle(base: Optional[QuerySet] = None) -> Que
     return media_queryset(base).annotate(_has_success_tr=Exists(success_request), _has_subtitle=Exists(has_subtitle)).filter(_has_success_tr=True, _has_subtitle=False)
 
 
+def _shared_key_queryset(qs: QuerySet, field: str, annotation: str) -> QuerySet:
+    """Rows whose case-folded field value is shared by at least one other row."""
+    keyed = qs.annotate(**{annotation: Lower(field)})
+    shared = keyed.values(annotation).annotate(_n=Count("pk")).filter(_n__gt=1).values(annotation)
+    return keyed.filter(**{f"{annotation}__in": shared})
+
+
+def qs_duplicate_md5(base: Optional[QuerySet] = None) -> QuerySet:
+    """Media that share an md5sum with another item.
+
+    Blank hashes are ignored. Hex case does not hide a match.
+    """
+    qs = media_queryset(base).exclude(Q(md5sum__isnull=True) | Q(md5sum=""))
+    return _shared_key_queryset(qs, "md5sum", "_md5_key")
+
+
+def qs_duplicate_name(base: Optional[QuerySet] = None) -> QuerySet:
+    """Media that share a title exactly, ignoring case.
+
+    Blank titles are ignored. Surrounding characters stay significant.
+    """
+    qs = media_queryset(base).exclude(Q(title__isnull=True) | Q(title=""))
+    return _shared_key_queryset(qs, "title", "_title_key")
+
+
 def qs_stale_encoding_running(base: Optional[QuerySet] = None) -> QuerySet:
     """Media with Encoding rows stuck in running past RUNNING_STATE_STALE."""
     stale_seconds = getattr(settings, "RUNNING_STATE_STALE", 60 * 60 * 2)
@@ -123,6 +149,8 @@ class IntegrityCheck:
                 "label": self.label,
                 "status": self.severity,
                 "detail": self.problem_detail.format(count=count),
+                "detail_template": self.problem_detail,
+                "detail_kwargs": {"count": count},
                 "link": self.admin_link(),
             }
         return {
@@ -130,6 +158,8 @@ class IntegrityCheck:
             "label": self.label,
             "status": "ok",
             "detail": self.ok_detail,
+            "detail_template": self.ok_detail,
+            "detail_kwargs": {},
             "link": self.admin_link(),
         }
 
@@ -337,6 +367,22 @@ INTEGRITY_CHECKS: tuple[IntegrityCheck, ...] = (
         problem_detail="{count} media item(s) have Encoding rows stuck in running.",
         queryset=qs_stale_encoding_running,
         seed=seed_stale_encoding_running,
+    ),
+    IntegrityCheck(
+        id="duplicate_md5",
+        label="Duplicate md5sum",
+        severity="warn",
+        ok_detail="No media share an md5sum.",
+        problem_detail="{count} media item(s) share an md5sum with another item.",
+        queryset=qs_duplicate_md5,
+    ),
+    IntegrityCheck(
+        id="duplicate_name",
+        label="Duplicate names",
+        severity="warn",
+        ok_detail="No media share a case-insensitive title.",
+        problem_detail="{count} media item(s) share a case-insensitive title with another item.",
+        queryset=qs_duplicate_name,
     ),
 )
 

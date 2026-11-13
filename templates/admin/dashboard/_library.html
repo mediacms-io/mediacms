@@ -106,6 +106,34 @@
                                 </div>
                             </div>
                             <div class="col-lg-3 col-6">
+                                <div class="small-box {% if stats.media.duplicate_md5 %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.duplicate_md5 }}</h3>
+                                        <p>{{ "Duplicate md5sum"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-fingerprint"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?integrity=duplicate_md5" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
+                                <div class="small-box {% if stats.media.duplicate_names %}bg-warning{% else %}bg-secondary{% endif %}">
+                                    <div class="inner">
+                                        <h3>{{ stats.media.duplicate_names }}</h3>
+                                        <p>{{ "Duplicate names"|custom_translate:LANGUAGE_CODE }}</p>
+                                    </div>
+                                    <div class="icon">
+                                        <i class="fas fa-font"></i>
+                                    </div>
+                                    <a href="{% url 'admin:files_media_changelist' %}?integrity=duplicate_name" class="small-box-footer">
+                                        {{ "Open all"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="col-lg-3 col-6">
                                 <div class="small-box bg-maroon">
                                     <div class="inner">
                                         <h3>{{ stats.media.by_state.public }}</h3>

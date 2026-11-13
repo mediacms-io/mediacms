@@ -253,7 +253,7 @@ class DashboardStatisticsTest(TestCase):
         self.assertIn("Open on site", content)
 
         media_change = reverse("admin:files_media_change", args=[self.media.pk])
-        self.assertIn(f"{media_change}#reports-tab", content)
+        self.assertIn(f"{media_change}#audit-log-tab", content)
         self.assertIn("Open reported media", content)
         self.assertIn("Open above report limit", content)
         actions = reverse("admin:actions_mediaaction_changelist")
@@ -262,7 +262,7 @@ class DashboardStatisticsTest(TestCase):
         moderation_html = moderation.content.decode()
         self.assertIn(f'href="{actions}?action__exact=report"', moderation_html)
         self.assertIn(f'href="{actions}?action__exact=media_reviewed"', moderation_html)
-        self.assertRegex(moderation_html, rf'href="{re.escape(media_change)}#reports-tab"[^>]*>\s*{re.escape(self.media.title)}')
+        self.assertRegex(moderation_html, rf'href="{re.escape(media_change)}#audit-log-tab"[^>]*>\s*{re.escape(self.media.title)}')
         self.assertIn(reverse("admin:users_user_change", args=[self.admin.pk]), content)
 
         media_list = reverse("admin:files_media_changelist")
@@ -433,7 +433,7 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(moderation, "Reports confirmed (7 days)")
         self.assertContains(moderation, "Media approved (7 days)")
         self.assertContains(moderation, "Recent reports")
-        self.assertContains(moderation, "Recent report audit actions")
+        self.assertContains(moderation, "Recent report actions")
         self.assertContains(moderation, "fas fa-broom")
         self.assertContains(moderation, 'aria-label="Report cleared"')
         self.assertContains(moderation, "Recent pending review")
@@ -445,7 +445,7 @@ class DashboardIndexOrderTest(TestCase):
 
         moderation_content = moderation.content.decode()
         reports = moderation_content.find("Recent reports")
-        audits = moderation_content.find("Recent report audit actions")
+        audits = moderation_content.find("Recent report actions")
         pending = moderation_content.find("Recent pending review")
         approved = moderation_content.find("Recently approved")
         self.assertGreater(audits, reports)
@@ -460,6 +460,10 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(library, "Channels")
         self.assertContains(library, "Featured")
         self.assertContains(library, "New media (7 days)")
+        self.assertContains(library, "Duplicate md5sum")
+        self.assertContains(library, "Duplicate names")
+        self.assertContains(library, "integrity=duplicate_md5")
+        self.assertContains(library, "integrity=duplicate_name")
         self.assertContains(library, "Media by type")
         self.assertContains(library, "Recent video uploads")
         self.assertContains(library, "Recent audio uploads")
@@ -467,6 +471,8 @@ class DashboardIndexOrderTest(TestCase):
         self.assertContains(library, "Recent PDF uploads")
         self.assertNotContains(library, "Encoding status")
         self.assertIn("added_last_7_days", calculate_statistics()["media"])
+        self.assertIn("duplicate_md5", calculate_statistics()["media"])
+        self.assertIn("duplicate_names", calculate_statistics()["media"])
         self.assertIn("total_tags", calculate_statistics()["system"])
         self.assertContains(processing, "Failed encodings")
         self.assertContains(processing, "Encoding queue")
@@ -493,6 +499,10 @@ class DashboardIndexOrderTest(TestCase):
         self.assertEqual(support.status_code, 200)
         self.assertContains(health, "Health checks")
         self.assertContains(health, "Site name matches PORTAL_NAME")
+        self.assertContains(health, "Duplicate md5sum")
+        self.assertContains(health, "Duplicate names")
+        self.assertContains(health, "integrity=duplicate_md5")
+        self.assertContains(health, "integrity=duplicate_name")
         self.assertContains(health, "Copy text")
         self.assertContains(health, "Copy CSV")
         self.assertContains(health, "Copy Markdown")
@@ -551,7 +561,10 @@ class DashboardIndexOrderTest(TestCase):
         from django.urls import clear_url_caches, set_urlconf
 
         import cms.urls
-        from identity_providers.admin import IdentityProviderUserLogAdmin, LoginOptionAdmin
+        from identity_providers.admin import (
+            IdentityProviderUserLogAdmin,
+            LoginOptionAdmin,
+        )
         from identity_providers.models import IdentityProviderUserLog, LoginOption
         from saml_auth.admin import SAMLConfigurationAdmin
         from saml_auth.models import SAMLConfiguration

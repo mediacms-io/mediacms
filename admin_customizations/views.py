@@ -1,9 +1,26 @@
-from django.contrib import admin
-from django.http import Http404, HttpResponse
+from django.contrib import admin, messages
+from django.contrib.auth import logout
+from django.http import (
+    Http404,
+    HttpResponse,
+    HttpResponseForbidden,
+    StreamingHttpResponse,
+)
+from django.shortcuts import redirect
 from django.template.response import TemplateResponse
 from django.utils.http import content_disposition_header
 
 from admin_customizations.admin import calculate_statistics
+from admin_customizations.database_backup import (
+    database_backup_filename,
+    iter_database_backup,
+)
+from admin_customizations.database_restore import (
+    RestoreError,
+    RestoreNotAllowed,
+    restore_database_backup,
+    vanilla_install_status,
+)
 from admin_customizations.support_bundle import (
     SUPPORT_EXAMPLES,
     SUPPORT_LINKS,
@@ -11,6 +28,7 @@ from admin_customizations.support_bundle import (
     support_bundle_filename,
     support_bundle_format,
 )
+from files.admin_helpers import admin_text
 
 DASHBOARD_SECTIONS = {
     "moderation": {
@@ -63,6 +81,11 @@ DASHBOARD_SECTIONS = {
         "template": "admin/dashboard/system.html",
         "icon": "fas fa-server",
     },
+    "database": {
+        "title": "Database",
+        "template": "admin/dashboard/database.html",
+        "icon": "fas fa-database",
+    },
     "support": {
         "title": "Get Support",
         "template": "admin/dashboard/support.html",
@@ -90,7 +113,47 @@ def dashboard_section(request, section):
         context["support_links"] = SUPPORT_LINKS
         context["support_bundle_txt"] = support_bundle_filename("txt")
         context["support_bundle_md"] = support_bundle_filename("md")
+    if section == "database":
+        context["database_restore"] = vanilla_install_status()
     return TemplateResponse(request, config["template"], context)
+
+
+def database_backup_download(request):
+    """Download a gzipped fixture. Superusers only; operational rows are omitted."""
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+    filename = database_backup_filename()
+    response = StreamingHttpResponse(iter_database_backup(), content_type="application/gzip")
+    response["Content-Disposition"] = content_disposition_header(True, filename)
+    return response
+
+
+def database_restore_upload(request):
+    """Upload a backup onto an initial installation. Superusers only."""
+    if request.method != "POST":
+        return redirect("admin:dashboard_section", section="database")
+    if not request.user.is_superuser:
+        return HttpResponseForbidden()
+    page = redirect("admin:dashboard_section", section="database")
+
+    def note(text):
+        return admin_text(getattr(request, "LANGUAGE_CODE", None), text)
+
+    upload = request.FILES.get("backup_file")
+    if upload is None:
+        messages.error(request, note("The backup file is empty."))
+        return page
+    try:
+        restore_database_backup(upload)
+    except RestoreNotAllowed:
+        messages.error(request, note("Database restore is not available on this installation."))
+        return page
+    except RestoreError as exc:
+        messages.error(request, note(str(exc)))
+        return page
+    logout(request)
+    messages.success(request, note("Database restore finished. Sign in with an account from the backup."))
+    return redirect("admin:login")
 
 
 def support_bundle_download(request, filename):

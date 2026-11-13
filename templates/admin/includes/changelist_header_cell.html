@@ -22,7 +22,7 @@
             {% else %}
                 <i class="fa fa-sort-alpha-up" aria-hidden="true"></i>
             {% endif %}
-            <a class="changelist-sort-clear" href="{{ header.url_remove }}" title="Clear sorting" aria-label="Clear sorting">
+            <a class="changelist-sort-clear" href="{{ header.url_remove }}" title="{{ 'Clear sorting'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Clear sorting'|custom_translate:LANGUAGE_CODE }}">
                 <i class="fa fa-times" aria-hidden="true"></i>
             </a>
         </span>

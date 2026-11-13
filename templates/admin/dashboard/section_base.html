@@ -415,6 +415,41 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
+        .database-metrics th,
+        .database-metrics td {
+            white-space: nowrap;
+            text-align: start;
+            vertical-align: middle;
+        }
+        .database-metrics th:nth-child(1),
+        .database-metrics td:nth-child(1),
+        .database-metrics th:nth-child(2),
+        .database-metrics td:nth-child(2) {
+            width: 1%;
+        }
+        details.database-restore > summary {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            list-style: none;
+        }
+        details.database-restore > summary::-webkit-details-marker {
+            display: none;
+        }
+        details.database-restore > summary .card-title {
+            margin-bottom: 0;
+        }
+        details.database-restore > summary .restore-closed,
+        details.database-restore > summary .restore-open {
+            margin-inline-start: auto;
+        }
+        details.database-restore .restore-open,
+        details.database-restore[open] .restore-closed {
+            display: none;
+        }
+        details.database-restore[open] .restore-open {
+            display: inline-block;
+        }
         .support-example {
             white-space: pre-wrap;
             word-break: break-word;

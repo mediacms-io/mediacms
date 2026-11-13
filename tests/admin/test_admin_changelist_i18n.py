@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from files.frontend_translations import translate_string
@@ -9,6 +9,7 @@ from files.tests import create_account, create_media
 PASSWORD = "admin-changelist-i18n-password"
 
 
+@override_settings(SECURE_SSL_REDIRECT=False, SESSION_COOKIE_SECURE=False, CSRF_COOKIE_SECURE=False)
 class AdminChangelistI18nTest(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -98,4 +99,53 @@ class AdminChangelistI18nTest(TestCase):
     def test_caption_request_filter_title_translated(self):
         response = self.client.get(reverse("admin:files_transcriptionrequest_changelist"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, translate_string("el", "translate to english"))
+        from django.utils.text import capfirst
+
+        self.assertContains(response, capfirst(translate_string("el", "translate to english")))
+
+    def test_greek_admin_chrome_uses_catalog_strings(self):
+        index = self.client.get(reverse("admin:index"))
+        self.assertEqual(index.status_code, 200)
+        index_html = index.content.decode()
+        self.assertIn(translate_string("el", "Expand all"), index_html)
+        self.assertNotIn(">Expand all<", index_html)
+        self.assertIn(f'data-users-label="{translate_string("el", "Users")}"', index_html)
+        self.assertNotIn('data-users-label="Users"', index_html)
+
+        overviews = (
+            "/admin/dashboard/moderation/",
+            "/admin/dashboard/people/",
+            "/admin/dashboard/library/",
+            "/admin/dashboard/processing/",
+            "/admin/dashboard/engagement/",
+            "/admin/dashboard/integrations/",
+            "/admin/dashboard/site/",
+            "/admin/dashboard/health/",
+        )
+        for path in overviews:
+            page = self.client.get(path)
+            self.assertEqual(page.status_code, 200, path)
+            self.assertIn(translate_string("el", "Expand all"), page.content.decode(), path)
+
+        health = self.client.get("/admin/dashboard/health/")
+        health_html = health.content.decode()
+        if settings.DEBUG:
+            english_detail = "DEBUG is True. Disable it for production deployments."
+        else:
+            english_detail = "DEBUG is False."
+        self.assertIn(translate_string("el", english_detail), health_html)
+        self.assertNotEqual(translate_string("el", english_detail), english_detail)
+        self.assertNotIn(english_detail, health_html)
+
+        changelist = self.client.get(reverse("admin:files_media_changelist"), {"o": "1"})
+        self.assertEqual(changelist.status_code, 200)
+        changelist_html = changelist.content.decode()
+        clear_sorting = translate_string("el", "Clear sorting")
+        self.assertIn(clear_sorting, changelist_html)
+        self.assertNotIn('title="Clear sorting"', changelist_html)
+
+        change = self.client.get(reverse("admin:files_media_change", args=[self.media.pk]))
+        self.assertEqual(change.status_code, 200)
+        change_html = change.content.decode()
+        self.assertIn(translate_string("el", "Audit log"), change_html)
+        self.assertNotIn(">Audit log<", change_html)

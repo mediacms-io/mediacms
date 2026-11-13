@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from files.frontend_translations import translate_string
@@ -8,6 +8,7 @@ from files.tests import create_account
 PASSWORD = "admin-language-switcher-password"
 
 
+@override_settings(SECURE_SSL_REDIRECT=False, SESSION_COOKIE_SECURE=False, CSRF_COOKIE_SECURE=False)
 class AdminLanguageSwitcherTest(TestCase):
     @classmethod
     def setUpTestData(cls):

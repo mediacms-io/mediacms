@@ -264,7 +264,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <a href="{% url 'admin:dashboard_section' 'library' %}" class="info-box dashboard-section-box mb-0">
-                                    <span class="info-box-icon bg-info"><i class="fas fa-photo-video"></i></span>
+                                    <span class="info-box-icon {% if stats.media.duplicate_md5 or stats.media.duplicate_names %}bg-warning{% else %}bg-info{% endif %}"><i class="fas fa-photo-video"></i></span>
                                     <div class="info-box-content">
                                         <span class="info-box-text">{{ "Library"|custom_translate:LANGUAGE_CODE }}</span>
                                         <div class="dashboard-section-meta">
@@ -275,6 +275,8 @@
                                             <span>{{ "Channels"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.total_channels }}</span>
                                             <span>{{ "Featured"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.featured }}</span>
                                             <span>{{ "New media (7 days)"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.added_last_7_days }}</span>
+                                            <span>{{ "Duplicate md5sum"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.duplicate_md5 }}</span>
+                                            <span>{{ "Duplicate names"|custom_translate:LANGUAGE_CODE }}: {{ stats.media.duplicate_names }}</span>
                                         </div>
                                     </div>
                                 </a>
@@ -346,6 +348,24 @@
                                             <span>{{ "Warnings"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.system_counts.warn }}</span>
                                             <span>{{ "Failures"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.system_counts.fail }}</span>
                                             <span>{{ "Info checks"|custom_translate:LANGUAGE_CODE }}: {{ stats.system.system_counts.info }}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'admin:dashboard_section' 'database' %}" class="info-box dashboard-section-box mb-0">
+                                    <span class="info-box-icon {% if stats.database.health_counts.fail %}bg-danger{% elif stats.database.health_counts.warn %}bg-warning{% elif stats.database.available %}bg-success{% else %}bg-secondary{% endif %}"><i class="fas fa-database"></i></span>
+                                    <div class="info-box-content">
+                                        <span class="info-box-text">{{ "Database"|custom_translate:LANGUAGE_CODE }}</span>
+                                        <div class="dashboard-section-meta">
+                                            <span>{{ "Connections used"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.summary.connections_used|custom_translate:LANGUAGE_CODE }}</span>
+                                            <span>{{ "Cache hit ratio"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.summary.cache_hit|custom_translate:LANGUAGE_CODE }}</span>
+                                            <span>{{ "Database size"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.summary.database_size|custom_translate:LANGUAGE_CODE }}</span>
+                                            <span>{{ "Transaction ID age"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.summary.xid_age|custom_translate:LANGUAGE_CODE }}</span>
+                                            <span>{{ "Passing checks"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.health_counts.ok }}</span>
+                                            <span>{{ "Warnings"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.health_counts.warn }}</span>
+                                            <span>{{ "Failures"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.health_counts.fail }}</span>
+                                            <span>{{ "Info checks"|custom_translate:LANGUAGE_CODE }}: {{ stats.database.health_counts.info }}</span>
                                         </div>
                                     </div>
                                 </a>

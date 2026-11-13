@@ -2,7 +2,10 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from admin_customizations.admin import get_site_health_checks
-from admin_customizations.processing_stats import get_migration_status_groups, get_processing_status_groups
+from admin_customizations.processing_stats import (
+    get_migration_status_groups,
+    get_processing_status_groups,
+)
 from files.models import EncodeProfile, Encoding, TranscriptionRequest, VideoTrimRequest
 from files.tests import create_account, create_media
 from migrationservice.models import MigrationRecord, MigrationService

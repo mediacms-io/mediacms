@@ -33,7 +33,7 @@
         {% for media in eligible %}
         <li>
             <strong>{{ media.title|truncatechars:60 }}</strong>
-            (<code class="media-id" dir="ltr">{{ media.friendly_token }}</code>) — {{ media.media_type }}, encoding={{ media.encoding_status }}
+            (<code class="media-id" dir="ltr">{{ media.friendly_token }}</code>) — {{ media.media_type|custom_translate:LANGUAGE_CODE }}, {{ "encoding"|custom_translate:LANGUAGE_CODE }}={{ media.encoding_status|custom_translate:LANGUAGE_CODE }}
         </li>
         {% endfor %}
     </ul>

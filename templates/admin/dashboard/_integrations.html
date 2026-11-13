@@ -84,7 +84,7 @@
                                                                 {{ check.label|custom_translate:LANGUAGE_CODE }}
                                                             {% endif %}
                                                         </td>
-                                                        <td>{{ check.detail }}</td>
+                                                        <td>{% admin_detail check %}</td>
                                                     </tr>
                                                 {% empty %}
                                                     <tr><td colspan="3">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>

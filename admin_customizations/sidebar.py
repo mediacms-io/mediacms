@@ -221,6 +221,7 @@ def build_workflow_app_list(raw_app_list):
         site_models.insert(1, _queue_link("Health", "SiteHealth", "/admin/dashboard/health/"))
         site_models.insert(2, _queue_link("Configuration", "SiteConfiguration", "/admin/dashboard/configuration/"))
         site_models.insert(3, _queue_link("System", "SiteSystem", "/admin/dashboard/system/"))
+        site_models.insert(4, _queue_link("Database", "SiteDatabase", "/admin/dashboard/database/"))
     group = _group("Site", "site", site_models)
     if group:
         groups.append(group)

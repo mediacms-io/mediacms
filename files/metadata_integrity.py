@@ -259,6 +259,8 @@ def iter_metadata_health_checks(base: Optional[QuerySet] = None) -> Iterable[dic
             "label": "Missing media metadata",
             "status": "warn",
             "detail": f"{missing_count} media item(s) missing md5sum or size.",
+            "detail_template": "{count} media item(s) missing md5sum or size.",
+            "detail_kwargs": {"count": missing_count},
             "link": media_link,
         }
     else:
@@ -267,6 +269,8 @@ def iter_metadata_health_checks(base: Optional[QuerySet] = None) -> Iterable[dic
             "label": "Missing media metadata",
             "status": "ok",
             "detail": "All media with files have md5sum and size.",
+            "detail_template": "All media with files have md5sum and size.",
+            "detail_kwargs": {},
             "link": media_link,
         }
 
@@ -279,6 +283,8 @@ def iter_metadata_health_checks(base: Optional[QuerySet] = None) -> Iterable[dic
             "label": "Recent integrity warnings",
             "status": "warn",
             "detail": f"{warning_count} integrity warning(s) in the last {days} days.",
+            "detail_template": "{count} integrity warning(s) in the last {days} days.",
+            "detail_kwargs": {"count": warning_count, "days": days},
             "link": action_link,
         }
     else:
@@ -287,5 +293,7 @@ def iter_metadata_health_checks(base: Optional[QuerySet] = None) -> Iterable[dic
             "label": "Recent integrity warnings",
             "status": "ok",
             "detail": f"No integrity warnings in the last {days} days.",
+            "detail_template": "No integrity warnings in the last {days} days.",
+            "detail_kwargs": {"days": days},
             "link": action_link,
         }

@@ -43,8 +43,21 @@ def _gap_status() -> str:
     return "warn" if _is_production() else "info"
 
 
-def _payload(check_id: str, label: str, status: str, detail: str) -> dict:
-    return {"check_id": check_id, "label": label, "status": status, "detail": detail, "link": None}
+def _payload(check_id: str, label: str, status: str, detail: str, detail_kwargs: Optional[dict] = None) -> dict:
+    detail_kwargs = dict(detail_kwargs or {})
+    try:
+        rendered = detail.format(**detail_kwargs) if detail_kwargs else detail
+    except (KeyError, ValueError, IndexError):
+        rendered = detail
+    return {
+        "check_id": check_id,
+        "label": label,
+        "status": status,
+        "detail": rendered,
+        "detail_template": detail,
+        "detail_kwargs": detail_kwargs,
+        "link": None,
+    }
 
 
 def _cors_installed() -> bool:
@@ -111,7 +124,8 @@ def iter_deployment_health_checks() -> Iterable[dict]:
             "proxy_ssl_header",
             "SECURE_PROXY_SSL_HEADER configured",
             _gap_status(),
-            f"SECURE_PROXY_SSL_HEADER is {header_tuple!r}; expected {EXPECTED_PROXY_SSL_HEADER!r}.",
+            "SECURE_PROXY_SSL_HEADER is {current}; expected {expected}.",
+            detail_kwargs={"current": repr(header_tuple), "expected": repr(EXPECTED_PROXY_SSL_HEADER)},
         )
 
     if not https:
@@ -126,14 +140,16 @@ def iter_deployment_health_checks() -> Iterable[dict]:
             "csrf_trusted_origins",
             "CSRF_TRUSTED_ORIGINS includes FRONTEND_HOST",
             "ok",
-            f'CSRF_TRUSTED_ORIGINS includes "{origin}".',
+            'CSRF_TRUSTED_ORIGINS includes "{origin}".',
+            detail_kwargs={"origin": origin},
         )
     else:
         yield _payload(
             "csrf_trusted_origins",
             "CSRF_TRUSTED_ORIGINS includes FRONTEND_HOST",
             _gap_status(),
-            f'CSRF_TRUSTED_ORIGINS does not include "{origin or "(empty FRONTEND_HOST)"}".',
+            "CSRF_TRUSTED_ORIGINS does not include an origin because FRONTEND_HOST is empty." if not origin else 'CSRF_TRUSTED_ORIGINS does not include "{origin}".',
+            detail_kwargs={"origin": origin} if origin else None,
         )
 
     csrf_secure = bool(getattr(settings, "CSRF_COOKIE_SECURE", False))
@@ -157,7 +173,8 @@ def iter_deployment_health_checks() -> Iterable[dict]:
             "secure_cookies",
             "Secure cookies enabled",
             _gap_status(),
-            f"CSRF_COOKIE_SECURE={csrf_secure}, SESSION_COOKIE_SECURE={session_secure}. Both should be True for HTTPS.",
+            "CSRF_COOKIE_SECURE={csrf_secure}, SESSION_COOKIE_SECURE={session_secure}. Both should be True for HTTPS.",
+            detail_kwargs={"csrf_secure": csrf_secure, "session_secure": session_secure},
         )
 
     ssl_redirect = bool(getattr(settings, "SECURE_SSL_REDIRECT", False))
@@ -236,12 +253,27 @@ def _probe_directory(path: Optional[str]) -> Optional[str]:
     return None
 
 
+def _storage_detail(path: str, reason: Optional[str]) -> tuple[str, dict]:
+    if reason is None:
+        return "{path} is readable and writable.", {"path": path}
+    if reason == "missing (empty path)":
+        return "{path} is missing (empty path).", {"path": path or ""}
+    if reason == "not a directory":
+        return "{path} is not a directory.", {"path": path}
+    if reason == "missing":
+        return "{path} is missing.", {"path": path}
+    if reason == "not readable":
+        return "{path} is not readable.", {"path": path}
+    if reason.startswith("not writable: "):
+        return "{path} is not writable: {error}.", {"path": path, "error": reason.split(": ", 1)[1]}
+    return "{path} is not accessible.", {"path": path}
+
+
 def _storage_check(check_id: str, label: str, path: str, fail: bool) -> dict:
     reason = _probe_directory(path)
-    if reason is None:
-        return _payload(check_id, label, "ok", f"{path} is readable and writable.")
-    status = "fail" if fail else "warn"
-    return _payload(check_id, label, status, f"{path} {reason}.")
+    template, kwargs = _storage_detail(path, reason)
+    status = "ok" if reason is None else ("fail" if fail else "warn")
+    return _payload(check_id, label, status, template, detail_kwargs=kwargs)
 
 
 def _media_subdir(name: str) -> str:
@@ -258,32 +290,13 @@ def iter_media_storage_health_checks() -> Iterable[dict]:
     yield _storage_check("hls_dir_access", "HLS_DIR readable/writable", getattr(settings, "HLS_DIR", "") or "", fail=False)
     yield _storage_check("temp_dir_access", "TEMP_DIRECTORY readable/writable", getattr(settings, "TEMP_DIRECTORY", "") or "", fail=True)
 
-    subdir_settings = (
-        ("MEDIA_UPLOAD_DIR", "original"),
-        ("MEDIA_ENCODING_DIR", "encoded"),
-        ("UPLOAD_DIR", "uploads"),
-        ("CHUNKS_DIR", "chunks"),
-    )
-    failures = []
-    for setting_name, label in subdir_settings:
-        path = _media_subdir(setting_name)
-        reason = _probe_directory(path)
-        if reason:
-            failures.append(f"{label} ({path or setting_name}): {reason}")
-    if failures:
-        yield _payload(
-            "media_subdirs_access",
-            "Media subdirs accessible",
-            "warn",
-            "; ".join(failures),
-        )
-    else:
-        yield _payload(
-            "media_subdirs_access",
-            "Media subdirs accessible",
-            "ok",
-            "original, encoded, uploads, and chunks are readable and writable.",
-        )
+    for setting_name, check_id, label in (
+        ("MEDIA_UPLOAD_DIR", "media_subdir_original", "Original media directory readable/writable"),
+        ("MEDIA_ENCODING_DIR", "media_subdir_encoded", "Encoded media directory readable/writable"),
+        ("UPLOAD_DIR", "media_subdir_uploads", "Uploads directory readable/writable"),
+        ("CHUNKS_DIR", "media_subdir_chunks", "Chunks directory readable/writable"),
+    ):
+        yield _storage_check(check_id, label, _media_subdir(setting_name), fail=False)
 
 
 def deployment_configuration_rows() -> list[dict]:
