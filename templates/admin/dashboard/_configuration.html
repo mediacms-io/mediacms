@@ -1,10 +1,19 @@
 {% load custom_filters %}
 <div class="col-12">
-    <div class="card card-outline card-info">
+    <div class="card">
         <div class="card-header">
-            <h3 class="card-title">{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>
-            {% include "admin/dashboard/_copy_tools.html" %}
+            <h3 class="card-title"><i class="fas fa-cog me-2"></i>{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>
         </div>
+        <div class="card-body">
+{% include "admin/dashboard/_section_health.html" with section="configuration" counts=stats.system.configuration_counts %}
+<div class="col-12">
+    <details class="card card-outline card-info dashboard-collapse mb-0">
+        <summary class="card-header">
+            <h3 class="card-title">{{ "Configuration"|custom_translate:LANGUAGE_CODE }}</h3>
+            <span class="dashboard-collapse-tools" onclick="event.stopPropagation()">{% include "admin/dashboard/_copy_tools.html" %}</span>
+            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+        </summary>
         <div class="card-body p-0">
             <table class="table table-sm mb-0">
                 <thead>
@@ -24,6 +33,9 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </details>
+</div>
         </div>
     </div>
 </div>

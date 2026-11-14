@@ -9,6 +9,12 @@ from .settings import BASE_DIR, DATABASES  # noqa: E402
 
 CELERY_TASK_ALWAYS_EAGER = True
 
+# Deployment local_settings may force HTTPS redirects and identity-provider URLs.
+# Tests keep the repository defaults so the client can call http://testserver.
+SECURE_SSL_REDIRECT = False
+USE_IDENTITY_PROVIDERS = False
+USERS_NEEDS_TO_BE_APPROVED = False
+
 # Tests may invoke populate_fake_media helpers; allow the command under test settings.
 ALLOW_POPULATE_FAKE_MEDIA = True
 

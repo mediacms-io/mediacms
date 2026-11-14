@@ -48,12 +48,14 @@
                             </div>
                         </div>
 
-                        <div class="row" id="integrations-health">
+                        <div class="row">
                             <div class="col-12">
-                                <div class="card card-outline {% if stats.integrations.health_counts.fail %}card-danger{% elif stats.integrations.health_counts.warn %}card-warning{% else %}card-secondary{% endif %}">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline {% if stats.integrations.health_counts.fail %}card-danger{% elif stats.integrations.health_counts.warn %}card-warning{% else %}card-secondary{% endif %} mb-0" id="integrations-health"{% if stats.integrations.health_counts.fail or stats.integrations.health_counts.warn %} open{% endif %}>
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Health checks"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                        <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                        <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                    </summary>
                                     <div class="card-body p-0">
                                         <table class="table table-sm mb-0">
                                             <thead>
@@ -92,7 +94,7 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                         </div>
 

@@ -1,34 +1,135 @@
 {% extends "base.html" %}
 {% load i18n custom_filters %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}
+
+{% block extra_head %}
+{{ block.super }}
+<style>
+  .user-action-form-inner .auth-card-header {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 0.75em;
+    padding-bottom: 0.67em;
+    border-bottom: 1px solid var(--user-action-form-inner-title-border-bottom-color, #e6e6e6);
+  }
+  .user-action-form-inner .auth-card-header h1 {
+    width: auto;
+    flex: 1 1 auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .user-action-form-inner .auth-card-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    width: auto;
+    margin: 0;
+  }
+  .user-action-form-inner form.auth-card-language,
+  .user-action-form-inner .auth-card-theme {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+    width: auto;
+    margin: 0;
+  }
+  .user-action-form-inner form.auth-card-language label,
+  .user-action-form-inner form.auth-card-language select,
+  .user-action-form-inner .auth-card-theme label {
+    width: auto;
+    margin: 0;
+  }
+  .user-action-form-inner form.auth-card-language select {
+    color: var(--user-action-form-inner-input-text-color, inherit);
+    background-color: var(--user-action-form-inner-input-bg-color, transparent);
+    border: 1px solid var(--user-action-form-inner-input-border-color, #ccc);
+    border-radius: 4px;
+    padding: 0.15rem 0.35rem;
+  }
+  .auth-card-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: inherit;
+  }
+  .auth-card-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+  .auth-card-theme-icon .icon-moon { display: none; }
+  body.dark_theme .auth-card-theme-icon .icon-sun,
+  html.theme-darkly .auth-card-theme-icon .icon-sun { display: none; }
+  body.dark_theme .auth-card-theme-icon .icon-moon,
+  html.theme-darkly .auth-card-theme-icon .icon-moon { display: inline; }
+  .auth-card-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .user-action-form-inner .auth-card-theme .checkbox-switcher {
+    width: 36px;
+    flex: 0 0 36px;
+  }
+  .user-action-form-inner .auth-card-theme .checkbox-switcher input[type="checkbox"]:after {
+    left: auto;
+    inset-inline-start: 0;
+  }
+  .user-action-form-inner .auth-card-theme .checkbox-switcher input[type="checkbox"]:checked:after {
+    left: auto;
+    margin-left: 0;
+    inset-inline-start: 100%;
+    margin-inline-start: -17px;
+  }
+</style>
+{% endblock extra_head %}
 
 {% block innercontent %}
 <div class="user-action-form-wrap">
-    <div class="user-action-form-inner">
-        <div class="auth-card-toolbar">
-            <form class="auth-card-language" method="post" action="{% url 'set_language' %}">
-                {% csrf_token %}
-                <input name="next" type="hidden" value="{% block auth_language_next %}{{ request.get_full_path }}{% endblock %}">
-                <label for="auth-card-language">{{ "Language"|custom_translate:request.LANGUAGE_CODE }}</label>
-                <select id="auth-card-language" name="language" onchange="this.form.submit()">
-                    {% get_available_languages as LANGUAGES %}
-                    {% get_language_info_list for LANGUAGES as languages %}
-                    {% for language in languages %}
-                        <option value="{{ language.code }}"{% if language.code == request.LANGUAGE_CODE %} selected{% endif %}>
-                            {{ language.name_local }}
-                        </option>
-                    {% endfor %}
-                </select>
-                <noscript><button type="submit">{{ "Go"|custom_translate:request.LANGUAGE_CODE }}</button></noscript>
-            </form>
-            <div class="auth-card-theme">
-                <label for="auth-card-theme" id="auth-card-theme-label" data-label-dark="{{ "Switch to dark theme"|custom_translate:request.LANGUAGE_CODE }}" data-label-light="{{ "Switch to light theme"|custom_translate:request.LANGUAGE_CODE }}">{{ "Switch to dark theme"|custom_translate:request.LANGUAGE_CODE }}</label>
-                <span class="checkbox-switcher">
-                    <input type="checkbox" id="auth-card-theme">
-                </span>
+    <div class="user-action-form-inner"{% if LANGUAGE_BIDI %} dir="rtl"{% else %} dir="ltr"{% endif %}>
+        <div class="auth-card-header">
+            <h1>{% block auth_heading %}{% endblock %}</h1>
+            <div class="auth-card-toolbar">
+                <form class="auth-card-language" method="post" action="{% url 'set_language' %}">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{% block auth_language_next %}{{ request.get_full_path }}{% endblock %}">
+                    <span class="auth-card-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false"><path fill="currentColor" d="M12 2a10 10 0 1 0 .01 20.01A10 10 0 0 0 12 2zm6.93 6h-3.12a15.7 15.7 0 0 0-1.26-3.26A8.03 8.03 0 0 1 18.93 8zM12 4.04c.55.86 1.2 2.2 1.6 3.96h-3.2c.4-1.76 1.05-3.1 1.6-3.96zM4.26 14a8.1 8.1 0 0 1 0-4h3.38a17.4 17.4 0 0 0 0 4H4.26zm.81 2h3.12a15.7 15.7 0 0 0 1.26 3.26A8.03 8.03 0 0 1 5.07 16zm3.12-8H5.07a8.03 8.03 0 0 1 4.38-3.26A15.7 15.7 0 0 0 8.19 8zM12 19.96c-.55-.86-1.2-2.2-1.6-3.96h3.2c-.4 1.76-1.05 3.1-1.6 3.96zM14.36 14H9.64a15.6 15.6 0 0 1 0-4h4.72a15.6 15.6 0 0 1 0 4zm.19 5.26A15.7 15.7 0 0 0 15.81 16h3.12a8.03 8.03 0 0 1-4.38 3.26zM16.36 14a17.4 17.4 0 0 0 0-4h3.38a8.1 8.1 0 0 1 0 4h-3.38z"/></svg>
+                    </span>
+                    <label class="auth-card-sr" for="auth-card-language">{{ "Language"|custom_translate:request.LANGUAGE_CODE }}</label>
+                    <select id="auth-card-language" name="language" aria-label="{{ "Language"|custom_translate:request.LANGUAGE_CODE }}" onchange="this.form.submit()">
+                        {% get_available_languages as LANGUAGES %}
+                        {% get_language_info_list for LANGUAGES as languages %}
+                        {% for language in languages %}
+                            <option value="{{ language.code }}"{% if language.code == request.LANGUAGE_CODE %} selected{% endif %}>
+                                {{ language.name_local }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <noscript><button type="submit">{{ "Go"|custom_translate:request.LANGUAGE_CODE }}</button></noscript>
+                </form>
+                <div class="auth-card-theme">
+                    <span class="auth-card-icon auth-card-theme-icon" aria-hidden="true">
+                        <svg class="icon-sun" viewBox="0 0 24 24" focusable="false"><path fill="currentColor" d="M6.76 4.84 5.34 3.42 3.93 4.84l1.41 1.41 1.42-1.41zM1 13h3v-2H1v2zm10 10h2v-3h-2v3zM4.84 19.16l1.41-1.41-1.41-1.41-1.42 1.41 1.42 1.41zM20 11v2h3v-2h-3zm-1.76-6.16 1.41-1.41-1.41-1.42-1.41 1.42 1.41 1.41zM13 1h-2v3h2V1zm5.66 16.34 1.41 1.41 1.42-1.41-1.42-1.41-1.41 1.41zM12 6a6 6 0 1 0 .01 12.01A6 6 0 0 0 12 6z"/></svg>
+                        <svg class="icon-moon" viewBox="0 0 24 24" focusable="false"><path fill="currentColor" d="M12.1 22a9.9 9.9 0 0 1-3.3-19.2 1 1 0 0 1 1.16 1.39A8 8 0 0 0 20.7 14a1 1 0 0 1 1.39 1.16A10 10 0 0 1 12.1 22z"/></svg>
+                    </span>
+                    <label class="auth-card-sr" for="auth-card-theme" id="auth-card-theme-label" data-label-dark="{{ "Switch to dark theme"|custom_translate:request.LANGUAGE_CODE }}" data-label-light="{{ "Switch to light theme"|custom_translate:request.LANGUAGE_CODE }}">{{ "Switch to dark theme"|custom_translate:request.LANGUAGE_CODE }}</label>
+                    <span class="checkbox-switcher">
+                        <input type="checkbox" id="auth-card-theme" aria-labelledby="auth-card-theme-label">
+                    </span>
+                </div>
             </div>
         </div>
-
-        <h1>{% block auth_heading %}{% endblock %}</h1>
         {% block auth_intro %}{% endblock %}
         {% block auth_actions %}{% endblock %}
     </div>
@@ -53,6 +154,11 @@
     function apply(mode) {
         var dark = mode === 'dark';
         document.body.classList.toggle('dark_theme', dark);
+        document.documentElement.classList.toggle('theme-darkly', dark);
+        var themeLink = document.getElementById('jazzmin-dark-mode-theme');
+        if (themeLink) {
+            themeLink.media = dark ? 'all' : 'not all';
+        }
         input.checked = dark;
         label.textContent = dark ? label.getAttribute('data-label-light') : label.getAttribute('data-label-dark');
     }
@@ -79,6 +185,12 @@
     window.addEventListener('mediacms-theme', function (event) {
         if (event.detail === 'light' || event.detail === 'dark') {
             apply(event.detail);
+        }
+    });
+
+    window.addEventListener('storage', function (event) {
+        if (event.key === storageKey && (event.newValue === 'light' || event.newValue === 'dark')) {
+            apply(event.newValue);
         }
     });
 })();

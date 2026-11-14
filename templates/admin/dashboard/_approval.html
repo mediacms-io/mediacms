@@ -1,0 +1,126 @@
+{% load custom_filters %}
+{% include "admin/dashboard/_section_health.html" with section="approval" counts=stats.system.approval_counts %}
+<div class="row">
+    <div class="col-lg-6 col-6">
+        <div class="small-box bg-secondary">
+            <div class="inner">
+                <h3>{{ stats.moderation.unreviewed }}</h3>
+                <p>{{ "Media not reviewed"|custom_translate:LANGUAGE_CODE }}</p>
+            </div>
+            <div class="icon"><i class="fas fa-eye-slash"></i></div>
+            <a href="{% url 'admin:files_media_changelist' %}?is_reviewed__exact=0" class="small-box-footer">
+                {{ "Open media not reviewed"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-6 col-6">
+        <div class="small-box bg-success">
+            <div class="inner">
+                <h3>{{ stats.moderation.approved_last_7_days }}</h3>
+                <p>{{ "Media approved (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
+            </div>
+            <div class="icon"><i class="fas fa-check-circle"></i></div>
+            <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=media_reviewed" class="small-box-footer">
+                {{ "Open approvals"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <details class="dashboard-collapse card card-outline card-warning">
+            <summary class="card-header">
+                <h3 class="card-title">
+                    <a href="{% url 'admin:files_media_changelist' %}?is_reviewed__exact=0">{{ "Recent pending review"|custom_translate:LANGUAGE_CODE }}</a>
+                </h3>
+                <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+            </summary>
+            <div class="card-body p-0">
+                <table class="table table-sm when-table moderation-person moderation-open site-open-table">
+                    <thead>
+                        <tr>
+                            <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "Uploader"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for media in stats.moderation.recent_pending_review %}
+                            <tr>
+                                <td><a href="{% url 'admin:files_media_change' media.id %}">{{ media.title|truncatechars:30|default:'-' }}</a></td>
+                                <td>
+                                    {% if media.user_id %}
+                                        <a href="{% url 'admin:users_user_change' media.user_id %}">{{ media.user__username|default:'-' }}</a>
+                                    {% else %}
+                                        {{ media.user__username|default:'-' }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ media.add_date|relative_when }}</td>
+                                <td>
+                                    {% if media.friendly_token %}
+                                        <a href="{% url 'get_media' %}?m={{ media.friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+    <div class="col-md-6">
+        <details class="dashboard-collapse card card-outline card-success">
+            <summary class="card-header">
+                <h3 class="card-title">
+                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=media_reviewed">{{ "Recently approved"|custom_translate:LANGUAGE_CODE }}</a>
+                </h3>
+                <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+            </summary>
+            <div class="card-body p-0">
+                <table class="table table-sm when-table moderation-person moderation-open site-open-table">
+                    <thead>
+                        <tr>
+                            <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approval in stats.moderation.recent_approved %}
+                            <tr>
+                                <td>
+                                    {% if approval.media_id %}
+                                        <a href="{% url 'admin:files_media_change' approval.media_id %}#audit-log-tab">{{ approval.media__title|truncatechars:30|default:'-' }}</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if approval.user_id %}
+                                        <a href="{% url 'admin:users_user_change' approval.user_id %}">{{ approval.user__username|default:'-' }}</a>
+                                    {% else %}
+                                        {{ approval.user__username|default:'-' }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ approval.action_date|relative_when }}</td>
+                                <td>
+                                    {% if approval.media__friendly_token %}
+                                        <a href="{% url 'get_media' %}?m={{ approval.media__friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+</div>

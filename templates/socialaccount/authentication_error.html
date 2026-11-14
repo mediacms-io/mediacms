@@ -1,14 +1,24 @@
-{% extends "socialaccount/base_entrance.html" %}
-{% load i18n %}
-{% load allauth %}
-{% block head_title %}
-    {% trans "Third-Party Login Failure" %}
-{% endblock head_title %}
-{% block content %}
-    {% element h1 %}
-        {% trans "Third-Party Login Failure" %}
-    {% endelement %}
-    {% element p %}
-        {% trans "An error occurred while attempting to login via your third-party account." %}
-    {% endelement %}
-{% endblock content %}
+{% extends "account/auth_card.html" %}
+{% load custom_filters %}
+
+{% block headtitle %} | {{ "Sign-in failed"|custom_translate:request.LANGUAGE_CODE }}{% endblock headtitle %}
+
+{% block auth_heading %}{{ "Sign-in failed"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
+
+{% block auth_intro %}
+<p>
+    {% if auth_error.code == "denied" %}
+        {{ "The identity provider denied the sign-in request."|custom_translate:request.LANGUAGE_CODE }}
+    {% else %}
+        {{ "The identity provider could not sign you in."|custom_translate:request.LANGUAGE_CODE }}
+    {% endif %}
+    {% if auth_error.provider %}({{ auth_error.provider }}){% endif %}
+</p>
+{% if auth_error.exception %}
+    <p>{{ auth_error.exception }}</p>
+{% endif %}
+{% endblock %}
+
+{% block auth_actions %}
+<p><a href="{% url 'login_system' %}">{{ "Back to sign in"|custom_translate:request.LANGUAGE_CODE }}</a></p>
+{% endblock %}

@@ -308,9 +308,9 @@ class SocialAppAdminTest(FlaggedAdminTestCase):
         inline_classes = self.model_admin(SocialApp).inlines
         self.assertEqual(inline_classes[0], identity_providers.admin.SAMLConfigurationInline)
         with override_settings(USE_SAML=False):
-            without_saml = identity_providers.admin.CustomSocialAppAdmin(SocialApp, self.site).inlines
-        self.assertNotIn(identity_providers.admin.SAMLConfigurationInline, without_saml)
-        self.assertEqual(len(without_saml), 4)
+            without_flag = identity_providers.admin.CustomSocialAppAdmin(SocialApp, self.site).inlines
+        self.assertIn(identity_providers.admin.SAMLConfigurationInline, without_flag)
+        self.assertEqual(len(without_flag), 5)
 
     def test_form_labels_and_required_fields(self):
         response = self.client.get(reverse("admin:socialaccount_socialapp_add"))
@@ -318,8 +318,105 @@ class SocialAppAdminTest(FlaggedAdminTestCase):
         self.assertEqual(form.fields["provider"].label, "Protocol")
         self.assertEqual(form.fields["name"].label, "IDP Config Name")
         self.assertTrue(form.fields["sites"].required)
-        self.assertTrue(form.fields["provider_id"].required)
+        self.assertEqual(list(form.fields["sites"].initial), [Site.objects.get_current().pk])
+        self.assertContains(response, "provider-url-copy")
+        sites_widget = getattr(form.fields["sites"].widget, "widget", form.fields["sites"].widget)
+        self.assertNotIn("selectfilter", sites_widget.attrs.get("class", ""))
+        self.assertNotContains(response, "selector-available")
+        self.assertFalse(form.fields["provider_id"].required)
+        self.assertIn("secret", form.fields)
+        self.assertIn("server_url", form.fields)
+        provider_ids = [choice[0] for choice in form.fields["provider"].widget.choices]
+        self.assertIn("google", provider_ids)
+        self.assertIn("saml", provider_ids)
         self.assertIn("/accounts/saml/{client_id}/login/", form.fields["client_id"].help_text)
+        self.assertContains(response, "provider-steps-oidc")
+        self.assertContains(response, "provider-steps-saml")
+        self.assertContains(response, "select2:select")
+        self.assertContains(response, "Issuer URL")
+        if identity_providers.admin.SAMLConfigurationInline in self.model_admin(SocialApp).inlines:
+            self.assertContains(response, 'name="saml_configurations-0-sso_url"')
+            self.assertEqual(self.model_admin(SocialApp).get_inlines(response.wsgi_request, None)[0], identity_providers.admin.SAMLConfigurationInline)
+
+    def test_oauth_app_creates_one_login_option_and_keeps_its_order(self):
+        data = self.app_data("google")
+        data.update({"provider": "google", "provider_id": "", "name": "Google", "client_id": "google-client", "secret": "google-secret"})
+        response = self.client.post(reverse("admin:socialaccount_socialapp_add"), data)
+        self.assertEqual(response.status_code, 302)
+        app = SocialApp.objects.get(provider="google", client_id="google-client")
+        self.assertEqual(app.provider_id, "google")
+        option = LoginOption.objects.get(url="/accounts/google/login/")
+        self.assertEqual(option.title, "Google")
+        option.title = "Work Google"
+        option.ordering = 4
+        option.save(update_fields=["title", "ordering"])
+
+        data.update({"provider_id": "google", "name": "Renamed Google"})
+        response = self.client.post(reverse("admin:socialaccount_socialapp_change", args=[app.pk]), data)
+        self.assertEqual(response.status_code, 302)
+        option.refresh_from_db()
+        self.assertEqual(option.title, "Work Google")
+        self.assertEqual(option.ordering, 4)
+        self.assertEqual(LoginOption.objects.filter(url="/accounts/google/login/").count(), 1)
+
+        app.delete()
+        self.assertFalse(LoginOption.objects.filter(url="/accounts/google/login/").exists())
+
+    def test_client_secret_is_hidden_and_can_be_replaced_or_cleared(self):
+        app = SocialApp.objects.create(provider="google", provider_id="google", name="Secret Google", client_id="secret-client", secret="stored-secret-value")
+        app.sites.add(Site.objects.get_current())
+        change_url = reverse("admin:socialaccount_socialapp_change", args=[app.pk])
+        response = self.client.get(change_url)
+        self.assertNotContains(response, "stored-secret-value")
+        self.assertContains(response, 'type="password"')
+        self.assertContains(response, "Clear saved client secret")
+
+        data = self.app_data("google")
+        data.update({"provider": "google", "provider_id": "google", "name": "Secret Google", "client_id": "secret-client", "secret": ""})
+        response = self.client.post(change_url, data)
+        self.assertEqual(response.status_code, 302)
+        app.refresh_from_db()
+        self.assertEqual(app.secret, "stored-secret-value")
+
+        data["secret"] = "rotated-secret"
+        response = self.client.post(change_url, data)
+        self.assertEqual(response.status_code, 302)
+        app.refresh_from_db()
+        self.assertEqual(app.secret, "rotated-secret")
+
+        data.update({"provider": "saml", "provider_id": "secret-saml", "secret": "", "clear_secret": "on"})
+        response = self.client.post(change_url, data)
+        self.assertEqual(response.status_code, 302)
+        app.refresh_from_db()
+        self.assertEqual(app.secret, "")
+
+    def test_saved_private_key_is_not_shown_and_can_be_replaced_or_cleared(self):
+        config = SAMLConfiguration.objects.get(social_app=self.idp)
+        config.sp_private_key = "stored-private-key"
+        config.save(update_fields=["sp_private_key"])
+        response = self.client.get(reverse("admin:socialaccount_socialapp_change", args=[self.idp.pk]))
+        self.assertNotContains(response, "stored-private-key")
+        self.assertContains(response, "Clear saved private key")
+
+        base = {
+            "social_app": self.idp.pk,
+            "sso_url": config.sso_url,
+            "slo_url": config.slo_url,
+            "sp_metadata_url": config.sp_metadata_url,
+            "idp_id": config.idp_id,
+            "idp_cert": config.idp_cert,
+            "sp_cert": "CERT",
+            "uid": config.uid,
+        }
+        form = identity_providers.forms.SAMLConfigurationInlineForm(data={**base, "sp_private_key": ""}, instance=config)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["sp_private_key"], "stored-private-key")
+        form = identity_providers.forms.SAMLConfigurationInlineForm(data={**base, "sp_private_key": "rotated-private-key"}, instance=config)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["sp_private_key"], "rotated-private-key")
+        form = identity_providers.forms.SAMLConfigurationInlineForm(data={**base, "sp_private_key": "", "sp_cert": "", "clear_sp_private_key": "on"}, instance=config)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["sp_private_key"], "")
 
     def test_change_page_renders_all_inline_rows(self):
         response = self.client.get(reverse("admin:socialaccount_socialapp_change", args=[self.idp.pk]))

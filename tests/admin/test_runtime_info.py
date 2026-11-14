@@ -1,4 +1,5 @@
 import os
+import tempfile
 from unittest.mock import patch
 
 from django.test import TestCase, override_settings
@@ -8,6 +9,7 @@ from admin_customizations.runtime_info import (
     _binary_cache,
     describe_binary,
     environment_rows,
+    get_installation_rows,
     get_system_runtime_rows,
     strip_userinfo,
 )
@@ -15,6 +17,7 @@ from admin_customizations.support_bundle import (
     render_support_bundle,
     support_bundle_filename,
 )
+from cms.version import VERSION
 from files.tests import create_account
 
 
@@ -72,5 +75,66 @@ class RuntimeInfoTest(TestCase):
     def test_support_bundle_text_format(self):
         body = render_support_bundle("txt")
         self.assertIn("MediaCMS support bundle", body)
+        self.assertIn("Installation", body)
+        self.assertIn(VERSION, body)
         self.assertIn("Configuration", body)
         self.assertIn("Runtime", body)
+
+    def test_packaged_install_omits_git_fields(self):
+        with tempfile.TemporaryDirectory() as base:
+            rows = self._rows(base, in_docker=False)
+        self.assertEqual([row["label"] for row in rows], ["Version", "Install", "Operating system"])
+        self.assertEqual(rows[0]["value"], VERSION)
+        self.assertEqual(rows[1]["value"], "Packaged")
+
+    def test_docker_install_without_git_stays_at_a_glance(self):
+        with tempfile.TemporaryDirectory() as base:
+            rows = self._rows(base, in_docker=True)
+        self.assertLessEqual(len(rows), 4)
+        self.assertEqual(rows[1]["value"], "Docker")
+        self.assertNotIn("Commit", [row["label"] for row in rows])
+        self.assertNotIn("Branch", [row["label"] for row in rows])
+
+    def test_git_checkout_reports_branch_and_commit_from_files(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as base:
+            self._write_head(base, "main", commit)
+            rows = {row["label"]: row["value"] for row in self._rows(base, in_docker=False)}
+        self.assertEqual(rows["Install"], "Git checkout")
+        self.assertEqual(rows["Branch"], "main")
+        self.assertEqual(rows["Commit"], commit)
+        self.assertGreater(len(rows), 4)
+
+    def test_docker_checkout_keeps_git_facts(self):
+        commit = "b" * 40
+        with tempfile.TemporaryDirectory() as base:
+            self._write_head(base, "feature", commit)
+            rows = {row["label"]: row["value"] for row in self._rows(base, in_docker=True)}
+        self.assertEqual(rows["Install"], "Docker, git checkout")
+        self.assertEqual(rows["Commit"], commit)
+
+    def test_detached_head_names_the_commit(self):
+        commit = "c" * 40
+        with tempfile.TemporaryDirectory() as base:
+            self._write_head(base, "detached", commit)
+            rows = {row["label"]: row for row in self._rows(base, in_docker=False)}
+        self.assertEqual(rows["Branch"]["value"], "detached")
+        self.assertTrue(rows["Branch"]["translate"])
+        self.assertEqual(rows["Commit"]["value"], commit)
+
+    def _rows(self, base, in_docker):
+        with patch("admin_customizations.runtime_info.shutil.which", return_value=""):
+            return get_installation_rows(base, in_docker=in_docker)
+
+    def _write_head(self, directory, branch, commit):
+        git_dir = os.path.join(directory, ".git", "refs", "heads")
+        os.makedirs(git_dir, exist_ok=True)
+        head = os.path.join(directory, ".git", "HEAD")
+        if branch == "detached":
+            with open(head, "w", encoding="utf-8") as handle:
+                handle.write(f"{commit}\n")
+            return
+        with open(head, "w", encoding="utf-8") as handle:
+            handle.write(f"ref: refs/heads/{branch}\n")
+        with open(os.path.join(git_dir, branch), "w", encoding="utf-8") as handle:
+            handle.write(f"{commit}\n")

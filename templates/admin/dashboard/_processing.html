@@ -5,6 +5,7 @@
                         <h3 class="card-title"><i class="fas fa-cogs me-2"></i>{{ "Processing"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
+                        {% include "admin/dashboard/_section_health.html" with section="processing" counts=stats.system.processing_counts %}
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="card card-outline card-secondary">

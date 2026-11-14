@@ -61,8 +61,8 @@ class BuildWorkflowAppListTest(TestCase):
         self.assertEqual(apps["people"][0], "PeopleOverview")
         self.assertEqual(apps["people"][1:], ["User", "EmailAddress"])
         self.assertEqual(
-            apps["site"][:6],
-            ["SiteOverview", "SiteHealth", "SiteConfiguration", "SiteSystem", "SiteDatabase", "Page"],
+            apps["site"][:5],
+            ["SiteHealth", "SiteConfiguration", "SiteSystem", "SiteDatabase", "Page"],
         )
         self.assertEqual(apps["integrations"][0], "IntegrationsOverview")
         self.assertEqual(apps["integrations"][1:], ["MigrationService"])

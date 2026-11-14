@@ -6,6 +6,7 @@
                         <h3 class="card-title"><i class="fas fa-photo-video me-2"></i>{{ "Library"|custom_translate:LANGUAGE_CODE }}</h3>
                     </div>
                     <div class="card-body">
+                        {% include "admin/dashboard/_section_health.html" with section="library" counts=stats.system.library_counts %}
                         <div class="row">
                             <div class="col-lg-3 col-6">
                                 <div class="small-box bg-info">
@@ -151,10 +152,13 @@
 
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <div class="card card-outline card-primary media-breakdown-card">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline card-primary media-breakdown-card">
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Media by type"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                    
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
                                     <div class="card-body">
                                         <table class="table media-breakdown">
                                             <tr>
@@ -175,13 +179,16 @@
                                             </tr>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                             <div class="col-md-6">
-                                <div class="card card-outline card-info media-breakdown-card">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline card-info media-breakdown-card">
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Media by state"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                    
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
                                     <div class="card-body">
                                         <table class="table media-breakdown">
                                             <tr>
@@ -202,16 +209,19 @@
                                             </tr>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                         </div>
 
                         <div class="row mt-3">
                             <div class="col-md-6">
-                                <div class="card card-outline card-danger">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline card-danger">
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Recent video uploads"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                    
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
                                     <div class="card-body p-0">
                                         <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
@@ -242,13 +252,16 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                             <div class="col-md-6">
-                                <div class="card card-outline card-info">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline card-info">
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Recent audio uploads"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                    
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
                                     <div class="card-body p-0">
                                         <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
@@ -279,13 +292,16 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                             <div class="col-md-6">
-                                <div class="card card-outline card-success">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline card-success">
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Recent image uploads"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                    
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
                                     <div class="card-body p-0">
                                         <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
@@ -316,13 +332,16 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                             <div class="col-md-6">
-                                <div class="card card-outline card-warning">
-                                    <div class="card-header">
+                                <details class="dashboard-collapse card card-outline card-warning">
+                                    <summary class="card-header">
                                         <h3 class="card-title">{{ "Recent PDF uploads"|custom_translate:LANGUAGE_CODE }}</h3>
-                                    </div>
+                                    
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
                                     <div class="card-body p-0">
                                         <table class="table table-sm when-table library-uploads site-open-table">
                                             <thead>
@@ -353,7 +372,7 @@
                                             </tbody>
                                         </table>
                                     </div>
-                                </div>
+                                </details>
                             </div>
                         </div>
                     </div>

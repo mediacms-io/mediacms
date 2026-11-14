@@ -44,6 +44,23 @@ class LoginFormTest(TestCase):
         self.assertTrue(response.context["form"].errors)
         self.assertEqual(self.client.get("/api/v1/whoami").status_code, 403)
 
+    def test_failed_login_suggests_registering_for_known_and_unknown_users(self):
+        unknown = self.login("nobody-here", password="not the password")
+        known = self.login(self.user.username, password="not the password")
+        hint = "you can"
+        register_href = 'href="/accounts/signup/"'
+        self.assertContains(unknown, hint)
+        self.assertContains(unknown, register_href)
+        self.assertContains(known, hint)
+        self.assertContains(known, register_href)
+        self.assertEqual(unknown.content.count(register_href.encode()), known.content.count(register_href.encode()))
+
+    @override_settings(USERS_CAN_SELF_REGISTER=False)
+    def test_failed_login_omits_the_register_link_when_signup_is_closed(self):
+        response = self.login(self.user.username, password="not the password")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "for a new account")
+
     def test_login_redirects_back_to_the_protected_page(self):
         edit_url = f"/user/{self.user.username}/edit"
         response = self.client.get(edit_url)

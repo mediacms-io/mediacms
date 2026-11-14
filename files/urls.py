@@ -1,4 +1,3 @@
-from allauth.account.views import LoginView
 from django.conf import settings
 from django.conf.urls import include
 from django.conf.urls.static import static
@@ -6,6 +5,7 @@ from django.urls import path, re_path
 
 from . import management_views, tinymce_handlers, views
 from .feeds import IndexRSSFeed, SearchRSSFeed
+from .views.auth import MediaCMSLoginView
 
 friendly_token = r"(?P<friendly_token>[\w\-_]*)"
 
@@ -126,10 +126,10 @@ if hasattr(settings, "USE_SAML") and settings.USE_SAML:
     urlpatterns.append(re_path(r"^saml/metadata", views.saml_metadata, name="saml-metadata"))
 
 if hasattr(settings, "USE_IDENTITY_PROVIDERS") and settings.USE_IDENTITY_PROVIDERS:
-    urlpatterns.append(path('accounts/login_system', LoginView.as_view(), name='login_system'))
-    urlpatterns.append(re_path(r"^accounts/login", views.custom_login_view, name='login'))
+    urlpatterns.append(re_path(r"^accounts/login_system/?$", MediaCMSLoginView.as_view(), name="login_system"))
+    urlpatterns.append(re_path(r"^accounts/login/?$", views.custom_login_view, name="login"))
 else:
-    urlpatterns.append(path('accounts/login', LoginView.as_view(), name='login_system'))
+    urlpatterns.append(re_path(r"^accounts/login/?$", MediaCMSLoginView.as_view(), name="login_system"))
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:
     urlpatterns.append(path("sitemap.xml", views.sitemap, name="sitemap"))

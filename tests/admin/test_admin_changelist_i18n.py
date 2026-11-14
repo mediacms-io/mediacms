@@ -119,7 +119,6 @@ class AdminChangelistI18nTest(TestCase):
             "/admin/dashboard/processing/",
             "/admin/dashboard/engagement/",
             "/admin/dashboard/integrations/",
-            "/admin/dashboard/site/",
             "/admin/dashboard/health/",
         )
         for path in overviews:

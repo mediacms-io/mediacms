@@ -22,7 +22,10 @@ from admin_customizations.processing_stats import (
     get_migration_status_groups,
     get_processing_status_groups,
 )
-from admin_customizations.runtime_info import get_system_runtime_rows
+from admin_customizations.runtime_info import (
+    get_installation_rows,
+    get_system_runtime_rows,
+)
 from admin_customizations.status_health import iter_status_health_checks
 from files.admin_helpers import MEDIA_ACTION_ICONS
 from files.integrity import qs_duplicate_md5, qs_duplicate_name
@@ -60,7 +63,7 @@ _REPORT_AUDIT_EXCLUDED = ("media_reviewed", "metadata_refresh", "integrity_warni
 REPORT_AUDIT_ACTIONS = tuple(name for name, _label in MODERATION_MEDIA_ACTIONS if name not in _REPORT_AUDIT_EXCLUDED)
 REPORT_AUDIT_ACTION_LABELS = dict(MODERATION_MEDIA_ACTIONS)
 
-DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v15"
+DASHBOARD_STATS_CACHE_KEY = "admin_dashboard_stats_v18"
 DASHBOARD_STATS_CACHE_TTL = 60
 
 
@@ -737,6 +740,44 @@ _SYSTEM_CHECK_IDS = frozenset(
         "media_subdir_chunks",
     }
 )
+_PROCESSING_CHECK_IDS = frozenset(
+    {
+        "encoding_failures",
+        "encoding_queue",
+        "trim_request_failures",
+        "caption_request_failures",
+        "encode_job_failures",
+        "integrity_video_success_no_encoding",
+        "integrity_nonvideo_not_success",
+        "integrity_video_queued_no_rows",
+        "integrity_nonvideo_has_encodings",
+        "integrity_transcription_success_no_subtitle",
+        "integrity_stale_encoding_running",
+    }
+)
+_LIBRARY_CHECK_IDS = frozenset(
+    {
+        "integrity_duplicate_md5",
+        "integrity_duplicate_name",
+        "integrity_listable_mismatch",
+        "missing_media_metadata",
+        "recent_integrity_warnings",
+    }
+)
+_REPORTS_CHECK_IDS = frozenset({"open_reports", "reports_above_limit"})
+_APPROVAL_CHECK_IDS = frozenset({"media_awaiting_review"})
+_PEOPLE_CHECK_IDS = frozenset({"users_awaiting_approval", "inactive_users"})
+_ENGAGEMENT_CHECK_IDS = frozenset({"recent_comments"})
+_HEALTH_GROUPS = (
+    (_CONFIGURATION_CHECK_IDS, "configuration"),
+    (_SYSTEM_CHECK_IDS, "system"),
+    (_PROCESSING_CHECK_IDS, "processing"),
+    (_LIBRARY_CHECK_IDS, "library"),
+    (_REPORTS_CHECK_IDS, "reports"),
+    (_APPROVAL_CHECK_IDS, "approval"),
+    (_PEOPLE_CHECK_IDS, "people"),
+    (_ENGAGEMENT_CHECK_IDS, "engagement"),
+)
 
 
 def _health_check(check_id, label, status, detail, link=None, group=None, detail_kwargs=None, detail_template=None):
@@ -765,13 +806,140 @@ def _tag_health_group(check):
     if check.get("group"):
         return check
     check_id = check["id"]
-    if check_id in _CONFIGURATION_CHECK_IDS:
-        check["group"] = "configuration"
-    elif check_id in _SYSTEM_CHECK_IDS:
-        check["group"] = "system"
-    else:
-        check["group"] = "health"
+    for check_ids, group in _HEALTH_GROUPS:
+        if check_id in check_ids:
+            check["group"] = group
+            return check
+    check["group"] = "health"
     return check
+
+
+def _workflow_health_checks(media_stats):
+    """Checks that belong on Moderation, People, and Engagement."""
+    if media_stats is None:
+        threshold = getattr(settings, "REPORTED_TIMES_THRESHOLD", 10)
+        reported = Media.objects.filter(reported_times__gt=0).count()
+        above = Media.objects.filter(reported_times__gte=threshold).count()
+        unreviewed = Media.objects.filter(is_reviewed=False).count()
+    else:
+        reported = media_stats.get("reported_media", 0)
+        above = media_stats.get("reported_above_threshold", 0)
+        unreviewed = media_stats.get("unreviewed", 0)
+    reported_link = reverse("admin:files_media_changelist") + "?reported=yes"
+    limit_link = reverse("admin:files_media_changelist") + "?reported=threshold"
+    review_link = reverse("admin:files_media_changelist") + "?is_reviewed__exact=0"
+    checks = [
+        _presence_check(
+            "open_reports",
+            "Open reports",
+            reported,
+            reported_link,
+            "{count} media item(s) have open reports.",
+            "No media have open reports.",
+            present_status="warn",
+        ),
+        _presence_check(
+            "reports_above_limit",
+            "Reports above limit",
+            above,
+            limit_link,
+            "{count} media item(s) are at or above the report limit.",
+            "No media are at or above the report limit.",
+            present_status="fail",
+        ),
+    ]
+    if getattr(settings, "MEDIA_IS_REVIEWED", True):
+        checks.append(
+            _health_check(
+                "media_awaiting_review",
+                "Media waiting for review",
+                "info",
+                "New media is marked reviewed automatically.",
+                link=review_link,
+                group="approval",
+            )
+        )
+    else:
+        checks.append(
+            _presence_check(
+                "media_awaiting_review",
+                "Media waiting for review",
+                unreviewed,
+                review_link,
+                "{count} media item(s) are waiting for review.",
+                "No media are waiting for review.",
+                present_status="warn",
+            )
+        )
+    approval_link = reverse("admin:users_user_changelist") + "?is_approved__exact=0"
+    if getattr(settings, "USERS_NEEDS_TO_BE_APPROVED", False):
+        pending = User.objects.filter(Q(is_approved=False) | Q(is_approved__isnull=True)).count()
+        checks.append(
+            _presence_check(
+                "users_awaiting_approval",
+                "Users waiting for approval",
+                pending,
+                approval_link,
+                "{count} user account(s) are waiting for approval.",
+                "No user accounts are waiting for approval.",
+                present_status="warn",
+            )
+        )
+    else:
+        checks.append(
+            _health_check(
+                "users_awaiting_approval",
+                "Users waiting for approval",
+                "info",
+                "User approval is not required.",
+                link=approval_link,
+                group="people",
+            )
+        )
+    inactive = User.objects.filter(is_active=False).count()
+    checks.append(
+        _presence_check(
+            "inactive_users",
+            "Inactive users",
+            inactive,
+            reverse("admin:users_user_changelist") + "?is_active__exact=0",
+            "{count} user account(s) are inactive.",
+            "No user accounts are inactive.",
+            present_status="info",
+        )
+    )
+    recent_comments = Comment.objects.filter(add_date__gte=timezone.now() - timedelta(days=7)).count()
+    checks.append(
+        _health_check(
+            "recent_comments",
+            "Recent comments",
+            "info",
+            "{count} comment(s) in the last 7 days.",
+            link=reverse("admin:files_comment_changelist"),
+            detail_kwargs={"count": recent_comments},
+            group="engagement",
+        )
+    )
+    return checks
+
+
+def _presence_check(check_id, label, count, link, problem, ok, present_status):
+    group = None
+    for check_ids, name in _HEALTH_GROUPS:
+        if check_id in check_ids:
+            group = name
+            break
+    if count:
+        return _health_check(
+            check_id,
+            label,
+            present_status,
+            problem,
+            link=link,
+            detail_kwargs={"count": count},
+            group=group,
+        )
+    return _health_check(check_id, label, "ok", ok, link=link, group=group)
 
 
 def get_site_health_checks(media_stats=None, extra_checks=None):
@@ -1098,6 +1266,7 @@ def get_site_health_checks(media_stats=None, extra_checks=None):
         extra_checks = get_integrations_health_checks(get_migration_status_groups())
     for check in extra_checks:
         checks.append(check)
+    checks.extend(_workflow_health_checks(media_stats))
 
     checks = [_tag_health_group(check) for check in checks]
     severity_order = {"fail": 0, "warn": 1, "info": 2, "ok": 3}
@@ -1163,10 +1332,12 @@ def get_system_statistics(media_stats=None, extra_checks=None):
         "health_checks": get_site_health_checks(media_stats=media_stats, extra_checks=extra_checks),
         "configuration": get_site_configuration_status(),
         "runtime": get_system_runtime_rows(),
+        "installation": get_installation_rows(),
     }
     system_stats["health_counts"] = _count_health(system_stats["health_checks"])
-    system_stats["configuration_counts"] = _count_health(check for check in system_stats["health_checks"] if check["group"] == "configuration")
-    system_stats["system_counts"] = _count_health(check for check in system_stats["health_checks"] if check["group"] == "system")
+    for group in ("configuration", "system", "processing", "library", "reports", "approval", "people", "engagement"):
+        grouped = (check for check in system_stats["health_checks"] if check["group"] == group)
+        system_stats[f"{group}_counts"] = _count_health(grouped)
 
     if media_stats is None:
         encoding = Media.objects.aggregate(

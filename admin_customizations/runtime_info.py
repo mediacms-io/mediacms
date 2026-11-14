@@ -2,12 +2,17 @@
 
 import importlib
 import os
+import platform
+import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 
 from django.conf import settings
+
+from cms.version import VERSION
 
 SAFE_ENV_KEYS = frozenset(
     {
@@ -169,6 +174,154 @@ def get_system_runtime_rows():
         ]
     )
     rows.extend(environment_rows())
+    return rows
+
+
+_SHA = re.compile(r"^[0-9a-fA-F]{40}([0-9a-fA-F]{24})?$")
+
+
+def running_in_docker():
+    """True inside a Docker or other container runtime."""
+    if os.path.exists("/.dockerenv"):
+        return True
+    try:
+        cgroup = Path("/proc/1/cgroup").read_text(errors="replace")
+    except OSError:
+        return False
+    return any(token in cgroup for token in ("docker", "containerd", "kubepods"))
+
+
+def _operating_system():
+    pretty = ""
+    release = Path("/etc/os-release")
+    if release.is_file():
+        try:
+            lines = release.read_text(errors="replace").splitlines()
+        except OSError:
+            lines = []
+        for line in lines:
+            if line.startswith("PRETTY_NAME="):
+                pretty = line.split("=", 1)[1].strip().strip('"')
+                break
+    if not pretty:
+        pretty = platform.platform()
+    machine = platform.machine()
+    if machine and machine not in pretty:
+        return f"{pretty} ({machine})"
+    return pretty or "unknown"
+
+
+def _git_directory(base_dir):
+    git_path = Path(base_dir) / ".git"
+    if not git_path.exists():
+        return None
+    if git_path.is_file():
+        try:
+            text = git_path.read_text(errors="replace").strip()
+        except OSError:
+            return None
+        if not text.startswith("gitdir:"):
+            return None
+        pointed = Path(text.split(":", 1)[1].strip())
+        if not pointed.is_absolute():
+            pointed = Path(base_dir) / pointed
+        git_path = pointed
+    if not git_path.is_dir():
+        return None
+    return git_path
+
+
+def _resolve_git_ref(git_path, ref):
+    ref_file = git_path / ref
+    try:
+        if ref_file.is_file():
+            value = ref_file.read_text(errors="replace").strip()
+            if _SHA.match(value):
+                return value
+    except OSError:
+        return ""
+    packed = git_path / "packed-refs"
+    try:
+        lines = packed.read_text(errors="replace").splitlines() if packed.is_file() else []
+    except OSError:
+        return ""
+    for line in lines:
+        if not line or line.startswith("#") or line.startswith("^"):
+            continue
+        sha, _, name = line.partition(" ")
+        if name.strip() == ref and _SHA.match(sha.strip()):
+            return sha.strip()
+    return ""
+
+
+def _read_git(base_dir):
+    """Branch and commit from .git files. Empty when this install has no checkout."""
+    git_path = _git_directory(base_dir)
+    if git_path is None:
+        return None
+    try:
+        head = (git_path / "HEAD").read_text(errors="replace").strip()
+    except OSError:
+        return {"branch": "", "commit": ""}
+    if head.startswith("ref:"):
+        ref = head.split(":", 1)[1].strip()
+        branch = ref[len("refs/heads/") :] if ref.startswith("refs/heads/") else ""
+        return {"branch": branch, "commit": _resolve_git_ref(git_path, ref)}
+    if _SHA.match(head):
+        return {"branch": "detached", "commit": head}
+    return {"branch": "", "commit": ""}
+
+
+def _working_tree_dirty(base_dir):
+    git = shutil.which("git")
+    if not git:
+        return False
+    try:
+        completed = subprocess.run(
+            [git, "status", "--porcelain"],
+            cwd=base_dir,
+            capture_output=True,
+            text=True,
+            timeout=1,
+            check=False,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False
+    return bool((completed.stdout or "").strip())
+
+
+def get_installation_rows(base_dir=None, in_docker=None):
+    """MediaCMS release facts. Git fields are omitted when the checkout is not present."""
+    base_dir = Path(base_dir or getattr(settings, "BASE_DIR", "."))
+    if in_docker is None:
+        in_docker = running_in_docker()
+    git = _read_git(base_dir)
+    if in_docker and git is not None:
+        install = "Docker, git checkout"
+    elif in_docker:
+        install = "Docker"
+    elif git is not None:
+        install = "Git checkout"
+    else:
+        install = "Packaged"
+    rows = [
+        {"label": "Version", "value": VERSION, "translate": False, "icon": "fas fa-tag"},
+        {"label": "Install", "value": install, "translate": True, "icon": "fas fa-cube"},
+        {"label": "Operating system", "value": _operating_system(), "translate": False, "icon": "fas fa-desktop"},
+    ]
+    if git is not None and git.get("branch"):
+        rows.append(
+            {
+                "label": "Branch",
+                "value": git["branch"],
+                "translate": git["branch"] == "detached",
+                "icon": "fas fa-code-branch",
+            }
+        )
+    if git is not None and git.get("commit"):
+        rows.append({"label": "Commit", "value": git["commit"], "translate": False, "icon": "fas fa-hashtag"})
+    if git is not None and _working_tree_dirty(base_dir):
+        rows.append({"label": "Working tree", "value": "Uncommitted changes", "translate": True, "icon": "fas fa-edit"})
     return rows
 
 

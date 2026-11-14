@@ -188,6 +188,10 @@ CHANGELIST_COLUMN_ICONS = {
     "column-is_approved": "fas fa-user-check",
     "column-display_permission": "fas fa-key",
     "column-display_source": "fas fa-sign-in-alt",
+    "column-display_provider": "fas fa-sign-in-alt",
+    "column-url": "fas fa-link",
+    "column-ordering": "fas fa-sort-amount-down",
+    "column-active": "fas fa-check-circle",
     "column-display_primary": "fas fa-star",
     "column-display_verified": "fas fa-check-circle",
 }

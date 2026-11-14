@@ -61,11 +61,6 @@ DASHBOARD_SECTIONS = {
         "template": "admin/dashboard/integrations.html",
         "icon": "fas fa-plug",
     },
-    "site": {
-        "title": "Site",
-        "template": "admin/dashboard/site.html",
-        "icon": "fas fa-sliders-h",
-    },
     "health": {
         "title": "Health",
         "template": "admin/dashboard/health.html",

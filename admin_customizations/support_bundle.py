@@ -9,7 +9,10 @@ from admin_customizations.admin import (
     get_site_health_checks,
 )
 from admin_customizations.database_stats import get_database_statistics
-from admin_customizations.runtime_info import get_system_runtime_rows
+from admin_customizations.runtime_info import (
+    get_installation_rows,
+    get_system_runtime_rows,
+)
 
 BUNDLE_NOTE = "This file is safe to paste into a GitHub issue. Secrets are omitted or redacted."
 BUNDLE_FILENAME = re.compile(r"^mediacms-support-\d{4}-\d{2}-\d{2}-\d{4}\.(txt|md)$")
@@ -90,6 +93,7 @@ def render_support_bundle(fmt):
     database_stats = get_database_statistics()
     warnings = _warning_records(database_stats)
     configuration = [(item["label"], item["value"]) for item in get_site_configuration_status()]
+    installation = [(item["label"], item["value"]) for item in get_installation_rows()]
     runtime = [(item["group"], item["label"], item["value"]) for item in get_system_runtime_rows()]
     database = [(item["group"], item["label"], item["value"]) for item in database_stats["rows"]]
     if fmt == "md":
@@ -99,6 +103,8 @@ def render_support_bundle(fmt):
                 "# MediaCMS support bundle",
                 f"Generated at: {generated}",
                 BUNDLE_NOTE,
+                "## Installation",
+                _markdown_table(("Name", "Value"), installation),
                 "## Warnings and failures",
                 warning_body,
                 "## Configuration",
@@ -116,6 +122,8 @@ def render_support_bundle(fmt):
             "MediaCMS support bundle",
             f"Generated at: {generated}",
             BUNDLE_NOTE,
+            "Installation",
+            _tsv(("Name", "Value"), installation),
             "Warnings and failures",
             warning_body,
             "Configuration",

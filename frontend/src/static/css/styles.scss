@@ -161,17 +161,38 @@ button {
     margin-top: 1.5em;
   }
 
-  .auth-card-toolbar {
+  .auth-card-header {
     display: flex;
-    align-items: center;
+    flex-direction: row;
+    align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 0.25rem;
+    margin: 0 0 0.75em;
+    padding-bottom: 0.67em;
+    border-bottom: 1px solid var(--user-action-form-inner-title-border-bottom-color);
+
+    h1 {
+      width: auto;
+      flex: 1 1 auto;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+  }
+
+  .auth-card-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    width: auto;
+    margin: 0;
 
     form.auth-card-language {
       display: flex;
+      flex-direction: row;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.4rem;
       width: auto;
       margin: 0;
 
@@ -182,7 +203,79 @@ button {
         width: auto;
         margin: 0;
       }
+
+      select {
+        color: var(--user-action-form-inner-input-text-color, inherit);
+        background-color: var(--user-action-form-inner-input-bg-color, transparent);
+        border: 1px solid var(--user-action-form-inner-input-border-color, #ccc);
+        border-radius: 4px;
+      }
     }
+  }
+
+  .auth-card-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    color: inherit;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .auth-card-theme-icon .icon-moon {
+    display: none;
+  }
+
+  .auth-card-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .login-or {
+    margin: 1.25rem 0 0.25rem;
+    text-align: center;
+  }
+
+  .login-provider-form {
+    margin: 0.75rem 0 0;
+  }
+
+  .login-provider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--input-border-color, #ccc);
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+
+    svg {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+    }
+  }
+
+  .login-register-hint,
+  .login-code-link,
+  .login-message {
+    margin-top: 0.75rem;
   }
 
   .auth-card-theme {
@@ -199,6 +292,18 @@ button {
     .checkbox-switcher {
       width: 36px;
       flex: 0 0 36px;
+
+      input[type='checkbox']:after {
+        left: auto;
+        inset-inline-start: 0;
+      }
+
+      input[type='checkbox']:checked:after {
+        left: auto;
+        margin-left: 0;
+        inset-inline-start: 100%;
+        margin-inline-start: -17px;
+      }
     }
   }
 

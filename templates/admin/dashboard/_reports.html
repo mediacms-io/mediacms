@@ -1,0 +1,170 @@
+{% load custom_filters %}
+{% include "admin/dashboard/_section_health.html" with section="reports" counts=stats.system.reports_counts %}
+<div class="row">
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+            <div class="inner">
+                <h3>{{ stats.moderation.reported_media }}</h3>
+                <p>{{ "Reported media"|custom_translate:LANGUAGE_CODE }}</p>
+            </div>
+            <div class="icon"><i class="fas fa-flag"></i></div>
+            <a href="{% url 'admin:files_media_changelist' %}?reported=yes" class="small-box-footer">
+                {{ "Open reported media"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h3>{{ stats.moderation.reported_above_threshold }}</h3>
+                <p>{{ "Above report limit"|custom_translate:LANGUAGE_CODE }}</p>
+            </div>
+            <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <a href="{% url 'admin:files_media_changelist' %}?reported=threshold" class="small-box-footer">
+                {{ "Open above report limit"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+            <div class="inner">
+                <h3>{{ stats.moderation.clears_last_7_days }}</h3>
+                <p>{{ "Reports cleared (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
+            </div>
+            <div class="icon"><i class="fas fa-broom"></i></div>
+            <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report_cleared" class="small-box-footer">
+                {{ "Open cleared reports"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
+    <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+            <div class="inner">
+                <h3>{{ stats.moderation.confirms_last_7_days }}</h3>
+                <p>{{ "Reports confirmed (7 days)"|custom_translate:LANGUAGE_CODE }}</p>
+            </div>
+            <div class="icon"><i class="fas fa-user-shield"></i></div>
+            <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report_confirmed" class="small-box-footer">
+                {{ "Open confirmed reports"|custom_translate:LANGUAGE_CODE }} <i class="fas fa-arrow-circle-right"></i>
+            </a>
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-6">
+        <details class="dashboard-collapse card card-outline card-secondary">
+            <summary class="card-header">
+                <h3 class="card-title">
+                    <a href="{% url 'admin:actions_mediaaction_changelist' %}?action__exact=report">{{ "Recent reports"|custom_translate:LANGUAGE_CODE }}</a>
+                </h3>
+                <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+            </summary>
+            <div class="card-body p-0">
+                <table class="table table-sm when-table moderation-person moderation-reports site-open-table">
+                    <thead>
+                        <tr>
+                            <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "Reporter"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in stats.moderation.recent_reports %}
+                            <tr>
+                                <td title="{{ report.extra_info|default:'' }}">
+                                    {% if report.media_id %}
+                                        <a href="{% url 'admin:files_media_change' report.media_id %}#audit-log-tab">{{ report.media__title|truncatechars:30|default:'-' }}</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.user_id %}
+                                        <a href="{% url 'admin:users_user_change' report.user_id %}">{{ report.user__username|default:'-' }}</a>
+                                    {% else %}
+                                        {{ report.user__username|default:'-' }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ report.action_date|relative_when }}</td>
+                                <td>
+                                    {% if report.media__friendly_token %}
+                                        <a href="{% url 'get_media' %}?m={{ report.media__friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.latest_report_id %}
+                                        <a href="{% url 'admin:actions_mediaaction_change' report.latest_report_id %}" class="open-on-site" title="{{ 'View latest report'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'View latest report'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-flag fa-sm" aria-hidden="true"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+    <div class="col-md-6">
+        <details class="dashboard-collapse card card-outline card-danger">
+            <summary class="card-header">
+                <h3 class="card-title">
+                    <a href="{% url 'admin:actions_mediaaction_changelist' %}">{{ "Recent report actions"|custom_translate:LANGUAGE_CODE }}</a>
+                </h3>
+                <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+            </summary>
+            <div class="card-body p-0">
+                <table class="table table-sm when-table moderation-audit site-open-table">
+                    <thead>
+                        <tr>
+                            <th>{{ "Media"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "Moderator"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "Audit"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th>{{ "When"|custom_translate:LANGUAGE_CODE }}</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for audit in stats.moderation.recent_report_audits %}
+                            <tr>
+                                <td title="{{ audit.extra_info|default:'' }}">
+                                    {% if audit.media_id %}
+                                        <a href="{% url 'admin:files_media_change' audit.media_id %}#audit-log-tab">{{ audit.media__title|truncatechars:30|default:'-' }}</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if audit.user_id %}
+                                        <a href="{% url 'admin:users_user_change' audit.user_id %}">{{ audit.user__username|default:'-' }}</a>
+                                    {% else %}
+                                        {{ audit.user__username|default:'-' }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if audit.id %}
+                                        <a href="{% url 'admin:actions_mediaaction_change' audit.id %}" class="changelist-status-icon changelist-status-icon--{{ audit.action_modifier }}" title="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}" aria-label="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}"><i class="{{ audit.action_icon }}" aria-hidden="true"></i></a>
+                                    {% else %}
+                                        <span class="changelist-status-icon changelist-status-icon--{{ audit.action_modifier }}" title="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}" aria-label="{{ audit.action_label|custom_translate:LANGUAGE_CODE }}"><i class="{{ audit.action_icon }}" aria-hidden="true"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ audit.action_date|relative_when }}</td>
+                                <td>
+                                    {% if audit.media__friendly_token %}
+                                        <a href="{% url 'get_media' %}?m={{ audit.media__friendly_token }}" class="open-on-site" target="_blank" rel="noopener noreferrer" title="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}" aria-label="{{ 'Open on site'|custom_translate:LANGUAGE_CODE }}"><i class="fas fa-eye fa-sm" aria-hidden="true"></i></a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5">{{ "No data"|custom_translate:LANGUAGE_CODE }}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+</div>

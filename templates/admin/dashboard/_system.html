@@ -1,10 +1,71 @@
 {% load custom_filters %}
 <div class="col-12">
-    <div class="card card-outline card-secondary">
+    <div class="card">
         <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-server me-2"></i>{{ "System"|custom_translate:LANGUAGE_CODE }}</h3>
+        </div>
+        <div class="card-body">
+{% include "admin/dashboard/_section_health.html" with section="system" counts=stats.system.system_counts %}
+{% if stats.system.installation|length <= 4 %}
+<div class="card card-outline card-secondary mb-3">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-cube me-2"></i>{{ "MediaCMS installation"|custom_translate:LANGUAGE_CODE }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for item in stats.system.installation %}
+                <div class="{% if stats.system.installation|length <= 2 %}col-md-6{% elif stats.system.installation|length == 3 %}col-md-4{% else %}col-md-3{% endif %} col-6">
+                    <div class="small-box bg-info installation-placard mb-0">
+                        <div class="inner">
+                            <h3>{% if item.translate %}{{ item.value|custom_translate:LANGUAGE_CODE }}{% else %}{{ item.value }}{% endif %}</h3>
+                            <p>{{ item.label|custom_translate:LANGUAGE_CODE }}</p>
+                        </div>
+                        <div class="icon"><i class="{{ item.icon }}"></i></div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="col-12">
+    <details class="dashboard-collapse card card-outline card-secondary" id="mediacms-installation">
+        <summary class="card-header">
+            <h3 class="card-title"><i class="fas fa-cube me-2"></i>{{ "MediaCMS installation"|custom_translate:LANGUAGE_CODE }}</h3>
+            <span class="dashboard-collapse-tools" onclick="event.stopPropagation()">{% include "admin/dashboard/_copy_tools.html" %}</span>
+            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+        </summary>
+        <div class="card-body p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th>{{ "Name"|custom_translate:LANGUAGE_CODE }}</th>
+                        <th>{{ "Value"|custom_translate:LANGUAGE_CODE }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in stats.system.installation %}
+                        <tr>
+                            <td>{{ item.label|custom_translate:LANGUAGE_CODE }}</td>
+                            <td class="runtime-value"><code>{% if item.translate %}{{ item.value|custom_translate:LANGUAGE_CODE }}{% else %}{{ item.value }}{% endif %}</code></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </details>
+</div>
+{% endif %}
+<div class="col-12">
+    <details class="dashboard-collapse card card-outline card-secondary">
+        <summary class="card-header">
             <h3 class="card-title">{{ "System"|custom_translate:LANGUAGE_CODE }}</h3>
             {% include "admin/dashboard/_copy_tools.html" %}
-        </div>
+        
+                                            <i class="fas fa-plus collapse-closed" aria-hidden="true"></i>
+                                            <i class="fas fa-minus collapse-open" aria-hidden="true"></i>
+                                        </summary>
         <div class="card-body p-0">
             <table class="table table-sm mb-0 runtime-table">
                 <thead>
@@ -32,6 +93,9 @@
                     {% endfor %}
                 </tbody>
             </table>
+        </div>
+    </details>
+</div>
         </div>
     </div>
 </div>

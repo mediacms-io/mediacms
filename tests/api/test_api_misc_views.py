@@ -1,10 +1,13 @@
 import uuid
 from unittest.mock import MagicMock, patch
 
+from allauth.socialaccount.helpers import render_authentication_error
 from allauth.socialaccount.models import SocialApp
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
 from django.http import Http404
 from django.test import Client, RequestFactory, TestCase, override_settings
+from django.urls import reverse
 from rest_framework.request import Request
 
 from actions.models import MediaAction
@@ -156,6 +159,7 @@ class CustomLoginViewTest(TestCase):
         request.LANGUAGE_CODE = 'en'
         return request
 
+    @override_settings(USE_IDENTITY_PROVIDERS=False)
     def test_redirects_to_system_login_without_identity_providers(self):
         response = custom_login_view(self.request())
         self.assertEqual(response.status_code, 302)
@@ -173,6 +177,35 @@ class CustomLoginViewTest(TestCase):
         self.assertIn('Login through University', body)
         self.assertIn('/accounts/saml/uni/login/', body)
         self.assertNotIn('Retired option', body)
+        self.assertIn('login-provider-saml', body)
+
+    @override_settings(USE_IDENTITY_PROVIDERS=True)
+    def test_provider_buttons_follow_display_order_and_local_login_is_the_password_form(self):
+        LoginOption.objects.create(title='Sign in with GitHub', url='/accounts/github/login/', ordering=2)
+        LoginOption.objects.create(title='Sign in with Google', url='/accounts/google/login/', ordering=1)
+        LoginOption.objects.create(title='Sign in with password', url='/accounts/login_system', ordering=0)
+        LoginOption.objects.create(title='Hidden', url='/accounts/facebook/login/', ordering=3, active=False)
+
+        response = custom_login_view(self.request())
+        body = response.content.decode()
+
+        self.assertLess(body.index('Sign in with Google'), body.index('Sign in with GitHub'))
+        self.assertIn('name="password"', body)
+        self.assertIn(f'action="{reverse("login_system")}"', body)
+        self.assertIn('method="post" action="/accounts/github/login/"', body)
+        self.assertNotIn('Hidden', body)
+        self.assertNotIn('login-provider-facebook', body)
+
+    def test_authentication_error_names_the_provider_and_the_failure(self):
+        request = self.request()
+        request._messages = FallbackStorage(request)
+        response = render_authentication_error(request, "GitHub", error="denied", exception=Exception("access_denied"))
+        body = response.content.decode()
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("GitHub", body)
+        self.assertIn("denied the sign-in request", body)
+        self.assertIn("access_denied", body)
+        self.assertIn("Back to sign in", body)
 
 
 class FastPaginationWithoutCountTest(TestCase):

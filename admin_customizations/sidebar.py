@@ -78,10 +78,7 @@ def build_workflow_app_list(raw_app_list):
             )
     _extend(moderation_models, index, [("actions", "MediaAction"), ("files", "Comment")])
     if moderation_models:
-        moderation_models.insert(
-            0,
-            _queue_link("Overview", "ModerationOverview", "/admin/dashboard/moderation/"),
-        )
+        moderation_models.insert(0, _queue_link("Overview", "ModerationOverview", "/admin/dashboard/moderation/"))
     group = _group("Moderation", "moderation", moderation_models)
     if group:
         groups.append(group)
@@ -217,11 +214,10 @@ def build_workflow_app_list(raw_app_list):
         ],
     )
     if site_models:
-        site_models.insert(0, _queue_link("Overview", "SiteOverview", "/admin/dashboard/site/"))
-        site_models.insert(1, _queue_link("Health", "SiteHealth", "/admin/dashboard/health/"))
-        site_models.insert(2, _queue_link("Configuration", "SiteConfiguration", "/admin/dashboard/configuration/"))
-        site_models.insert(3, _queue_link("System", "SiteSystem", "/admin/dashboard/system/"))
-        site_models.insert(4, _queue_link("Database", "SiteDatabase", "/admin/dashboard/database/"))
+        site_models.insert(0, _queue_link("Health", "SiteHealth", "/admin/dashboard/health/"))
+        site_models.insert(1, _queue_link("Configuration", "SiteConfiguration", "/admin/dashboard/configuration/"))
+        site_models.insert(2, _queue_link("System", "SiteSystem", "/admin/dashboard/system/"))
+        site_models.insert(3, _queue_link("Database", "SiteDatabase", "/admin/dashboard/database/"))
     group = _group("Site", "site", site_models)
     if group:
         groups.append(group)

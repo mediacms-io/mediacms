@@ -141,6 +141,9 @@ ACCOUNT_USERNAME_VALIDATORS = "users.validators.custom_username_validators"
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*"]
 ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 1
+# Email a one-time sign-in code. Off until a portal turns it on; the login
+# page shows the link only when this is true (and the process is restarted).
+ACCOUNT_LOGIN_BY_CODE_ENABLED = False
 ALLAUTH_TRUSTED_PROXY_COUNT = 1
 # registration won't be open, might also consider to remove links for register
 USERS_CAN_SELF_REGISTER = True
@@ -314,6 +317,10 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "drf_yasg",
+    "allauth.socialaccount.providers.google",
+    "allauth.socialaccount.providers.github",
+    "allauth.socialaccount.providers.facebook",
+    "allauth.socialaccount.providers.openid_connect",
     "allauth.socialaccount.providers.saml",
     "saml_auth.apps.SamlAuthConfig",
     "tinymce",
@@ -740,9 +747,15 @@ PYSUBS_COMMAND = "pysubs2"
 # and docker-compose-dev.yaml
 try:
     DEVELOPMENT_MODE = os.environ.get("DEVELOPMENT_MODE")
+    # dev_settings replaces INSTALLED_APPS, which drops apps appended in local_settings.
+    _apps_before_dev = list(INSTALLED_APPS)
     if DEVELOPMENT_MODE:
         # keep a dev_settings.py file for local overrides
         from .dev_settings import *  # noqa
+
+        for _app in _apps_before_dev:
+            if _app not in INSTALLED_APPS:
+                INSTALLED_APPS.append(_app)
 except ImportError:
     pass
 

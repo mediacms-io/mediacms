@@ -3,22 +3,104 @@
 
 {% block headtitle %} | {{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock headtitle %}
 
+{% block extra_head %}
+{{ block.super }}
+<style>
+  .login-or {
+    margin: 1.25rem 0 0.25rem;
+    text-align: center;
+    color: var(--body-text-color, #666);
+  }
+  .login-provider-form {
+    margin: 0.75rem 0 0;
+  }
+  .login-provider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    min-height: 3.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--input-border-color, #ccc);
+    border-radius: 6px;
+    background: var(--user-action-form-inner-bg-color, #fff);
+    color: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .login-provider svg {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+  }
+  .login-provider:hover {
+    border-color: #4a90e2;
+  }
+  .login-register-hint,
+  .login-code-link,
+  .login-message {
+    margin-top: 0.75rem;
+  }
+</style>
+{% endblock extra_head %}
+
 {% block auth_heading %}{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}{% endblock %}
 
 {% block auth_intro %}
+{% if messages %}
+    {% for message in messages %}
+        <p class="login-message">{{ message }}</p>
+    {% endfor %}
+{% endif %}
 <p>{% translate_link request.LANGUAGE_CODE "If you have not created an account yet, then please {link} first." "sign up" signup_url %}</p>
 {% endblock %}
 
 {% block auth_actions %}
+{% if show_local_login %}
 <form class="login" method="POST" action="{% url 'login_system' %}">
     {% csrf_token %}
     {% if form.non_field_errors %}
         {{ form.non_field_errors }}
+        {% if suggest_register %}
+            <p class="login-register-hint">{% translate_link request.LANGUAGE_CODE "If you do not have an account yet, you can {link} for a new account." "register" signup_url %}</p>
+        {% endif %}
     {% endif %}
-    {{ form.as_p }}
+    {% for field in form %}
+        <p>
+            {{ field.label_tag }}
+            {{ field }}
+            {{ field.errors }}
+            {% if field.help_text %}<span class="helptext">{{ field.help_text }}</span>{% endif %}
+        </p>
+    {% endfor %}
     {% if redirect_field_value %}
         <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
     {% endif %}
     <button class="primaryAction" type="submit">{{ "Sign in"|custom_translate:request.LANGUAGE_CODE }}</button>
 </form>
+{% endif %}
+
+{% if provider_options %}
+    {% if show_local_login %}
+        <p class="login-or">{{ "or"|custom_translate:request.LANGUAGE_CODE }}</p>
+    {% endif %}
+    {% for option in provider_options %}
+        <form class="login-provider-form" method="post" action="{{ option.url }}">
+            {% csrf_token %}
+            {% if redirect_field_value %}
+                <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+            {% endif %}
+            <button class="login-provider login-provider-{{ option.kind }}" type="submit">
+                {% include "account/includes/provider_icon.html" with kind=option.kind %}
+                <span>{{ option.title }}</span>
+            </button>
+        </form>
+    {% endfor %}
+{% endif %}
+
+{% if login_by_code_url %}
+    <p class="login-code-link"><a href="{{ login_by_code_url }}">{{ "Email me a sign-in code"|custom_translate:request.LANGUAGE_CODE }}</a></p>
+{% endif %}
 {% endblock %}

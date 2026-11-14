@@ -7,13 +7,18 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 
-from identity_providers.forms import ImportCSVsForm
+from identity_providers.forms import ImportCSVsForm, SAMLConfigurationInlineForm
 from identity_providers.models import (
     IdentityProviderCategoryMapping,
     IdentityProviderGlobalRole,
     IdentityProviderGroupRole,
     IdentityProviderUserLog,
     LoginOption,
+)
+from identity_providers.providers import (
+    ensure_login_option,
+    label_for_url,
+    login_url_for,
 )
 from rbac.models import RBACGroup
 from saml_auth.models import SAMLConfiguration
@@ -36,9 +41,37 @@ class IdentityProviderUserLogAdmin(admin.ModelAdmin):
 
 class SAMLConfigurationInline(admin.StackedInline):
     model = SAMLConfiguration
+    form = SAMLConfigurationInlineForm
     extra = 0
     can_delete = True
     max_num = 1
+    fields = (
+        "sso_url",
+        "slo_url",
+        "sp_metadata_url",
+        "idp_id",
+        "idp_cert",
+        "sp_cert",
+        "sp_private_key",
+        "clear_sp_private_key",
+        "uid",
+        "name",
+        "email",
+        "groups",
+        "first_name",
+        "last_name",
+        "user_logo",
+        "role",
+        "verified_email",
+        "email_authentication",
+        "remove_from_groups",
+        "save_saml_response_logs",
+    )
+
+    def get_extra(self, request, obj=None, **kwargs):
+        if obj is None or not obj.saml_configurations.exists():
+            return 1
+        return 0
 
 
 class IdentityProviderCategoryMappingInlineForm(forms.ModelForm):
@@ -134,15 +167,15 @@ class CustomSocialAppAdmin(SocialAppAdmin):
 
     change_form_template = 'admin/socialaccount/socialapp/change_form.html'
     list_display = ('get_config_name', 'get_protocol')
-    fields = ('provider', 'provider_id', 'name', 'client_id', 'sites', 'groups_csv', 'categories_csv')
+    fields = ('provider', 'name', 'provider_id', 'client_id', 'secret', 'clear_secret', 'server_url', 'sites', 'groups_csv', 'categories_csv')
+    filter_horizontal = ()
     form = ImportCSVsForm
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.inlines = []
 
-        if getattr(settings, 'USE_SAML', False):
-            self.inlines.append(SAMLConfigurationInline)
+        self.inlines.append(SAMLConfigurationInline)
         self.inlines.append(IdentityProviderGlobalRoleInline)
         self.inlines.append(IdentityProviderGroupRoleInline)
         self.inlines.append(RBACGroupInline)
@@ -163,20 +196,32 @@ class CustomSocialAppAdmin(SocialAppAdmin):
             field.label = 'IDP Config Name'
             field.help_text = "This should be a unique name for the provider."
         elif db_field.name == 'client_id':
-            field.help_text = 'App ID, or consumer key. For SAML providers, this will be part of the default login URL /accounts/saml/{client_id}/login/'
+            field.help_text = 'OAuth and OpenID Connect: the client id from the provider. SAML: the short name used in /accounts/saml/{client_id}/login/ and /accounts/saml/{client_id}/acs/.'
+        elif db_field.name == 'secret':
+            field.label = 'Client secret'
+            field.required = False
+            field.help_text = 'Client secret from the provider. Required for OAuth and OpenID Connect. A saved secret is not shown; enter a new value to replace it.'
         elif db_field.name == 'sites':
             field.required = True
             field.help_text = "Select at least one site where this social application is available. Required."
         elif db_field.name == 'provider_id':
-            field.required = True
-            field.help_text = "This should be a unique identifier for the provider."
+            field.required = False
+            field.help_text = "A short unique id for this connection. Required for SAML and OpenID Connect. For OpenID Connect it is also the name in /accounts/oidc/{provider_id}/login/callback/. OAuth uses the provider name when this is left blank."
         return field
 
     get_config_name.short_description = 'IDP Config Name'
     get_protocol.short_description = 'Protocol'
 
+    def get_inlines(self, request, obj):
+        # Render SAML fields on add and on other protocols so choosing SAML reveals them.
+        return list(self.inlines)
+
     def save_model(self, request, obj, form, change):
+        previous_url = None
+        if change and obj.pk:
+            previous_url = login_url_for(SocialApp.objects.get(pk=obj.pk))
         super().save_model(request, obj, form, change)
+        ensure_login_option(obj, previous_url)
         csv_file = form.cleaned_data.get('groups_csv')
         if csv_file:
             try:
@@ -334,10 +379,24 @@ class IdentityProviderGlobalRoleInline(admin.TabularInline):
 
 
 class LoginOptionAdmin(admin.ModelAdmin):
-    list_display = ('title', 'url', 'ordering', 'active')
+    list_display = ('title', 'display_provider', 'url', 'ordering', 'active')
+    list_display_links = ('title',)
     list_editable = ('ordering', 'active')
     list_filter = ('active',)
     search_fields = ('title', 'url')
+    ordering = ('ordering', 'title')
+    fieldsets = (('General', {'fields': ('title', 'url', 'ordering', 'active'), 'classes': ('tab',)}),)
+
+    @admin.display(description='Provider')
+    def display_provider(self, obj):
+        return label_for_url(obj.url)
+
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'ordering':
+            field.label = 'Display order'
+            field.help_text = 'Display order only. Smaller numbers appear first. This does not change which method is tried.'
+        return field
 
 
 if getattr(settings, 'USE_IDENTITY_PROVIDERS', False):

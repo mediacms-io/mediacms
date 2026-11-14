@@ -1,5 +1,22 @@
 {% extends "admin/dashboard/section_base.html" %}
+{% load custom_filters %}
 
 {% block dashboard_section_content %}
-{% include "admin/dashboard/_moderation.html" %}
+<div class="col-12">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title"><i class="fas fa-shield-alt me-2"></i>{{ "Moderation"|custom_translate:LANGUAGE_CODE }}</h3>
+        </div>
+        <div class="card-body">
+<section id="moderation-reports" class="dashboard-subsection">
+    <h3 class="dashboard-subsection-title"><i class="fas fa-flag" aria-hidden="true"></i>{{ "Reports"|custom_translate:LANGUAGE_CODE }}</h3>
+    {% include "admin/dashboard/_reports.html" %}
+</section>
+<section id="moderation-approval" class="dashboard-subsection">
+    <h3 class="dashboard-subsection-title"><i class="fas fa-clipboard-check" aria-hidden="true"></i>{{ "Media approval"|custom_translate:LANGUAGE_CODE }}</h3>
+    {% include "admin/dashboard/_approval.html" %}
+</section>
+        </div>
+    </div>
+</div>
 {% endblock %}

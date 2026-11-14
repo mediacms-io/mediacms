@@ -339,6 +339,14 @@ body.dark_theme {
   --user-action-form-inner-input-text-color: rgba(255, 255, 255, 0.88);
   --user-action-form-inner-input-bg-color: #121212;
 
+  .auth-card-theme-icon .icon-sun {
+    display: none;
+  }
+
+  .auth-card-theme-icon .icon-moon {
+    display: inline;
+  }
+
   /* ################################################## */
 
   .media-edit-nav {

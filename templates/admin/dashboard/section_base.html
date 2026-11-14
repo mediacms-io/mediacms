@@ -411,6 +411,14 @@
         .dashboard-section-content .card-header:has(.dashboard-copy-tools) .card-title {
             margin-bottom: 0;
         }
+        .installation-placard h3 {
+            font-size: 1.25rem;
+            white-space: normal;
+            overflow-wrap: anywhere;
+        }
+        .installation-placard {
+            min-height: 6.5rem;
+        }
         .runtime-value {
             white-space: pre-wrap;
             word-break: break-word;
@@ -427,27 +435,38 @@
         .database-metrics td:nth-child(2) {
             width: 1%;
         }
-        details.database-restore > summary {
+        details.dashboard-collapse > summary {
             display: flex;
             align-items: center;
             cursor: pointer;
             list-style: none;
         }
-        details.database-restore > summary::-webkit-details-marker {
+        details.dashboard-collapse > summary::-webkit-details-marker {
             display: none;
         }
-        details.database-restore > summary .card-title {
+        details.dashboard-collapse > summary .card-title {
             margin-bottom: 0;
         }
-        details.database-restore > summary .restore-closed,
-        details.database-restore > summary .restore-open {
+        details.dashboard-collapse > summary .dashboard-collapse-tools {
             margin-inline-start: auto;
         }
-        details.database-restore .restore-open,
-        details.database-restore[open] .restore-closed {
+        details.dashboard-collapse > summary .card-tools {
+            float: none;
+            margin-right: 0;
+        }
+        details.dashboard-collapse > summary .collapse-closed,
+        details.dashboard-collapse > summary .collapse-open {
+            margin-inline-start: auto;
+        }
+        details.dashboard-collapse > summary .dashboard-collapse-tools ~ .collapse-closed,
+        details.dashboard-collapse > summary .dashboard-collapse-tools ~ .collapse-open {
+            margin-inline-start: 0.75rem;
+        }
+        details.dashboard-collapse .collapse-open,
+        details.dashboard-collapse[open] .collapse-closed {
             display: none;
         }
-        details.database-restore[open] .restore-open {
+        details.dashboard-collapse[open] .collapse-open {
             display: inline-block;
         }
         .support-example {
@@ -455,6 +474,19 @@
             word-break: break-word;
             max-height: 16rem;
             overflow: auto;
+        }
+        .dashboard-subsection + .dashboard-subsection {
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--gray, #dee2e6);
+        }
+        .dashboard-subsection-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            margin: 0 0 1rem;
+        }
+        .dashboard-subsection-title .fas {
+            margin-inline-end: 0.5rem;
         }
     </style>
 {% endblock %}
@@ -568,7 +600,8 @@
                 }
 
                 root.querySelectorAll(".js-copy-table").forEach(function (button) {
-                    button.addEventListener("click", function () {
+                    button.addEventListener("click", function (event) {
+                        event.stopPropagation();
                         var card = button.closest(".card");
                         var table = card ? card.querySelector("table") : null;
                         if (!table) {

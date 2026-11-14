@@ -1,8 +1,36 @@
 {% extends "admin/change_form_with_object_actions.html" %}
-{% load static %}
+{% load static i18n custom_filters %}
+{% get_current_language as LANGUAGE_CODE %}
 
 {% block extrahead %}
 {{ block.super }}
+<template id="provider-setup-template">
+  <div class="provider-setup">
+    <ol class="provider-steps provider-steps-oauth">
+      <li>{{ "Create an OAuth app at the provider. Set the callback URL to"|custom_translate:LANGUAGE_CODE }}
+        <span class="provider-url-line"><code class="provider-url" data-callback="/accounts/{provider}/login/callback/"></code><button type="button" class="provider-url-copy">{{ "Copy"|custom_translate:LANGUAGE_CODE }}</button></span>
+      </li>
+      <li>{{ "Paste the provider's client id into Client id and the client secret into Client secret."|custom_translate:LANGUAGE_CODE }}</li>
+      <li>{{ "Select this site under Sites, then save. A sign-in button is added for you."|custom_translate:LANGUAGE_CODE }}</li>
+    </ol>
+    <ol class="provider-steps provider-steps-oidc">
+      <li>{{ "Create a web application at the identity provider. Set the redirect URI to"|custom_translate:LANGUAGE_CODE }}
+        <span class="provider-url-line"><code class="provider-url" data-callback="/accounts/oidc/<provider id>/login/callback/"></code><button type="button" class="provider-url-copy">{{ "Copy"|custom_translate:LANGUAGE_CODE }}</button></span>
+      </li>
+      <li>{{ "Enter Provider id (the short name in that URL), Client id, Client secret, and Issuer URL, such as https://login.example.com."|custom_translate:LANGUAGE_CODE }}</li>
+      <li>{{ "Select this site under Sites, then save. A sign-in button is added for you."|custom_translate:LANGUAGE_CODE }}</li>
+    </ol>
+    <ol class="provider-steps provider-steps-saml">
+      <li>{{ "Create a SAML application at the identity provider. Set the reply URL to"|custom_translate:LANGUAGE_CODE }}
+        <span class="provider-url-line"><code class="provider-url" data-callback="/accounts/saml/<client id>/acs/"></code><button type="button" class="provider-url-copy">{{ "Copy"|custom_translate:LANGUAGE_CODE }}</button></span>
+        {{ "and the entity id to"|custom_translate:LANGUAGE_CODE }}
+        <span class="provider-url-line"><code class="provider-url" data-callback="/saml/metadata/"></code><button type="button" class="provider-url-copy">{{ "Copy"|custom_translate:LANGUAGE_CODE }}</button></span>
+      </li>
+      <li>{{ "Enter Client id (the short name in that reply URL) and Provider id. On the SAML configuration tab, enter the identity provider id, sign-in URL, sign-out URL, service provider metadata URL, the identity provider certificate, and the user id attribute."|custom_translate:LANGUAGE_CODE }}</li>
+      <li>{{ "Select this site under Sites, then save. Group and role mapping stays on the other tabs."|custom_translate:LANGUAGE_CODE }}</li>
+    </ol>
+  </div>
+</template>
 <script>
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -49,6 +77,45 @@ document.addEventListener('DOMContentLoaded', function() {
       border-color: var(--info);
       outline: 0;
       box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .provider-setup {
+      margin: 0 0 1.25rem;
+    }
+    .provider-steps {
+      margin: 0;
+      padding-left: 1.4rem;
+    }
+    .provider-steps li {
+      margin: 0.35rem 0;
+    }
+    .provider-steps code {
+      font-size: 0.92em;
+    }
+    .provider-url-line {
+      display: flex;
+      align-items: stretch;
+      gap: 0.5rem;
+      margin: 0.45rem 0 0.15rem;
+    }
+    .provider-url-line code {
+      display: block;
+      flex: 1 1 auto;
+      margin: 0;
+      padding: 0.45rem 0.65rem;
+      border: 1px solid var(--gray, #ccc);
+      border-radius: 4px;
+      background: var(--mc-canvas, #f6f6f6);
+      user-select: all;
+      word-break: break-all;
+      white-space: normal;
+    }
+    .provider-url-copy {
+      flex: 0 0 auto;
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--gray, #ccc);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
     }
   `;
   document.head.appendChild(styleEl);
@@ -132,6 +199,86 @@ document.addEventListener('DOMContentLoaded', function() {
 
       hasCategoriesFieldError.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+  }
+
+  function placeProviderSetup() {
+    const template = document.getElementById('provider-setup-template');
+    const protocol = document.querySelector('.form-group.field-provider');
+    if (!template || !protocol || document.querySelector('.provider-setup')) {
+      return;
+    }
+    protocol.insertAdjacentElement('afterend', template.content.firstElementChild);
+  }
+
+  function toggleProviderFields() {
+    const providerField = document.getElementById('id_provider');
+    if (!providerField) {
+      return;
+    }
+    const provider = providerField.value;
+    const oauth = ['google', 'github', 'facebook'].indexOf(provider) !== -1;
+    const oidc = provider === 'openid_connect';
+    const saml = provider === 'saml';
+    const kind = oidc ? 'oidc' : (saml ? 'saml' : 'oauth');
+
+    function show(selector, visible) {
+      document.querySelectorAll(selector).forEach(function (element) {
+        element.style.display = visible ? '' : 'none';
+      });
+    }
+
+    show('.field-secret', oauth || oidc);
+    show('.field-clear_secret', (oauth || oidc) && document.querySelector('.field-clear_secret input[type="checkbox"]'));
+    show('.field-server_url', oidc);
+    show('.field-provider_id', saml || oidc);
+    show('.field-groups_csv, .field-categories_csv', saml);
+    show('#jazzy-tabs, .nav-tabs', saml);
+    show('.provider-steps', false);
+    show('.provider-steps-' + kind, true);
+    document.querySelectorAll('.provider-url').forEach(function (node) {
+      const path = (node.getAttribute('data-callback') || '').replace('{provider}', provider || 'google');
+      node.textContent = window.location.origin + path;
+    });
+  }
+
+  function bindProviderToggle() {
+    placeProviderSetup();
+    const providerField = document.getElementById('id_provider');
+    if (!providerField || providerField.dataset.setupBound) {
+      toggleProviderFields();
+      return;
+    }
+    providerField.dataset.setupBound = '1';
+    providerField.addEventListener('change', toggleProviderFields);
+    providerField.addEventListener('select2:select', toggleProviderFields);
+    if (window.jQuery) {
+      window.jQuery(providerField).on('change select2:select', toggleProviderFields);
+    }
+    toggleProviderFields();
+  }
+
+  document.addEventListener('click', function (event) {
+    const button = event.target.closest('.provider-url-copy');
+    if (!button) {
+      return;
+    }
+    const url = button.parentElement.querySelector('.provider-url');
+    const text = url ? url.textContent : '';
+    if (!text || !navigator.clipboard) {
+      return;
+    }
+    const original = button.textContent;
+    navigator.clipboard.writeText(text).then(function () {
+      button.textContent = "{{ 'Copied'|custom_translate:LANGUAGE_CODE|escapejs }}";
+      window.setTimeout(function () {
+        button.textContent = original;
+      }, 1500);
+    });
+  });
+
+  bindProviderToggle();
+  if (window.jQuery) {
+    window.jQuery(document).ready(bindProviderToggle);
   }
 
   function performRestStuff() {

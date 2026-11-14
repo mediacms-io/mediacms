@@ -12,10 +12,38 @@ from .models import SAMLConfiguration
 
 class SAMLConfigurationForm(forms.ModelForm):
     import_csv = forms.FileField(required=False, label="CSV file", help_text="Make sure headers are group_id, name")
+    clear_sp_private_key = forms.BooleanField(
+        required=False,
+        label="Clear saved private key",
+        help_text="Remove the saved private key. Leave this unchecked to keep it.",
+    )
 
     class Meta:
         model = SAMLConfiguration
         fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        private_key = self.fields["sp_private_key"]
+        private_key.widget = forms.PasswordInput(render_value=False, attrs={"autocomplete": "new-password"})
+        private_key.required = False
+        if self.instance.pk and self.instance.sp_private_key:
+            private_key.label = "New private key"
+            private_key.help_text = "A private key is saved and is not shown. Enter a new value to replace it, or clear it below. Leave both unchanged to keep the saved key."
+        else:
+            self.fields["clear_sp_private_key"].widget = forms.HiddenInput()
+
+    def clean(self):
+        cleaned = super().clean()
+        stored = self.instance.sp_private_key if self.instance.pk else ""
+        submitted = (cleaned.get("sp_private_key") or "").strip()
+        if submitted:
+            cleaned["sp_private_key"] = submitted
+        elif cleaned.get("clear_sp_private_key"):
+            cleaned["sp_private_key"] = ""
+        else:
+            cleaned["sp_private_key"] = stored or ""
+        return cleaned
 
     def clean_import_csv(self):
         csv_file = self.cleaned_data.get('import_csv')
@@ -51,7 +79,7 @@ class SAMLConfigurationAdmin(admin.ModelAdmin):
     search_fields = ['social_app__name', 'idp_id', 'sp_metadata_url']
 
     fieldsets = [
-        ('Provider Settings', {'fields': ['social_app', 'idp_id', 'idp_cert', 'sp_cert', 'sp_private_key']}),
+        ('Provider Settings', {'fields': ['social_app', 'idp_id', 'idp_cert', 'sp_cert', 'sp_private_key', 'clear_sp_private_key']}),
         ('URLs', {'fields': ['sso_url', 'slo_url', 'sp_metadata_url']}),
         ('Group Management', {'fields': ['remove_from_groups', 'save_saml_response_logs']}),
         ('Attribute Mapping', {'fields': ['uid', 'name', 'email', 'groups', 'first_name', 'last_name', 'user_logo', 'role']}),
