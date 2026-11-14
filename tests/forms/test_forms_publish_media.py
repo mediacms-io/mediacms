@@ -38,6 +38,16 @@ class PublishFormFieldsTest(TestCase):
                 self.assertTrue(form.fields[field].disabled)
                 self.assertEqual(form.fields[field].widget.attrs["class"], "read-only-field")
 
+    def test_is_reviewed_initial_matches_instance_for_owners(self):
+        # Regression for #1275: field must stay on the form (disabled) so the UI
+        # shows the real DB value instead of defaulting to checked/true.
+        Media.objects.filter(pk=self.public.pk).update(is_reviewed=False)
+        self.public.refresh_from_db()
+        form = MediaPublishForm(self.owner, instance=self.public)
+        self.assertIn("is_reviewed", form.fields)
+        self.assertTrue(form.fields["is_reviewed"].disabled)
+        self.assertFalse(form.initial.get("is_reviewed", form.fields["is_reviewed"].initial))
+
     def test_moderation_fields_are_editable_for_editors(self):
         form = MediaPublishForm(self.editor, instance=self.public)
         for field in EDITOR_ONLY_FIELDS:

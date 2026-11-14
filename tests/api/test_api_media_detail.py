@@ -354,8 +354,8 @@ class MediaDetailManagerActionsTest(TestCase):
         self.media.refresh_from_db()
         self.assertEqual((self.media.is_reviewed, self.media.listable), (True, True))
 
-        self.media.is_reviewed = False
-        self.media.save(update_fields=["is_reviewed", "listable"])
+        # Multipart clients send the string "false"; that must unreview and unlist.
+        self.assertEqual(self.post({"type": "review", "result": "false"}).status_code, 201)
         self.media.refresh_from_db()
         self.assertEqual((self.media.is_reviewed, self.media.listable), (False, False))
 
