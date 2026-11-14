@@ -821,6 +821,37 @@ class MediaBulkUserActions(APIView):
         return Response({"detail": "Course cleanup completed successfully"})
 
 
+class MediaPlaylistMembership(APIView):
+    """
+    GET: Return playlists (current user's) that contain the given media.
+    Used by the media page Save popup to show which playlists already contain this media.
+    """
+
+    permission_classes = (permissions.IsAuthenticated, IsAuthorizedToAdd)
+    parser_classes = (JSONParser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(
+                name='friendly_token',
+                type=openapi.TYPE_STRING,
+                in_=openapi.IN_PATH,
+                description='Media friendly token',
+                required=True,
+            ),
+        ],
+        tags=['Media'],
+        operation_summary='List playlists containing this media',
+        operation_description='Returns current user playlists that contain the given media',
+        responses={200: 'List of { friendly_token }', 404: 'Media not found'},
+    )
+    def get(self, request, friendly_token, format=None):
+        media = get_object_or_404(Media, friendly_token=friendly_token)
+        playlists = Playlist.objects.filter(user=request.user, playlistmedia__media=media).values('friendly_token').distinct()
+        results = [{'friendly_token': p['friendly_token']} for p in playlists]
+        return Response({'results': results})
+
+
 class MediaDetail(APIView):
     """
     Retrieve, update or delete a media instance.

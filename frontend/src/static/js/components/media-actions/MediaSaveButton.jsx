@@ -3,6 +3,7 @@ import { usePopup } from '../../utils/hooks/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, PopupMain } from '../_shared/';
 import { PlaylistsSelection } from '../playlists-selection/PlaylistsSelection';
 import { translateString } from '../../utils/helpers/';
+import { MediaPageActions } from '../../utils/actions/';
 
 function mediaSavePopupPages(onTriggerPopupClose) {
   return {
@@ -35,7 +36,7 @@ export function MediaSaveButton(props) {
 
   return (
     <div className="save" data-action-tooltip={translateString('Save')}>
-      <PopupTrigger contentRef={popupContentRef}>
+      <PopupTrigger contentRef={popupContentRef} onBeforeOpen={() => MediaPageActions.loadPlaylistsForSave()}>
         <button>
           <CircleIconButton type="span">
             <MaterialIcon type="playlist_add" />

@@ -171,10 +171,30 @@ class MediaPageStore extends EventEmitter {
     }
 
     this.playlistsAPIUrl = this.mediacms_config.api.user.playlists + this.mediacms_config.member.username;
-
     this.playlistsResponse = this.playlistsResponse.bind(this);
-
     getRequest(this.playlistsAPIUrl, !1, this.playlistsResponse);
+  }
+
+  mediaPlaylistsResponse(response) {
+    const mediaId = MediaPageStoreData[this.id].mediaId;
+    let containingSet = new Set();
+    if (response && response.data && response.data.results) {
+      let i = 0;
+      while (i < response.data.results.length) {
+        containingSet.add(response.data.results[i].friendly_token);
+        i += 1;
+      }
+    }
+    let i = 0;
+    while (i < MediaPageStoreData[this.id].playlists.length) {
+      MediaPageStoreData[this.id].playlists[i].media_list = containingSet.has(
+        MediaPageStoreData[this.id].playlists[i].playlist_id
+      )
+        ? [mediaId]
+        : [];
+      i += 1;
+    }
+    this.emit('playlists_load');
   }
 
   dataResponse(response) {
@@ -195,11 +215,10 @@ class MediaPageStore extends EventEmitter {
       this.emit('loaded_media_data');
     }
 
-    // Skip loading playlists and comments when in embed mode (to reduce API calls)
+    // Skip loading comments/users in embed mode. Playlists load lazily when Save opens.
     const isEmbedMode = window.location.pathname.startsWith('/embed');
 
     if (!isEmbedMode) {
-      this.loadPlaylists();
       if (MediaCMS.features.media.actions.comment_mention === true) {
         this.loadUsers();
       }
@@ -242,61 +261,37 @@ class MediaPageStore extends EventEmitter {
   playlistsResponse(response) {
     if (response && response.data) {
       let tmp_playlists = response.data.count ? response.data.results : [];
-
       MediaPageStoreData[this.id].playlists = [];
 
       let i = 0;
-      let cntr = 0;
-
       while (i < tmp_playlists.length) {
-        (function (pos) {
-          let _this = this;
-
-          if (tmp_playlists[pos].user === this.mediacms_config.member.username) {
-            let playlistsIndex = MediaPageStoreData[_this.id].playlists.length;
-
-            MediaPageStoreData[_this.id].playlists[playlistsIndex] = {
-              playlist_id: (function (_url_) {
-                let ret = _url_.split('/');
-                return 1 < ret.length ? ret[ret.length - 1] : null;
-              })(tmp_playlists[pos].url),
-              title: tmp_playlists[pos].title,
-              description: tmp_playlists[pos].description,
-              add_date: tmp_playlists[pos].add_date,
-            };
-
-            getRequest(
-              this.mediacms_config.site.url + '/' + tmp_playlists[pos].api_url.replace(/^\//g, ''),
-              !1,
-              function (resp) {
-                if (!!resp && !!resp.data) {
-                  MediaPageStoreData[_this.id].playlists[playlistsIndex].media_list = [];
-
-                  let f = 0;
-                  let arr;
-
-                  while (f < resp.data.playlist_media.length) {
-                    arr = resp.data.playlist_media[f].url.split('m=');
-                    if (2 === arr.length) {
-                      MediaPageStoreData[_this.id].playlists[playlistsIndex].media_list.push(arr[1]);
-                    }
-                    f += 1;
-                  }
-                }
-
-                cntr += 1;
-
-                if (cntr === tmp_playlists.length) {
-                  this.emit('playlists_load');
-                }
-              }
-            );
-          }
-        }.bind(this)(i));
-
+        if (tmp_playlists[i].user === this.mediacms_config.member.username) {
+          MediaPageStoreData[this.id].playlists.push({
+            playlist_id: tmp_playlists[i].friendly_token,
+            title: tmp_playlists[i].title,
+            description: tmp_playlists[i].description,
+            add_date: tmp_playlists[i].add_date,
+            media_list: [],
+          });
+        }
         i += 1;
       }
+
+      if (MediaPageStoreData[this.id].playlists.length === 0) {
+        this.emit('playlists_load');
+        return;
+      }
+
+      const mediaPlaylistsUrl =
+        this.mediacms_config.api.media + '/' + MediaPageStoreData[this.id].mediaId + '/playlists';
+      this.mediaPlaylistsResponse = this.mediaPlaylistsResponse.bind(this);
+      this.mediaPlaylistsErrorResponse = this.mediaPlaylistsErrorResponse.bind(this);
+      getRequest(mediaPlaylistsUrl, !1, this.mediaPlaylistsResponse, this.mediaPlaylistsErrorResponse);
     }
+  }
+
+  mediaPlaylistsErrorResponse() {
+    this.emit('playlists_load');
   }
 
   requestMediaLike() {
@@ -817,6 +812,9 @@ class MediaPageStore extends EventEmitter {
       case 'APPEND_NEW_PLAYLIST':
         MediaPageStoreData[this.id].playlists.push(action.playlist_data);
         this.emit('playlists_load');
+        break;
+      case 'LOAD_PLAYLISTS_FOR_SAVE':
+        this.loadPlaylists();
         break;
     }
   }

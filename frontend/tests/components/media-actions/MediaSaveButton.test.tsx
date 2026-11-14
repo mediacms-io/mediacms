@@ -28,6 +28,7 @@ describe('components/media-actions', () => {
             const { container, unmount } = renderIntoContainer(<MediaSaveButton />);
             expect(container.querySelector('.save > button')?.textContent).toBe('SAVE');
             click(container.querySelector('.save > button'));
+            expect((MediaPageActions as any).loadPlaylistsForSave).toHaveBeenCalled();
             const labels = Array.from(container.querySelectorAll('.saveto-select label')) as HTMLElement[];
             expect(labels.map((l) => l.textContent)).toEqual(['Fav', 'Later']);
             expect((labels[0].querySelector('input') as HTMLInputElement).checked).toBe(true);
