@@ -3,7 +3,7 @@
 
 {% block headermeta %}
 
-<link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">
+{% if media_object %}<link rel="canonical" href="{{FRONTEND_HOST}}{{media_object.get_absolute_url}}">{% endif %}
 
 <meta name="description" content="{{PORTAL_DESCRIPTION}}">
 

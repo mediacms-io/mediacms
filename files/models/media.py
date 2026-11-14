@@ -453,7 +453,17 @@ class Media(models.Model):
         Set encoding_status as success for non video
         content since all listings filter for encoding_status success
         """
+        logger.debug(
+            "Setting media type - friendly_token=%s, current_media_type=%s",
+            self.friendly_token,
+            self.media_type,
+        )
         kind = helpers.get_file_type(self.media_file.path)
+        logger.debug(
+            "File type detected - friendly_token=%s, detected_type=%s",
+            self.friendly_token,
+            kind,
+        )
         if kind is not None:
             if kind == "image":
                 self.media_type = "image"
@@ -475,7 +485,12 @@ class Media(models.Model):
             elif ret.get("is_video") or ret.get("is_audio"):
                 try:
                     self.media_info = json.dumps(ret)
-                except TypeError:
+                except TypeError as e:
+                    logger.error(
+                        "Type error updating search vector - friendly_token=%s, error=%s",
+                        self.friendly_token,
+                        str(e),
+                    )
                     self.media_info = ""
                 self.md5sum = ret.get("md5sum")
                 self.size = helpers.show_file_size(ret.get("file_size"))
@@ -596,10 +611,24 @@ class Media(models.Model):
         so that no EncodeProfile for highter heights than the video
         are created
         """
+        logger.debug(
+            "Starting encode - friendly_token=%s, profile_count=%s, force=%s, chunkize=%s, video_height=%s, duration=%s",
+            self.friendly_token,
+            len(profiles) if profiles else 0,
+            force,
+            chunkize,
+            self.video_height,
+            self.duration,
+        )
 
         if not profiles:
             profiles = EncodeProfile.objects.filter(active=True)
         profiles = list(profiles)
+        logger.debug(
+            "Active profiles retrieved - friendly_token=%s, profile_count=%s",
+            self.friendly_token,
+            len(profiles),
+        )
 
         from .. import tasks
 
@@ -678,6 +707,7 @@ class Media(models.Model):
         """Set encoding_status for videos
         Set success if at least one mp4 or webm exists
         """
+        old_status = self.encoding_status
         mp4_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="mp4", chunk=False).exclude(profile__name=PREVIEW_PROFILE_NAME))
         webm_statuses = set(encoding.status for encoding in self.encodings.filter(profile__extension="webm", chunk=False))
 
@@ -689,6 +719,14 @@ class Media(models.Model):
             encoding_status = "running"
         else:
             encoding_status = "fail"
+
+        if old_status != encoding_status:
+            logger.info(
+                "Media encoding status changed - friendly_token=%s, old_status=%s, new_status=%s",
+                self.friendly_token,
+                old_status,
+                encoding_status,
+            )
         self.encoding_status = encoding_status
 
         return True
@@ -1079,9 +1117,25 @@ def media_save(sender, instance, created, **kwargs):
     if created:
         from ..methods import notify_users
 
+        # Log media creation - this should always fire for new media
+        logger.info(
+            "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+            instance.user.username if instance.user else None,
+            instance.media_type,
+            instance.title[:50] if instance.title else None,
+        )
         instance.media_init()
         if not getattr(instance, "_skip_admin_notification", False):
             notify_users(friendly_token=instance.friendly_token, action="media_added")
+    else:
+        # Log significant updates
+        logger.debug(
+            "Media updated - friendly_token=%s, user_id=%s",
+            instance.friendly_token,
+            instance.user.id if instance.user else None,
+        )
 
     instance.user.update_user_media()
     if instance.category.all():
@@ -1099,6 +1153,12 @@ def media_save(sender, instance, created, **kwargs):
 
 @receiver(pre_delete, sender=Media)
 def media_file_pre_delete(sender, instance, **kwargs):
+    logger.info(
+        "Media deletion initiated - friendly_token=%s, user_id=%s, media_type=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+    )
     if instance.category.all():
         for category in instance.category.all():
             instance.category.remove(category)
@@ -1115,6 +1175,13 @@ def media_file_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
+    logger.info(
+        "Media deletion completed - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
+        instance.friendly_token,
+        instance.user.id if instance.user else None,
+        instance.media_type,
+        instance.title[:50] if instance.title else None,
+    )
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:
@@ -1142,7 +1209,28 @@ def media_file_delete(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=Media.category.through)
-def media_m2m(sender, instance, **kwargs):
+def media_m2m(sender, instance, action, pk_set, **kwargs):
+    import logging
+
+    logger = logging.getLogger(__name__)
+
+    # Only log post_add and post_remove actions to avoid duplicate logs
+    if action in ['post_add', 'post_remove']:
+        from .category import Category
+
+        categories = Category.objects.filter(pk__in=pk_set) if pk_set else []
+        category_names = [cat.title for cat in categories]
+
+        logger.info(
+            "Media category %s - friendly_token=%s, user_id=%s, action=%s, category_count=%s, category_names=%s",
+            "added" if action == 'post_add' else "removed",
+            instance.friendly_token if instance.friendly_token else None,
+            instance.user.id if instance.user else None,
+            action,
+            len(categories),
+            category_names,
+        )
+
     if instance.category.all():
         for category in instance.category.all():
             category.update_category_media()
@@ -1150,5 +1238,5 @@ def media_m2m(sender, instance, **kwargs):
         for tag in instance.tags.all():
             tag.update_tag_media()
 
-    if kwargs.get("action") in ("post_add", "post_remove", "post_clear"):
+    if action in ("post_add", "post_remove", "post_clear"):
         instance.update_search_vector()

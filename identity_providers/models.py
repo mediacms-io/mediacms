@@ -1,6 +1,12 @@
+import logging
+
 from allauth.socialaccount.models import SocialApp
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
+
+logger = logging.getLogger(__name__)
 
 
 class IdentityProviderUserLog(models.Model):
@@ -123,3 +129,104 @@ class LoginOption(models.Model):
 
     def __str__(self):
         return self.title
+
+
+@receiver(post_save, sender=IdentityProviderGroupRole)
+def identity_provider_group_role_save(sender, instance, created, **kwargs):
+    """Log identity provider group role mapping creation and updates"""
+    if created:
+        logger.info(
+            "Identity provider group role mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+    else:
+        logger.debug(
+            "Identity provider group role mapping updated - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+
+
+@receiver(post_delete, sender=IdentityProviderGroupRole)
+def identity_provider_group_role_delete(sender, instance, **kwargs):
+    """Log identity provider group role mapping deletion"""
+    logger.info(
+        "Identity provider group role mapping deleted - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+        instance.id,
+        instance.identity_provider.id if instance.identity_provider else None,
+        instance.name,
+        instance.map_to,
+    )
+
+
+@receiver(post_save, sender=IdentityProviderGlobalRole)
+def identity_provider_global_role_save(sender, instance, created, **kwargs):
+    """Log identity provider global role mapping creation and updates"""
+    if created:
+        logger.info(
+            "Identity provider global role mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+    else:
+        logger.debug(
+            "Identity provider global role mapping updated - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to,
+        )
+
+
+@receiver(post_delete, sender=IdentityProviderGlobalRole)
+def identity_provider_global_role_delete(sender, instance, **kwargs):
+    """Log identity provider global role mapping deletion"""
+    logger.info(
+        "Identity provider global role mapping deleted - mapping_id=%s, identity_provider_id=%s, name=%s, map_to=%s",
+        instance.id,
+        instance.identity_provider.id if instance.identity_provider else None,
+        instance.name,
+        instance.map_to,
+    )
+
+
+@receiver(post_save, sender=IdentityProviderCategoryMapping)
+def identity_provider_category_mapping_save(sender, instance, created, **kwargs):
+    """Log identity provider category mapping creation and updates"""
+    if created:
+        logger.info(
+            "Identity provider category mapping created - mapping_id=%s, identity_provider_id=%s, name=%s, category_id=%s, category_title=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to.id if instance.map_to else None,
+            instance.map_to.title if instance.map_to else None,
+        )
+    else:
+        logger.debug(
+            "Identity provider category mapping updated - mapping_id=%s, identity_provider_id=%s, name=%s, category_id=%s",
+            instance.id,
+            instance.identity_provider.id if instance.identity_provider else None,
+            instance.name,
+            instance.map_to.id if instance.map_to else None,
+        )
+
+
+@receiver(post_delete, sender=IdentityProviderCategoryMapping)
+def identity_provider_category_mapping_delete(sender, instance, **kwargs):
+    """Log identity provider category mapping deletion"""
+    logger.info(
+        "Identity provider category mapping deleted - mapping_id=%s, identity_provider_id=%s, name=%s, category_id=%s, category_title=%s",
+        instance.id,
+        instance.identity_provider.id if instance.identity_provider else None,
+        instance.name,
+        instance.map_to.id if instance.map_to else None,
+        instance.map_to.title if instance.map_to else None,
+    )
