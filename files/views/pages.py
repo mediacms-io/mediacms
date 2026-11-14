@@ -754,12 +754,26 @@ def upload_media(request):
 
     from allauth.account.forms import LoginForm
 
+    from ..models.utils import MEDIA_STATES
+
     form = LoginForm()
     context = {}
     context["form"] = form
     context["can_add"] = user_allowed_to_upload(request)
     can_upload_exp = settings.CANNOT_ADD_MEDIA_MESSAGE
     context["can_upload_exp"] = can_upload_exp
+
+    default_state = helpers.get_default_state(user=request.user)
+    if is_mediacms_editor(request.user) or settings.PORTAL_WORKFLOW == "public":
+        allowed_states = list(MEDIA_STATES)
+    else:
+        allowed_keys = ["private", "unlisted"]
+        if default_state not in allowed_keys:
+            allowed_keys.append(default_state)
+        allowed_states = [(key, dict(MEDIA_STATES).get(key, key)) for key in allowed_keys if key in dict(MEDIA_STATES)]
+
+    context["default_media_state"] = default_state
+    context["allowed_media_states"] = allowed_states
 
     return render(request, "cms/add-media.html", context)
 

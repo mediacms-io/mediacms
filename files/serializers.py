@@ -2,10 +2,37 @@ from django.conf import settings
 from django.urls import reverse
 from rest_framework import serializers
 
-from .methods import can_edit_category, is_mediacms_editor
+from users.models import User
+
+from .helpers import get_alphanumeric_and_spaces
+from .methods import can_edit_category, change_media_owner, is_mediacms_editor
 from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
 
 # TODO: put them in a more DRY way
+
+
+class CommaSeparatedOrListField(serializers.Field):
+    """Accept a list or a comma-separated string (multipart-friendly)."""
+
+    default_error_messages = {"invalid": "Expected a list of strings or a comma-separated string."}
+
+    def to_internal_value(self, data):
+        if data is None or data == "":
+            return []
+        if isinstance(data, str):
+            return [item.strip() for item in data.split(",") if item.strip()]
+        if isinstance(data, list):
+            items = []
+            for item in data:
+                if isinstance(item, str) and "," in item:
+                    items.extend([part.strip() for part in item.split(",") if part.strip()])
+                elif item is not None and str(item).strip():
+                    items.append(str(item).strip())
+            return items
+        self.fail("invalid")
+
+    def to_representation(self, value):
+        return value or []
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -16,6 +43,10 @@ class MediaSerializer(serializers.ModelSerializer):
     thumbnail_url = serializers.SerializerMethodField()
     author_profile = serializers.SerializerMethodField()
     author_thumbnail = serializers.SerializerMethodField()
+    category_uids = CommaSeparatedOrListField(required=False, write_only=True)
+    category_titles = CommaSeparatedOrListField(required=False, write_only=True)
+    tag_titles = CommaSeparatedOrListField(required=False, write_only=True)
+    owner = serializers.CharField(required=False, write_only=True, allow_blank=False)
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
@@ -42,7 +73,6 @@ class MediaSerializer(serializers.ModelSerializer):
             "user",
             "add_date",
             "media_type",
-            "state",
             "duration",
             "encoding_status",
             "views",
@@ -79,24 +109,132 @@ class MediaSerializer(serializers.ModelSerializer):
             "featured",
             "user_featured",
             "size",
-            # "category",
+            "enable_comments",
+            "allow_download",
+            "category_uids",
+            "category_titles",
+            "tag_titles",
+            "owner",
         )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
+    def validate_state(self, value):
+        valid_states = ["private", "public", "unlisted"]
+        if value not in valid_states:
+            raise serializers.ValidationError(f"state must be one of {valid_states}")
 
-        if False and request and 'category' in self.fields:
-            # this is not working
-            user = request.user
-            if is_mediacms_editor(user):
-                pass
-            else:
-                if getattr(settings, 'USE_RBAC', False):
-                    # Filter category queryset based on user permissions
-                    non_rbac_categories = Category.objects.filter(is_rbac_category=False)
-                    rbac_categories = user.get_rbac_categories_as_contributor()
-                    self.fields['category'].queryset = non_rbac_categories.union(rbac_categories)
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user and not is_mediacms_editor(user) and settings.PORTAL_WORKFLOW != "public" and value == "public":
+            raise serializers.ValidationError("You are not allowed to set media to public state")
+        return value
+
+    def validate_owner(self, value):
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if not user or not is_mediacms_editor(user):
+            raise serializers.ValidationError("Only editors can set owner")
+        if not User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("User not found")
+        return value
+
+    def _apply_state(self, media, state):
+        media.state = state
+        if media.state == "public" and media.encoding_status == "success" and media.is_reviewed is True:
+            media.listable = True
+        else:
+            media.listable = False
+        media.save(update_fields=["state", "listable"])
+
+    def _user_can_use_category(self, user, category):
+        if category.is_rbac_category and not (user and user.has_contributor_access_to_category(category)):
+            return False
+        return True
+
+    def _resolve_categories(self, identifiers=None, titles=None):
+        """Resolve categories by uid and/or title.
+
+        Values in ``identifiers`` (from category_uids) match uid first, then exact title.
+        Values in ``titles`` (from category_titles) match exact title only.
+        """
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        resolved = []
+        seen_ids = set()
+
+        def add_category(category):
+            if category is None or category.id in seen_ids:
+                return
+            if not self._user_can_use_category(user, category):
+                return
+            seen_ids.add(category.id)
+            resolved.append(category)
+
+        for ident in identifiers or []:
+            category = Category.objects.filter(uid=ident).first()
+            if category is None:
+                category = Category.objects.filter(title=ident).first()
+            add_category(category)
+
+        for title in titles or []:
+            for category in Category.objects.filter(title=title):
+                add_category(category)
+
+        return resolved
+
+    def _apply_categories(self, media, identifiers=None, titles=None):
+        for category in self._resolve_categories(identifiers=identifiers, titles=titles):
+            media.category.add(category)
+
+    def _apply_tags(self, media, tag_titles):
+        if not tag_titles:
+            return
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        for raw_title in tag_titles:
+            title = get_alphanumeric_and_spaces(raw_title)[:100]
+            if not title:
+                continue
+            tag, _created = Tag.objects.get_or_create(title=title, defaults={"user": user})
+            media.tags.add(tag)
+
+    def create(self, validated_data):
+        category_uids = validated_data.pop("category_uids", None) or []
+        category_titles = validated_data.pop("category_titles", None) or []
+        tag_titles = validated_data.pop("tag_titles", None) or []
+        owner_username = validated_data.pop("owner", None)
+        # Media.save() always resets state on create; apply explicitly afterwards.
+        explicit_state = validated_data.pop("state", None)
+
+        if owner_username:
+            validated_data["user"] = User.objects.get(username=owner_username)
+
+        media = super().create(validated_data)
+
+        if explicit_state:
+            self._apply_state(media, explicit_state)
+
+        self._apply_categories(media, identifiers=category_uids, titles=category_titles)
+        self._apply_tags(media, tag_titles)
+        return media
+
+    def update(self, instance, validated_data):
+        category_uids = validated_data.pop("category_uids", None)
+        category_titles = validated_data.pop("category_titles", None)
+        tag_titles = validated_data.pop("tag_titles", None)
+        owner_username = validated_data.pop("owner", None)
+
+        media = super().update(instance, validated_data)
+
+        if owner_username:
+            new_user = User.objects.get(username=owner_username)
+            change_media_owner(media.id, new_user)
+            media.refresh_from_db()
+
+        if category_uids is not None or category_titles is not None:
+            self._apply_categories(media, identifiers=category_uids or [], titles=category_titles or [])
+        if tag_titles is not None:
+            self._apply_tags(media, tag_titles)
+        return media
 
 
 class CategoriesInfoMixin(serializers.Serializer):

@@ -34,10 +34,24 @@ media_file = '/tmp/file.mp4'
 requests.post(
     url=upload_url,
     files={'media_file': open(media_file,'rb')},
-    data={'title': title, 'description': description},
+    data={
+        'title': title,
+        'description': description,
+        # optional metadata on create:
+        'state': 'unlisted',              # private | public | unlisted
+        'category_uids': 'uid1,News',    # comma-separated UIDs and/or titles (uid tried first)
+        # 'category_titles': 'News,Sports',  # titles only, if preferred
+        'tag_titles': 'news,sports',      # comma-separated tag titles (created if needed)
+        'enable_comments': True,
+        'allow_download': True,
+        # editors only: upload as another user
+        # 'owner': 'otherusername',
+    },
     auth=auth
 )
 ```
+
+The same optional fields (`state`, `category_uids`, `category_titles`, `tag_titles`, `enable_comments`, `allow_download`, and editor-only `owner`) can be sent on `PUT /api/v1/media/{friendly_token}`. Non-editors cannot set `state` to `public` when `PORTAL_WORKFLOW` is not `public`. Editors can also reassign any media via `POST /api/v1/media/user/bulk_actions` with `action=change_owner`.
 
 ## 4. How to contribute
 Before you send a PR, make sure your code is properly formatted. For that, use `pre-commit install` to install a pre-commit hook and run `pre-commit run --all` and fix everything before you commit. This pre-commit will check for your code lint everytime you commit a code.
