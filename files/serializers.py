@@ -116,7 +116,8 @@ class CategoriesInfoMixin(serializers.Serializer):
             if cat.is_rbac_category and cat.pk not in accessible_rbac:
                 continue
             ret.append({"title": cat.title, "uid": cat.uid, "url": cat.get_absolute_url(), "is_lms_course": cat.is_lms_course})
-        return ret
+        # Sort alphabetically by title (case-insensitive)
+        return sorted(ret, key=lambda x: x["title"].lower())
 
 
 class SingleMediaSerializer(CategoriesInfoMixin, serializers.ModelSerializer):

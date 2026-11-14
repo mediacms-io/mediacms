@@ -162,16 +162,19 @@ export const BulkActionTagModal: React.FC<BulkActionTagModalProps> = ({
 
   // Get tags for left panel (all tags minus those already existing)
   const getLeftPanelTags = () => {
-    return allTags.filter(
+    const filtered = allTags.filter(
       (tag) => !existingTags.some((existing) => existing.title === tag.title)
     );
+    // Sort alphabetically by title (case-insensitive)
+    return filtered.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
   };
 
   // Get tags for right panel ("Add to" - existing + newly added)
   const getRightPanelTags = () => {
     // Combine existing tags with newly added ones
     const combined = [...existingTags, ...tagsToAdd];
-    return combined;
+    // Sort alphabetically by title (case-insensitive)
+    return combined.sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }));
   };
 
   if (!isOpen) return null;

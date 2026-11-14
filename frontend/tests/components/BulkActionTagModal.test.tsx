@@ -53,7 +53,7 @@ describe('components', () => {
             expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/media/user/bulk_actions');
             expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ action: 'tag_membership', media_ids: ids });
             expect(fetchMock.mock.calls[1][0]).toBe('/api/v1/tags');
-            expect(panelTitles(container, 0)).toEqual(['music', 'art']);
+            expect(panelTitles(container, 0)).toEqual(['art', 'music']);
             expect(panelTitles(container, 1)).toEqual(['news']);
             expect(container.querySelector('.info-tooltip')).not.toBeNull();
             expect((container.querySelector('.tag-btn-proceed') as HTMLButtonElement).disabled).toBe(true);
@@ -82,20 +82,21 @@ describe('components', () => {
             const music = findByText(container.querySelectorAll('.tag-panel')[0], '.tag-item', 'music+');
             click(music);
             click(music);
-            expect(panelTitles(container, 1)).toEqual(['news', 'music']);
+            // Panels sort alphabetically, so music appears before news.
+            expect(panelTitles(container, 1)).toEqual(['music', 'news']);
 
             const rightItems = () => container.querySelectorAll('.tag-panel')[1].querySelectorAll('.tag-item');
-            const newsBtn = () => rightItems()[0].querySelector('.remove-btn') as HTMLButtonElement;
+            const musicBtn = () => rightItems()[0].querySelector('.remove-btn') as HTMLButtonElement;
+            const newsBtn = () => rightItems()[1].querySelector('.remove-btn') as HTMLButtonElement;
             expect(newsBtn().title).toBe('Remove tag');
             click(newsBtn());
-            expect(rightItems()[0].className).toContain('marked-for-removal');
+            expect(rightItems()[1].className).toContain('marked-for-removal');
             expect(newsBtn().title).toBe('Undo removal');
             click(newsBtn());
-            expect(rightItems()[0].className).not.toContain('marked-for-removal');
+            expect(rightItems()[1].className).not.toContain('marked-for-removal');
 
-            const musicBtn = rightItems()[1].querySelector('.remove-btn') as HTMLButtonElement;
-            expect(musicBtn.title).toBe('Remove from list');
-            click(musicBtn);
+            expect(musicBtn().title).toBe('Remove from list');
+            click(musicBtn());
             expect(panelTitles(container, 1)).toEqual(['news']);
             unmount();
         });
@@ -104,7 +105,8 @@ describe('components', () => {
             loadTags(['news'], ['news', 'music']);
             const { container, onSuccess, onCancel, unmount } = await setup();
             click(findByText(container, '.tag-item.clickable', 'music+'));
-            click(container.querySelectorAll('.tag-panel')[1].querySelector('.remove-btn'));
+            // After sort the right panel is [music, news]; mark news (index 1) for removal.
+            click(container.querySelectorAll('.tag-panel')[1].querySelectorAll('.tag-item')[1].querySelector('.remove-btn'));
             fetchMock.mockReturnValueOnce(jsonResponse({})).mockReturnValueOnce(jsonResponse({}));
             click(container.querySelector('.tag-btn-proceed'));
             await flush();
