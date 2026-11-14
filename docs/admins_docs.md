@@ -482,10 +482,13 @@ When set to False, only logged-in users will be able to access the user listing 
 
 ### 5.27 Control who can see the members page
 
-By default `CAN_SEE_MEMBERS_PAGE = "all"` means that all registered users can see the members page. Other valid options are:
+By default `CAN_SEE_MEMBERS_PAGE = "all"` means that all registered (logged-in) users can see the members page. Other valid options are:
 
+- **anonymous**, anyone including non-registered users can view the page
 - **editors**, only MediaCMS editors can view the page
 - **admins**, only MediaCMS admins can view the page
+
+For a working anonymous members experience, keep `ALLOW_ANONYMOUS_USER_LISTING = True` (the default) so the users listing API remains available to non-logged-in visitors. See section 5.26.
 
 
 ### 5.28 Configure user search fields

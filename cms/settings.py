@@ -600,7 +600,7 @@ ALLOW_MEDIA_REPLACEMENT = False
 ALLOW_ANONYMOUS_USER_LISTING = True
 
 # Who can see the members page
-# valid choices are all, editors, admins
+# valid choices are anonymous, all, editors, admins
 CAN_SEE_MEMBERS_PAGE = "all"
 
 # User search field setting
