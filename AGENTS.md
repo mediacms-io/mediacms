@@ -81,6 +81,11 @@ docker compose -f docker-compose-dev.yaml exec -T frontend npm run test -- --ci
 
 This repo uses **semantic-release with Conventional Commits** (`.releaserc.json`). Commit messages must use types: `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `perf`, `test`, `depr`. Releases are automated from `main` — do not manually bump versions or edit `CHANGELOG.md`.
 
+## Pull requests
+
+- PR titles follow the commit conventions above (enforced by CI).
+- The PR template's AI assistance disclosure and attestation are the human submitter's statements: fill them in yourself — never let an AI agent tick them on your behalf.
+
 ## Testing Notes
 
 - `pytest.ini` uses `cms/test_settings.py` as the Django settings module.
@@ -91,7 +96,7 @@ This repo uses **semantic-release with Conventional Commits** (`.releaserc.json`
 
 ### Configuration pattern
 
-All portal configuration is in `cms/settings.py`. Overrides go in `cms/local_settings.py` (never edit `settings.py` for a deployment), or `deploy/docker/local_settings.py` for docker installs. **Any settings change requires a restart** (`docker compose restart web celery_worker celery_beat`). Notable settings:
+All portal configuration is in `cms/settings.py`. Overrides go in `cms/local_settings.py` (never edit `settings.py` for a deployment). **Docker installs:** the container entrypoint (`deploy/docker/entrypoint.sh`) copies `deploy/docker/local_settings.py` over `cms/local_settings.py` at every startup — edit the `deploy/docker/` copy (or pass environment variables), or your changes will be lost on restart. **Any settings change requires a restart** (`docker compose restart web celery_worker celery_beat`). Notable settings:
 
 - `PORTAL_WORKFLOW`: `public` / `private` / `unlisted` — what happens to newly uploaded media
 - `CAN_ADD_MEDIA`, `CAN_COMMENT`: `"all"` / `"email_verified"` / `"advancedUser"`
@@ -99,9 +104,9 @@ All portal configuration is in `cms/settings.py`. Overrides go in `cms/local_set
 - `USE_RBAC`, `USE_SAML`, `USE_IDENTITY_PROVIDERS`, `USE_WHISPER_TRANSCRIBE`, `DO_NOT_TRANSCODE_VIDEO`
 - `ALLOWED_MEDIA_UPLOAD_TYPES` (default `["video", "audio", "image", "pdf"]`), `NUMBER_OF_MEDIA_USER_CAN_UPLOAD`, `UPLOAD_MAX_SIZE`
 
-### Video transcoding pipeline (Encode objects)
+### Video transcoding pipeline (Encoding objects)
 
-Originals are uploaded to the app server as FileFields. Videos longer than a threshold (about 4 minutes) are split into chunks; one `Encode` object is created per chunk per enabled `EncodeProfile`. Celery workers transcode chunks; when all chunks of a resolution succeed they are concatenated into one `Encode` object (`chunk=False`, `status='success'`) which is what gets served/downloaded. An HLS version (`.ts` segments) is then generated. The `Encode` model doubles as in-progress tracking (`chunk=True`, `status='pending'`) and final output storage. Encode profiles (resolutions 144p–1080p, h264/h265/vp9) are managed via Django admin at `/admin/files/encodeprofile/`. Workers must share the same filesystem (localhost or NFS/EFS).
+Originals are uploaded to the app server as FileFields. Videos longer than `CHUNKIZE_VIDEO_DURATION` (default: 5 minutes) are split into chunks; one `Encoding` object is created per chunk per enabled `EncodeProfile`. Celery workers transcode chunks; when all chunks of a resolution succeed they are concatenated into one `Encoding` object (`chunk=False`, `status='success'`) which is what gets served/downloaded. An HLS version (`.ts` segments) is then generated. The `Encoding` model doubles as in-progress tracking (`chunk=True`, `status='pending'`) and final output storage. Encode profiles (resolutions 144p–1080p, h264/h265/vp9) are managed via Django admin at `/admin/files/encodeprofile/`. Workers must share the same filesystem (localhost or NFS/EFS).
 
 ### Translations — MANDATORY workflow
 
@@ -116,7 +121,7 @@ Django template changes don't need a frontend rebuild; frontend string changes d
 
 ### API
 
-REST API is documented with Swagger at `/swagger` (e.g. https://demo.mediacms.io/swagger/). Auth works via session or basic auth; uploads POST to `/api/v1/media` with `media_file`, `title`, `description`.
+REST API is documented with Swagger at `/swagger/` (e.g. https://demo.mediacms.io/swagger/). Auth works via session or basic auth; uploads POST to `/api/v1/media` with `media_file`, `title`, `description`.
 
 ### Frontend build serving
 
@@ -137,3 +142,5 @@ Django templates load bundles from `static/js/<name>.js`. After `npm run dist`, 
 - `docs/dev_exp.md` — local Docker development walkthrough
 - `docs/transcoding.md`, `docs/media_permissions.md`, `docs/kaltura_migration.md`, `docs/youtube_migration.md`, `docs/panopto_migration.md`, `docs/saml_entraid_setup.md`
 - `CODE_OF_CONDUCT.md` — required reading before contributing
+
+The docs files above are large — load only the section you need (grep for the heading) rather than the whole file.
