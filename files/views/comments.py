@@ -92,8 +92,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='List comments',
+        operation_description='Paginated comments of a media, newest first. Private media need the same access as viewing the media.',
     )
     def get(self, request, friendly_token):
         # list comments for a media
@@ -110,8 +110,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Delete a comment',
+        operation_description='Delete the comment with the given uid. Allowed for the comment author, the media owner and MediaCMS editors, managers and admins.',
     )
     def delete(self, request, friendly_token, uid=None):
         """Delete a comment
@@ -135,8 +135,8 @@ class CommentDetail(APIView):
     @swagger_auto_schema(
         manual_parameters=[],
         tags=['Media'],
-        operation_summary='to_be_written',
-        operation_description='to_be_written',
+        operation_summary='Add a comment',
+        operation_description='Post a comment on a media, if comments are enabled for it. The media owner is notified, and so are mentioned users when mentions are enabled.',
     )
     def post(self, request, friendly_token):
         """Create a comment"""

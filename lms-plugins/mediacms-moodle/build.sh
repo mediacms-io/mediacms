@@ -23,14 +23,15 @@ echo -e "${GREEN}======================================${NC}"
 echo
 
 # Configuration
-VERSION="1.0.0"
+VERSION="1.0.2"
 BUILD_DATE=$(date +%Y%m%d)
 DIST_DIR="dist"
 
-# Create clean dist directory
+# Clean staged folders and this version's packages, keeping older release ZIPs
 echo -e "${YELLOW}→${NC} Cleaning dist directory..."
-rm -rf "${DIST_DIR}"
 mkdir -p "${DIST_DIR}"
+find "${DIST_DIR}" -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +
+rm -f "${DIST_DIR}"/*-v"${VERSION}".zip "${DIST_DIR}"/*-v"${VERSION}".zip.sha256
 
 # Remove development files from a staged plugin directory
 clean_plugin_dir() {

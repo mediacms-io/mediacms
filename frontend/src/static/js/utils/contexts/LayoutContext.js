@@ -1,10 +1,26 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { BrowserCache } from '../classes/';
 import { PageStore } from '../stores/';
 import { addClassname, removeClassname, inEmbeddedApp } from '../helpers/';
 import SiteContext from './SiteContext';
 
 let slidingSidebarTimeout;
+
+const WIDE_SCREEN_MIN_WIDTH = 1280;
+
+function storedSidebar(key) {
+    try {
+        const value = localStorage.getItem(key);
+        return 'true' === value ? true : 'false' === value ? false : null;
+    } catch (error) {
+        return null;
+    }
+}
+
+function storeSidebar(key, visible) {
+    try {
+        localStorage.setItem(key, visible ? 'true' : 'false');
+    } catch (error) {}
+}
 
 function onSidebarVisibilityChange(visibleSidebar) {
     clearTimeout(slidingSidebarTimeout);
@@ -43,7 +59,7 @@ export const LayoutContext = createContext();
 
 export const LayoutProvider = ({ children }) => {
     const site = useContext(SiteContext);
-    const cache = new BrowserCache('MediaCMS[' + site.id + '][layout]', 86400);
+    const storageKey = 'MediaCMS[' + site.id + '][layout][visible-sidebar]';
 
     const isMediaPage = useMemo(() => PageStore.get('current-page') === 'media' || window.MediaCMS?.mediaId !== undefined, []);
     const isEmbeddedApp = useMemo(() => inEmbeddedApp(), []);
@@ -51,7 +67,7 @@ export const LayoutProvider = ({ children }) => {
     const enabledSidebar = Boolean(document.getElementById('app-sidebar') || document.querySelector('.page-sidebar'));
 
     const [visibleSidebar, setVisibleSidebar] = useState(
-        isMediaPage || isEmbeddedApp ? false : cache.get('visible-sidebar')
+        isMediaPage || isEmbeddedApp ? false : storedSidebar(storageKey)
     );
     const [visibleMobileSearch, setVisibleMobileSearch] = useState(false);
 
@@ -72,8 +88,8 @@ export const LayoutProvider = ({ children }) => {
             removeClassname(document.body, 'visible-sidebar');
         }
 
-        if (!isEmbeddedApp && !isMediaPage && 1023 < window.innerWidth) {
-            cache.set('visible-sidebar', visibleSidebar);
+        if (!isEmbeddedApp && !isMediaPage && WIDE_SCREEN_MIN_WIDTH <= window.innerWidth) {
+            storeSidebar(storageKey, visibleSidebar);
         }
     }, [isEmbeddedApp, isMediaPage, visibleSidebar]);
 
@@ -86,7 +102,7 @@ export const LayoutProvider = ({ children }) => {
         });
 
         setVisibleSidebar(
-            !isEmbeddedApp && !isMediaPage && 1023 < window.innerWidth && (null === visibleSidebar || visibleSidebar)
+            !isEmbeddedApp && !isMediaPage && WIDE_SCREEN_MIN_WIDTH <= window.innerWidth && (null === visibleSidebar || visibleSidebar)
         );
     }, []);
 

@@ -1,4 +1,7 @@
 import React, { useEffect, useRef } from 'react';
+import * as ReactDOM from 'react-dom';
+import * as ReactDOMClient from 'react-dom/client';
+import * as ReactJSXRuntime from 'react/jsx-runtime';
 
 /**
  * VideoJSEmbed - A React component that embeds the MediaCMS video js
@@ -13,8 +16,10 @@ import React, { useEffect, useRef } from 'react';
  * />
  */
 
+const DEFAULT_DATA = {};
+
 const VideoJSEmbed = ({
-    data,
+    data = DEFAULT_DATA,
     useRoundedCorners,
     version,
     isPlayList,
@@ -24,7 +29,7 @@ const VideoJSEmbed = ({
     videoPlaybackSpeed,
     inTheaterMode,
     siteId,
-    siteUrl,
+    siteUrl = '',
     info,
     cornerLayers,
     sources,
@@ -230,6 +235,10 @@ const VideoJSEmbed = ({
 
         // Load JS if not already loaded
         if (!existingJS) {
+            window.React = React;
+            window.ReactDOM = ReactDOM;
+            window.ReactDOMClient = ReactDOMClient;
+            window.ReactJSXRuntime = ReactJSXRuntime;
             const script = document.createElement('script');
             script.src = siteUrl + '/static/video_js/video-js.js?v=' + version;
             document.head.appendChild(script);
@@ -248,11 +257,6 @@ const VideoJSEmbed = ({
             )}
         </div>
     );
-};
-
-VideoJSEmbed.defaultProps = {
-    data: {},
-    siteUrl: '',
 };
 
 export default VideoJSEmbed;

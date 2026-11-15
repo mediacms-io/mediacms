@@ -21,6 +21,15 @@
       background-color: var(--body-bg-color);
     }
 
+    .form-textarea__suggestions__item {
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+
+    .form-textarea__suggestions__item--focused {
+      background-color: var(--comment-text-mentions-background-color-highlight);
+    }
+
     strong {
       background-color: var(--comment-text-mentions-background-color-highlight)
     }

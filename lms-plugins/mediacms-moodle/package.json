@@ -1,6 +1,6 @@
 {
   "name": "mediacms-moodle",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "This package provides the integration between MediaCMS and Moodle (versions 4.x and 5.x). It consists of two components that work together to provide a seamless video experience:",
   "main": "index.js",
   "scripts": {

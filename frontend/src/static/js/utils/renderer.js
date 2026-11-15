@@ -1,5 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { LayoutProvider } from './contexts/LayoutContext';
 import { UserProvider } from './contexts/UserContext';
@@ -15,6 +16,17 @@ const AppProviders = ({ children }) => (
 
 import { PageHeader, PageSidebar } from '../components/page-layout';
 
+const roots = new WeakMap();
+
+function mount(container, element) {
+    let root = roots.get(container);
+    if (!root) {
+        root = createRoot(container);
+        roots.set(container, root);
+    }
+    flushSync(() => root.render(element));
+}
+
 export function renderPage(idSelector, PageComponent) {
     if (inEmbeddedApp()) {
         globalThis.document.body.classList.add('embedded-app');
@@ -23,11 +35,11 @@ export function renderPage(idSelector, PageComponent) {
         const appContent = idSelector ? document.getElementById(idSelector) : undefined;
 
         if (appContent && PageComponent) {
-            ReactDOM.render(
+            mount(
+                appContent,
                 <AppProviders>
                     <PageComponent />
-                </AppProviders>,
-                appContent
+                </AppProviders>
             );
         }
 
@@ -39,39 +51,39 @@ export function renderPage(idSelector, PageComponent) {
     const appSidebar = document.getElementById('app-sidebar');
 
     if (appContent && PageComponent) {
-        ReactDOM.render(
+        mount(
+            appContent,
             <AppProviders>
-                {appHeader ? ReactDOM.createPortal(<PageHeader />, appHeader) : null}
-                {appSidebar ? ReactDOM.createPortal(<PageSidebar />, appSidebar) : null}
+                {appHeader ? createPortal(<PageHeader />, appHeader) : null}
+                {appSidebar ? createPortal(<PageSidebar />, appSidebar) : null}
                 <PageComponent />
-            </AppProviders>,
-            appContent
+            </AppProviders>
         );
     } else if (appHeader && appSidebar) {
-        ReactDOM.render(
+        mount(
+            appSidebar,
             <AppProviders>
-                {ReactDOM.createPortal(<PageHeader />, appHeader)}
+                {createPortal(<PageHeader />, appHeader)}
                 <PageSidebar />
-            </AppProviders>,
-            appSidebar
+            </AppProviders>
         );
     } else if (appHeader) {
-        ReactDOM.render(
+        mount(
+            appHeader,
             <LayoutProvider>
                 <ThemeProvider>
                     <UserProvider>
                         <PageHeader />
                     </UserProvider>
                 </ThemeProvider>
-            </LayoutProvider>,
-            appSidebar
+            </LayoutProvider>
         );
     } else if (appSidebar) {
-        ReactDOM.render(
+        mount(
+            appSidebar,
             <AppProviders>
                 <PageSidebar />
-            </AppProviders>,
-            appSidebar
+            </AppProviders>
         );
     }
 }
@@ -80,6 +92,6 @@ export function renderEmbedPage(idSelector, PageComponent) {
     const appContent = idSelector ? document.getElementById(idSelector) : undefined;
 
     if (appContent && PageComponent) {
-        ReactDOM.render(<PageComponent />, appContent);
+        mount(appContent, <PageComponent />);
     }
 }

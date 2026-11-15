@@ -1,8 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { ItemList } from '../item-list/ItemList';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function PlaylistPageMedia(props) {
+export function PlaylistPageMedia(rawProps) {
+  const props = applyDefaultProps(rawProps, PlaylistPageMedia.defaultPropValues);
   return (
     <ItemList
       items={props.media}
@@ -21,14 +22,6 @@ export function PlaylistPageMedia(props) {
   );
 }
 
-PlaylistPageMedia.propTypes = {
-  media: PropTypes.array.isRequired,
-  playlistId: PropTypes.string.isRequired,
-  itemsCountCallback: PropTypes.func,
-  itemsLoadCallback: PropTypes.func,
-  hidePlaylistOptions: PropTypes.bool,
-};
-
-PlaylistPageMedia.defaultProps = {
+PlaylistPageMedia.defaultPropValues = {
   hidePlaylistOptions: true,
 };

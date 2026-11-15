@@ -12,7 +12,7 @@ from users.models import User
 from users.serializers import UserSerializer
 
 from .methods import is_mediacms_manager
-from .models import Comment, Media
+from .models import Category, Comment, Media
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
 
@@ -33,6 +33,8 @@ class MediaList(APIView):
             openapi.Parameter(name='ordering', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Order by: asc, desc'),
             openapi.Parameter(name='state', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Media state, options: private", "public", "unlisted'),
             openapi.Parameter(name='encoding_status', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Encoding status, options "pending", "running", "fail", "success"'),
+            openapi.Parameter(name='q', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by title'),
+            openapi.Parameter(name='owner', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by owner name or username'),
         ],
         tags=['Manage'],
         operation_summary='Manage Media',
@@ -49,6 +51,8 @@ class MediaList(APIView):
         featured = params.get("featured", "").strip()
         is_reviewed = params.get("is_reviewed", "").strip()
         category = params.get("category", "").strip()
+        query = params.get("q", "").strip()
+        owner = params.get("owner", "").strip()
 
         sort_by_options = [
             "title",
@@ -102,7 +106,16 @@ class MediaList(APIView):
             qs = qs.filter(is_reviewed=is_reviewed)
 
         if category:
-            qs = qs.filter(category__title__contains=category)
+            category_obj = Category.objects.filter(uid=category).first()
+            if category_obj:
+                qs = qs.filter(category=category_obj)
+            else:
+                qs = qs.filter(category__title=category)
+
+        if query:
+            qs = qs.filter(title__icontains=query)
+        if owner:
+            qs = qs.filter(Q(user__name__icontains=owner) | Q(user__username__icontains=owner))
 
         media = qs.order_by(f"{ordering}{sort_by}")
 
@@ -196,7 +209,9 @@ class UserList(APIView):
     parser_classes = (JSONParser,)
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='name', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by name, username, and optionally email (depending on USER_SEARCH_FIELD setting)'),
+        ],
         tags=['Manage'],
         operation_summary='Manage Users',
         operation_description='Manage users for MediaCMS managers and reviewers',
@@ -206,6 +221,7 @@ class UserList(APIView):
         ordering = params.get("ordering", "").strip()
         sort_by = params.get("sort_by", "").strip()
         role = params.get("role", "all").strip()
+        name = params.get("name", "").strip()
 
         sort_by_options = ["date_added", "name"]
         if sort_by not in sort_by_options:
@@ -230,6 +246,12 @@ class UserList(APIView):
             elif is_approved == "false":
                 qs = qs.filter(Q(is_approved=False) | Q(is_approved__isnull=True))
 
+        if name:
+            if settings.USER_SEARCH_FIELD == "name_username_email":
+                qs = qs.filter(Q(name__icontains=name) | Q(username__icontains=name) | Q(email__icontains=name))
+            else:
+                qs = qs.filter(Q(name__icontains=name) | Q(username__icontains=name))
+
         users = qs.order_by(f"{ordering}{sort_by}")
 
         paginator = pagination_class()
@@ -251,6 +273,8 @@ class UserList(APIView):
 
         tokens = request.GET.get("tokens")
         if tokens:
-            tokens = tokens.split(",")
-            User.objects.filter(username__in=tokens).delete()
+            users = User.objects.filter(username__in=tokens.split(","))
+            if not request.user.is_superuser and users.filter(is_superuser=True).exists():
+                return Response({"detail": "You do not have permission to delete a superuser."}, status=status.HTTP_403_FORBIDDEN)
+            users.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

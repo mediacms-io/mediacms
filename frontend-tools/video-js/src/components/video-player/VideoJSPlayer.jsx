@@ -29,10 +29,17 @@ import PlaybackEventHandler from '../../utils/PlaybackEventHandler';
 // Import sample media data
 import sampleMediaData from '../../assets/sample-media-file.json';
 
-// Import fallback poster image
-import audioPosterImg from '../../assets/audio-poster.jpg';
-
 // Function to enable tooltips for all standard VideoJS buttons
+const MAX_PIXEL_RATIO = 2;
+
+const canUseLocalStorage = () => {
+    try {
+        return Boolean(window.localStorage);
+    } catch {
+        return false;
+    }
+};
+
 const enableStandardButtonTooltips = (player) => {
     // Wait a bit for all components to be initialized
     setTimeout(() => {
@@ -200,13 +207,11 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                       useRoundedCorners: false,
                       isPlayList: false,
                       previewSprite: {
-                          url: sampleMediaData.sprites_url
-                              ? 'https://deic.mediacms.io' + sampleMediaData.sprites_url
-                              : 'https://deic.mediacms.io/media/original/thumbnails/user/admin/43cc73a8c1604425b7057ad2b50b1798.19247660hd_1920_1080_60fps.mp4sprites.jpg',
+                          url: sampleMediaData.sprites_url || '',
                           frame: { width: 160, height: 90, seconds: 10 },
                       },
-                      siteUrl: 'https://deic.mediacms.io',
-                      nextLink: 'https://deic.mediacms.io/view?m=elygiagorgechania',
+                      siteUrl: window.location.origin,
+                      nextLink: null,
                   },
         []
     );
@@ -544,7 +549,11 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                 ? mediaData.siteUrl + mediaData.data.author_thumbnail
                 : '',
             url: mediaData.data?.url || '',
-            poster: mediaData.data?.poster_url ? mediaData.siteUrl + mediaData.data.poster_url : audioPosterImg,
+            poster: mediaData.data?.poster_url
+                ? mediaData.siteUrl + mediaData.data.poster_url
+                : mediaData.data?.media_type === 'audio'
+                  ? mediaData.siteUrl + '/static/video_js/audio-poster.webp'
+                  : undefined,
             previewSprite: mediaData?.previewSprite || {},
             useRoundedCorners: mediaData?.useRoundedCorners,
             isPlayList: mediaData?.isPlayList,
@@ -817,7 +826,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
             }
             return window.location.origin;
         }
-        return mediaData.siteUrl || 'https://deic.mediacms.io';
+        return mediaData.siteUrl || window.location.origin;
     };
 
     // Helper function to get embed URL
@@ -979,7 +988,7 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                     controls: true,
 
                     // Player dimensions - removed for responsive design
-                    // Autoplay behavior: Try unmuted first, fallback to muted if needed
+                    // Autoplay behavior: try with sound, and stay paused if the browser refuses
                     // For embed players, disable autoplay to show poster
                     autoplay: isEmbedPlayer ? false : true, // Try unmuted autoplay first (true/false, play, muted, any)
 
@@ -1235,6 +1244,13 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
 
                         // Play inline
                         playsinline: true,
+
+                        vhs: {
+                            useNetworkInformationApi: false,
+                            useBandwidthFromLocalStorage: canUseLocalStorage(),
+                            useDevicePixelRatio: true,
+                            customPixelRatio: Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO),
+                        },
                     },
 
                     // ===== COMPONENT CONFIGURATION =====
@@ -1364,6 +1380,11 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                             let touchStartTime = 0;
                             let touchStartPos = { x: 0, y: 0 };
 
+                            let controlsShownAt = 0;
+                            playerRef.current.on('useractive', () => {
+                                controlsShownAt = Date.now();
+                            });
+
                             const handleTouchStart = (e) => {
                                 touchStartTime = Date.now();
                                 const touch = e.touches[0];
@@ -1406,7 +1427,9 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                         // Check if controls are currently visible by examining control bar
                                         const controlBar = playerRef.current.getChild('controlBar');
                                         const controlBarEl = controlBar ? controlBar.el() : null;
+                                        const controlsAppearedWithThisTouch = controlsShownAt >= touchStartTime - 50;
                                         const isControlsVisible =
+                                            !controlsAppearedWithThisTouch &&
                                             controlBarEl &&
                                             window.getComputedStyle(controlBarEl).opacity !== '0' &&
                                             window.getComputedStyle(controlBarEl).visibility !== 'hidden';
@@ -1435,12 +1458,15 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                         if (isPaused) {
                                             // Always play if video is paused
                                             playerRef.current.play();
+                                            seekIndicator?.show('play');
                                         } else if (isTapOnCenterIcon) {
                                             // Pause if tapping on center icon (highest priority)
                                             playerRef.current.pause();
+                                            seekIndicator?.show('pause');
                                         } else if (isControlsVisible) {
                                             // Pause if controls are visible and not touching seekbar area
                                             playerRef.current.pause();
+                                            seekIndicator?.show('pause');
                                         } else {
                                             // If controls are not visible, show them AND show center pause icon
                                             playerRef.current.userActive(true);
@@ -1644,17 +1670,8 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                                 if (playerRef.current && !playerRef.current.isDisposed()) {
                                     try {
                                         await playerRef.current.play();
-                                    } catch (error) {
-                                        console.error('ℹ️ Browser prevented play:', error.message);
-                                        // Try muted playback as fallback
-                                        if (!playerRef.current.muted()) {
-                                            try {
-                                                playerRef.current.muted(true);
-                                                await playerRef.current.play();
-                                            } catch (mutedError) {
-                                                console.error('ℹ️ Even muted play was blocked:', mutedError.message);
-                                            }
-                                        }
+                                    } catch {
+                                        playerRef.current.pause();
                                     }
                                 }
                             }, 100);
@@ -2309,9 +2326,17 @@ function VideoJSPlayer({ videoId = 'default-video', showTitle = true, showRelate
                 // BEGIN: Initialize playback event handler
                 playbackEventHandler.current = new PlaybackEventHandler(playerRef, customComponents, {
                     isEmbedPlayer: isEmbedPlayer,
-                    showSeekIndicators: true,
+                    showSeekIndicators: false,
                 });
                 playbackEventHandler.current.init();
+
+                playerRef.current.on('click', (event) => {
+                    const indicator = customComponents.current?.seekIndicator;
+                    if (!indicator || !event.target.classList.contains('vjs-tech')) {
+                        return;
+                    }
+                    indicator.show(playerRef.current.paused() ? 'pause' : 'play');
+                });
 
                 // Store cleanup function for playback event handler
                 customComponents.current.cleanupPlaybackEventHandler = () => {

@@ -3,10 +3,10 @@ import { config as mediacmsConfig } from '../settings/config.js';
 
 const notifications = mediacmsConfig(window.MediaCMS).notifications.messages;
 
-const texts = {
+export const textsConfig = {
   notifications,
 };
 
-export const TextsContext = createContext(texts);
+export const TextsContext = createContext(textsConfig);
 
 export const TextsConsumer = TextsContext.Consumer;

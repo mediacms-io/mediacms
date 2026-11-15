@@ -38,6 +38,17 @@
 </head>
 
 <body>
+<script>
+    (function () {
+        var mode = null;
+        try {
+            mode = localStorage.getItem('MediaCMS[mediacms][theme][mode]');
+        } catch (error) {}
+        if ('dark' === ('light' === mode || 'dark' === mode ? mode : '{{DEFAULT_THEME}}')) {
+            document.body.className += ' dark_theme';
+        }
+    })();
+</script>
 
     {% block beforecontent %}{% endblock %}
 

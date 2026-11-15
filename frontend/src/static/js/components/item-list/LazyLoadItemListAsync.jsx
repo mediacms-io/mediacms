@@ -5,8 +5,10 @@ import { ItemListAsync } from './ItemListAsync';
 import { PendingItemsList } from './PendingItemsList';
 import { ListItem, listItemProps } from '../list-item/ListItem';
 import { ItemsListHandler } from './includes/itemLists/ItemsListHandler';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function LazyLoadItemListAsync(props) {
+export function LazyLoadItemListAsync(rawProps) {
+  const props = applyDefaultProps(rawProps, LazyLoadItemListAsync.defaultPropValues);
   const [
     items,
     countedItems,
@@ -85,11 +87,7 @@ export function LazyLoadItemListAsync(props) {
   );
 }
 
-LazyLoadItemListAsync.propTypes = {
-  ...ItemListAsync.propTypes,
-};
-
-LazyLoadItemListAsync.defaultProps = {
-  ...ItemListAsync.defaultProps,
+LazyLoadItemListAsync.defaultPropValues = {
+  ...ItemListAsync.defaultPropValues,
   pageItems: 2,
 };

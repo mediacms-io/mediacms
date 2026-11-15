@@ -150,9 +150,26 @@ def provision_lti_user(platform, claims):
     name = claims.get('name', f"{given_name} {family_name}").strip()
 
     mapping = LTIUserMapping.objects.filter(platform=platform, lti_user_id=lti_user_id).select_related('user').first()
+    user = mapping.user if mapping else None
 
-    if mapping:
-        user = mapping.user
+    if user is None:
+        sibling = (
+            LTIUserMapping.objects.filter(
+                lti_user_id=lti_user_id,
+                platform__platform_id=platform.platform_id,
+            )
+            .select_related('user')
+            .first()
+        )
+        if sibling:
+            user = sibling.user
+            LTIUserMapping.objects.get_or_create(
+                platform=platform,
+                lti_user_id=lti_user_id,
+                defaults={'user': user},
+            )
+
+    if user is not None:
         update_fields = []
 
         if email and user.email != email:
@@ -171,27 +188,33 @@ def provision_lti_user(platform, claims):
         if update_fields:
             user.save(update_fields=update_fields)
 
-    else:
-        username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
-        if User.objects.filter(username=username).exists():
-            username = f"{username}_{hashlib.md5(lti_user_id.encode()).hexdigest()[:6]}"
+        return user
 
-        user = User.objects.create_user(
-            username=username,
-            email=email or '',
-            first_name=given_name,
-            last_name=family_name,
-            name=name or username,
-            is_active=True,
-        )
+    username = generate_username_from_lti(lti_user_id, email, given_name, family_name)
+    if User.objects.filter(username=username).exists():
+        username = f"{username}_{hashlib.md5(lti_user_id.encode()).hexdigest()[:6]}"
+        base = username
+        suffix = 1
+        while User.objects.filter(username=username).exists():
+            username = f"{base}_{suffix}"
+            suffix += 1
 
-        if email:
-            try:
-                EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
-            except Exception:
-                pass
+    user = User.objects.create_user(
+        username=username,
+        email=email or '',
+        first_name=given_name,
+        last_name=family_name,
+        name=name or username,
+        is_active=True,
+    )
 
-        LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user)
+    if email:
+        try:
+            EmailAddress.objects.create(user=user, email=email, verified=True, primary=True)
+        except Exception:
+            pass
+
+    LTIUserMapping.objects.create(platform=platform, lti_user_id=lti_user_id, user=user)
 
     return user
 
@@ -328,7 +351,8 @@ def apply_lti_roles(user, platform, lti_roles, rbac_group):
             if all_mappings[role].get('group_role'):
                 group_role = resolve_group_role(group_role, all_mappings[role]['group_role'])
 
-    user.set_role_from_mapping(global_role)
+    if global_role != 'user':
+        user.set_role_from_mapping(global_role)
     _ensure_membership(user, rbac_group, group_role)
 
     return global_role, group_role

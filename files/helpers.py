@@ -13,6 +13,7 @@ from fractions import Fraction
 
 import filetype
 from django.conf import settings
+from django.utils.safestring import mark_safe
 
 CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
@@ -102,6 +103,10 @@ def get_portal_workflow():
     return settings.PORTAL_WORKFLOW
 
 
+def get_media_is_reviewed():
+    return settings.MEDIA_IS_REVIEWED
+
+
 def get_default_state(user=None):
     # possible states given the portal workflow setting
     state = "private"
@@ -166,6 +171,13 @@ def rm_dir(directory):
             except (FileNotFoundError, PermissionError):
                 pass
     return False
+
+
+SCRIPT_JSON_ESCAPES = str.maketrans({"<": r"\u003C", ">": r"\u003E", "&": r"\u0026"})
+
+
+def json_for_script(value):
+    return mark_safe(json.dumps(value).translate(SCRIPT_JSON_ESCAPES))
 
 
 def url_from_path(filename):

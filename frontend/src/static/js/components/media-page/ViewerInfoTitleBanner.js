@@ -1,9 +1,8 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { formatInnerLink, formatViewsNumber } from '../../utils/helpers/';
-import { MemberContext, PlaylistsContext, SiteContext } from '../../utils/contexts/';
-import { MediaLikeIcon, MediaDislikeIcon, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaShareButton, MediaMoreOptionsIcon } from '../media-actions/';
+import { memberConfig, PlaylistsContext, siteConfig } from '../../utils/contexts/';
+import { MediaLikeIcon, MediaDislikeIcon, MediaEditButton, OtherMediaDownloadLink, VideoMediaDownloadLink, MediaSaveButton, MediaShareButton, MediaMoreOptionsIcon } from '../media-actions/';
 
 function Tooltip(el) {
   const parent = document.body;
@@ -47,11 +46,16 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
     this.state = {
       likedMedia: MediaPageStore.get('user-liked-media'),
       dislikedMedia: MediaPageStore.get('user-disliked-media'),
+      actionsLayout: '',
     };
+
+    this.viewsActionsRef = React.createRef();
+    this.actionsWidth = null;
+    this.actionsCount = null;
 
     this.downloadLink =
       'video' !== MediaPageStore.get('media-type')
-        ? formatInnerLink(MediaPageStore.get('media-original-url'), SiteContext._currentValue.url)
+        ? formatInnerLink(MediaPageStore.get('media-original-url'), siteConfig.url)
         : null;
 
     // Extract actual filename from URL for non-video downloads
@@ -59,6 +63,8 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
     this.downloadFilename = originalUrl ? originalUrl.substring(originalUrl.lastIndexOf('/') + 1) : this.props.title;
 
     this.updateStateValues = this.updateStateValues.bind(this);
+    this.onActionsResize = this.onActionsResize.bind(this);
+    this.fitActions = this.fitActions.bind(this);
   }
 
   componentDidMount() {
@@ -72,6 +78,55 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
     if (tooltips.length) {
       tooltips.forEach((tooltipElem) => Tooltip(tooltipElem));
     }
+
+    if (window.ResizeObserver && this.viewsActionsRef.current) {
+      this.actionsObserver = new ResizeObserver(this.onActionsResize);
+      this.actionsObserver.observe(this.viewsActionsRef.current);
+      this.actionsObserver.observe(this.viewsActionsRef.current.querySelector('.media-actions > div'));
+    }
+  }
+
+  componentWillUnmount() {
+    if (this.actionsObserver) {
+      this.actionsObserver.disconnect();
+    }
+  }
+
+  actionItems() {
+    return Array.from(this.viewsActionsRef.current.querySelectorAll('.media-actions > div > *')).filter(
+      (item) => item.offsetWidth > 0
+    );
+  }
+
+  onActionsResize() {
+    if (!this.viewsActionsRef.current) {
+      return;
+    }
+
+    const width = this.viewsActionsRef.current.clientWidth;
+    const count = this.actionItems().length;
+
+    if (width === this.actionsWidth && count === this.actionsCount) {
+      return;
+    }
+
+    this.actionsWidth = width;
+    this.actionsCount = count;
+    this.setState({ actionsLayout: '' }, this.fitActions);
+  }
+
+  fitActions() {
+    if (!this.viewsActionsRef.current || 'stacked' === this.state.actionsLayout) {
+      return;
+    }
+
+    const items = this.actionItems();
+
+    if (!items.length || items.every((item) => item.offsetTop === items[0].offsetTop)) {
+      return;
+    }
+
+    this.setState({ actionsLayout: '' === this.state.actionsLayout ? 'compact' : 'stacked' }, this.fitActions);
   }
 
   updateStateValues() {
@@ -92,7 +147,7 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
       cats.push(
         <span key={i}>
           <a
-            href={formatInnerLink(this.props.categories[i].url, SiteContext._currentValue.url)}
+            href={formatInnerLink(this.props.categories[i].url, siteConfig.url)}
             title={this.props.categories[i].title}
           >
             {this.props.categories[i].title}
@@ -160,10 +215,12 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
         ) : null}
 
         <div
+          ref={this.viewsActionsRef}
           className={
             'media-views-actions' +
             (this.state.likedMedia ? ' liked-media' : '') +
-            (this.state.dislikedMedia ? ' disliked-media' : '')
+            (this.state.dislikedMedia ? ' disliked-media' : '') +
+            (this.state.actionsLayout ? ' ' + this.state.actionsLayout + '-actions' : '')
           }
         >
           {!displayViews && PageStore.get('config-options').pages.media.categoriesWithTitle
@@ -178,16 +235,17 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
 
           <div className="media-actions">
             <div>
-              {MemberContext._currentValue.can.likeMedia ? <MediaLikeIcon /> : null}
-              {MemberContext._currentValue.can.dislikeMedia ? <MediaDislikeIcon /> : null}
-              {MemberContext._currentValue.can.shareMedia ? <MediaShareButton isVideo={false} /> : null}
+              {memberConfig.can.likeMedia ? <MediaLikeIcon /> : null}
+              {memberConfig.can.dislikeMedia ? <MediaDislikeIcon /> : null}
+              <MediaEditButton />
+              {memberConfig.can.shareMedia ? <MediaShareButton isVideo={false} /> : null}
 
-              {!MemberContext._currentValue.is.anonymous &&
-                MemberContext._currentValue.can.saveMedia ? (
+              {!memberConfig.is.anonymous &&
+                memberConfig.can.saveMedia ? (
                 <MediaSaveButton />
               ) : null}
 
-              {!this.props.allowDownload || !MemberContext._currentValue.can.downloadMedia ? null : !this
+              {!this.props.allowDownload || !memberConfig.can.downloadMedia ? null : !this
                 .downloadLink ? (
                 <VideoMediaDownloadLink />
               ) : (
@@ -202,10 +260,6 @@ export default class ViewerInfoTitleBanner extends React.PureComponent {
     );
   }
 }
-
-ViewerInfoTitleBanner.propTypes = {
-  allowDownload: PropTypes.bool.isRequired,
-};
 
 ViewerInfoTitleBanner.defaultProps = {
   allowDownload: false,

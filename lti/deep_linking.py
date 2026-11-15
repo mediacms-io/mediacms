@@ -21,11 +21,13 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from jwcrypto import jwk
 
+from files.methods import is_mediacms_editor
 from files.models import Media
 
 from .models import LTIPlatform, LTIToolKeys
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 @method_decorator(login_required, name='dispatch')
 class SelectMediaView(View):
     """
@@ -44,9 +46,14 @@ class SelectMediaView(View):
         if lti_context_id:
             profile_url += f"&lti_context_id={quote(str(lti_context_id))}"
 
+        # Signal the frontend that this is a standard LTI Deep Linking selection
+        # (e.g. itslearning), so selecting a media item POSTs back to this view to
+        # build the signed response, instead of only firing the Moodle postMessage bridge.
+        if request.session.get('lti_deep_link'):
+            profile_url += "&lti_deep_link=1"
+
         return HttpResponseRedirect(profile_url)
 
-    @method_decorator(csrf_exempt)
     def post(self, request):
         """Return selected media as deep linking content items"""
 
@@ -64,7 +71,15 @@ class SelectMediaView(View):
 
         for media_id in selected_ids:
             try:
-                media = Media.objects.get(id=media_id)
+                # The frontend media list identifies items by friendly_token; fall
+                # back to numeric pk for any caller that still sends a raw id.
+                media = Media.objects.filter(friendly_token=media_id).first()
+                if media is None and str(media_id).isdigit():
+                    media = Media.objects.filter(id=media_id).first()
+                if media is None:
+                    raise Media.DoesNotExist
+                if not self.can_select(request.user, media):
+                    continue
 
                 # Build launch URL (must be an LTI launch endpoint that handles POST with id_token)
                 # The /lti/launch/ endpoint will use the custom parameter to redirect to the correct media
@@ -104,6 +119,14 @@ class SelectMediaView(View):
         }
 
         return render(request, 'lti/deep_link_return.html', context)
+
+    @staticmethod
+    def can_select(user, media):
+        # Embedding into a course grants course members viewer access to shared
+        # media, so only allow selecting media the user can already reach.
+        if media.state in ("public", "unlisted"):
+            return True
+        return is_mediacms_editor(user) or user.has_member_access_to_media(media)
 
     def create_deep_link_jwt(self, deep_link_data, content_items, request):
         """

@@ -1,8 +1,9 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import './SpinnerLoader.scss';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
-export function SpinnerLoader(props) {
+export function SpinnerLoader(rawProps) {
+  const props = applyDefaultProps(rawProps, SpinnerLoader.defaultPropValues);
   let classname = 'spinner-loader';
 
   switch (props.size) {
@@ -24,10 +25,6 @@ export function SpinnerLoader(props) {
   );
 }
 
-SpinnerLoader.propTypes = {
-  size: PropTypes.oneOf(['tiny', 'x-small', 'small', 'medium', 'large', 'x-large']),
-};
-
-SpinnerLoader.defaultProps = {
+SpinnerLoader.defaultPropValues = {
   size: 'medium',
 };

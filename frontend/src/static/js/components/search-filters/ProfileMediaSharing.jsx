@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { FilterOptions } from '../_shared';
 import { translateString } from '../../utils/helpers/';
 import '../management-table/ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function ProfileMediaSharing(props) {
+export function ProfileMediaSharing(rawProps) {
+  const props = applyDefaultProps(rawProps, ProfileMediaSharing.defaultPropValues);
   const [isHidden, setIsHidden] = useState(props.hidden);
 
   const containerRef = useRef(null);
@@ -83,17 +84,7 @@ export function ProfileMediaSharing(props) {
   );
 }
 
-ProfileMediaSharing.propTypes = {
-  hidden: PropTypes.bool,
-  mode: PropTypes.string,
-  sharedUsers: PropTypes.array,
-  sharedGroups: PropTypes.array,
-  onSharingSelect: PropTypes.func,
-  selectedSharingType: PropTypes.string,
-  selectedSharingValue: PropTypes.string,
-};
-
-ProfileMediaSharing.defaultProps = {
+ProfileMediaSharing.defaultPropValues = {
   hidden: false,
   mode: null,
   sharedUsers: [],

@@ -120,8 +120,6 @@ body.dark_theme {
 
   --profile-page-item-content-title-bg-color: #121212;
 
-  --playlist-item-main-view-full-link-text-color: rgb(170, 170, 170);
-  --playlist-item-main-view-full-link-hover-text-color: #fff;
 
   /* ################################################## */
 
@@ -294,7 +292,6 @@ body.dark_theme {
 
   --media-actions-not-popup-circle-icon-focus-bg-color: rgba(255, 255, 255, 0.07);
   --media-actions-not-popup-circle-icon-active-bg-color: rgba(255, 255, 255, 0.14);
-  --media-actions-like-before-border-color: rgba(255, 255, 255, 0.5);
   --media-actions-share-title-text-color: rgba(255, 255, 255, 0.88);
   --media-actions-share-options-nav-button-text-color: rgba(255, 255, 255, 0.5);
   --media-actions-share-options-link-text-color: rgba(255, 255, 255, 0.88);
@@ -355,5 +352,56 @@ body.dark_theme {
         border-bottom-color: #ffffff !important;
       }
     }
+  }
+
+  .form-group {
+    background: #1c1c1c;
+    border-color: #303030;
+    color-scheme: dark;
+  }
+
+  .help-text-inline {
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .controls input:not([type='checkbox']):not([type='radio']),
+  .controls select,
+  .controls textarea,
+  .category-search {
+    background: #121212;
+    border-color: #303030;
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .category-panel h3 {
+    color: rgba(255, 255, 255, 0.88);
+  }
+
+  .category-list {
+    background: #121212;
+    border-color: #303030;
+
+    &::-webkit-scrollbar-track {
+      background: #1c1c1c;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #444444;
+    }
+  }
+
+  .category-item {
+    background: #242424;
+    border-color: #303030;
+    color: rgba(255, 255, 255, 0.88);
+
+    &:hover {
+      background: #2c2c2c;
+      border-color: #4a90e2;
+    }
+  }
+
+  .empty-message {
+    color: rgba(255, 255, 255, 0.5);
   }
 }

@@ -1,5 +1,67 @@
 # Changelog
 
+## [9.4.0](https://github.com/mediacms-io/mediacms/compare/v9.3.1...v9.4.0) (2026-10-26)
+
+### Features
+
+* Video player optimizations ([#1610](https://github.com/mediacms-io/mediacms/issues/1610)) ([e4f9f97](https://github.com/mediacms-io/mediacms/commit/e4f9f973d5c4c9143227d1c549969cdb6a44d25e))
+
+## [9.3.1](https://github.com/mediacms-io/mediacms/compare/v9.3.0...v9.3.1) (2026-10-20)
+
+### Bug Fixes
+
+* like and dislike buttons ([#1608](https://github.com/mediacms-io/mediacms/issues/1608)) ([f065841](https://github.com/mediacms-io/mediacms/commit/f0658414439b59d3fabab82c007c2739114e6fb4))
+
+## [9.3.0](https://github.com/mediacms-io/mediacms/compare/v9.2.1...v9.3.0) (2026-10-20)
+
+### Features
+
+* misc Kaltura fixes ([#1606](https://github.com/mediacms-io/mediacms/issues/1606)) ([92d5313](https://github.com/mediacms-io/mediacms/commit/92d531304b53068647da14f70eeebfea5cabd4d4))
+
+### Documentation
+
+* add ZopDay to Commercial Hostings ([#1604](https://github.com/mediacms-io/mediacms/issues/1604)) ([874e687](https://github.com/mediacms-io/mediacms/commit/874e687d29bfcacb7c4d67f409d6ea0e73ca0365))
+
+## [9.2.1](https://github.com/mediacms-io/mediacms/compare/v9.2.0...v9.2.1) (2026-10-07)
+
+### Bug Fixes
+
+* trimming video ([#1600](https://github.com/mediacms-io/mediacms/issues/1600)) ([a1ffd46](https://github.com/mediacms-io/mediacms/commit/a1ffd4677cfb976a1dd591227783f881e6fc2ad9))
+
+## [9.2.0](https://github.com/mediacms-io/mediacms/compare/v9.1.2...v9.2.0) (2026-10-07)
+
+### Features
+
+* upgrade React from 17 to 19 and modernize build ([#1599](https://github.com/mediacms-io/mediacms/issues/1599)) ([d1112c0](https://github.com/mediacms-io/mediacms/commit/d1112c06b13b0c13d836316daf0201f8b705244c))
+
+## [9.1.2](https://github.com/mediacms-io/mediacms/compare/v9.1.1...v9.1.2) (2026-10-05)
+
+### Bug Fixes
+
+* tests infrastructure ([#1598](https://github.com/mediacms-io/mediacms/issues/1598)) ([ce49813](https://github.com/mediacms-io/mediacms/commit/ce49813cc6aa1a1ab58c015f5118558291efbae3))
+
+## [9.1.1](https://github.com/mediacms-io/mediacms/compare/v9.1.0...v9.1.1) (2026-10-05)
+
+### Bug Fixes
+
+* issue with trim video ([#1597](https://github.com/mediacms-io/mediacms/issues/1597)) ([2cdf017](https://github.com/mediacms-io/mediacms/commit/2cdf0174533df6e5efa4bf62d438199d73bc2dc2))
+
+## [9.1.0](https://github.com/mediacms-io/mediacms/compare/v9.0.0...v9.1.0) (2026-10-01)
+
+### Features
+
+* LTI changes for ItsLearning LMS support ([#1596](https://github.com/mediacms-io/mediacms/issues/1596)) ([db74610](https://github.com/mediacms-io/mediacms/commit/db74610908c7575310159f472e1b3b7759d1cae7))
+
+## [9.0.0](https://github.com/mediacms-io/mediacms/compare/v8.4.0...v9.0.0) (2026-10-01)
+
+### ⚠ BREAKING CHANGES
+
+* migrate media from Kaltura, YouTube and Panopto (#1571)
+
+### Features
+
+* migrate media from Kaltura, YouTube and Panopto ([#1571](https://github.com/mediacms-io/mediacms/issues/1571)) ([cb14ea9](https://github.com/mediacms-io/mediacms/commit/cb14ea94f79960180550cafe6f207690a75a9ff9))
+
 ## [8.4.0](https://github.com/mediacms-io/mediacms/compare/v8.3.5...v8.4.0) (2026-08-25)
 
 ### Features

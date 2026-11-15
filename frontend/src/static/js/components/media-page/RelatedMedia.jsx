@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore, MediaPageStore } from '../../utils/stores/';
 import { ItemList } from '../item-list/ItemList';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function RelatedMedia(props) {
+export function RelatedMedia(rawProps) {
+  const props = applyDefaultProps(rawProps, RelatedMedia.defaultPropValues);
   const [items, setItems] = useState(updateMediaItems());
   const [mediaType, setMediaType] = useState(null);
 
@@ -38,10 +39,6 @@ export function RelatedMedia(props) {
   );
 }
 
-RelatedMedia.propTypes = {
-  hideFirst: PropTypes.bool,
-};
-
-RelatedMedia.defaultProps = {
+RelatedMedia.defaultPropValues = {
   hideFirst: true,
 };

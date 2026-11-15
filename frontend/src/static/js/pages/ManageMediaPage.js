@@ -1,12 +1,20 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext } from '../utils/contexts/';
+import { apiUrlConfig } from '../utils/contexts/';
 import { PageActions } from '../utils/actions/';
+import { SearchFieldStore } from '../utils/stores/';
 import { FiltersToggleButton } from '../components/_shared';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageMediaFilters } from '../components/management-table/ManageMediaFilters.jsx';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
 import { Page } from './_Page';
+
+function searchArgs() {
+  const query = SearchFieldStore.get('search-query');
+  const owner = SearchFieldStore.get('search-owner');
+  return [query ? 'q=' + encodeURIComponent(query) : '', owner ? 'owner=' + encodeURIComponent(owner) : '']
+    .filter((arg) => '' !== arg)
+    .join('&');
+}
 
 function genReqUrl(url, filters, sort, page) {
   const ret = url + '?' + filters + ('' === filters ? '' : '&') + sort + ('' === sort ? '' : '&') + 'page=' + page;
@@ -17,13 +25,15 @@ export class ManageMediaPage extends Page {
   constructor(props) {
     super(props, 'manage-media');
 
+    this.searchArgs = searchArgs();
+
     this.state = {
       resultsCount: null,
       currentPage: 1,
-      requestUrl: ApiUrlContext._currentValue.manage.media,
+      requestUrl: genReqUrl(apiUrlConfig.manage.media, this.searchArgs, '', 1),
       pageTitle: props.title,
       hiddenFilters: true,
-      filterArgs: '',
+      filterArgs: this.searchArgs,
       sortingArgs: '',
       sortBy: 'add_date',
       ordering: 'desc',
@@ -43,7 +53,7 @@ export class ManageMediaPage extends Page {
     this.setState({
       currentPage: updatedPage,
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.media,
+        apiUrlConfig.manage.media,
         this.state.filterArgs,
         this.state.sortingArgs,
         updatedPage
@@ -65,7 +75,7 @@ export class ManageMediaPage extends Page {
   }
 
   onFiltersUpdate(updatedArgs) {
-    const newArgs = [];
+    const newArgs = '' === this.searchArgs ? [] : [this.searchArgs];
 
     for (let arg in updatedArgs) {
       if (null !== updatedArgs[arg] && 'all' !== updatedArgs[arg]) {
@@ -76,7 +86,7 @@ export class ManageMediaPage extends Page {
     this.setState({
       filterArgs: newArgs.join('&'),
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.media,
+        apiUrlConfig.manage.media,
         newArgs.join('&'),
         this.state.sortingArgs,
         this.state.currentPage
@@ -91,7 +101,7 @@ export class ManageMediaPage extends Page {
       ordering: order,
       sortingArgs: newArgs,
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.media,
+        apiUrlConfig.manage.media,
         this.state.filterArgs,
         newArgs,
         this.state.currentPage
@@ -104,7 +114,7 @@ export class ManageMediaPage extends Page {
       {
         resultsCount: null,
         refresh: this.state.refresh + 1,
-        requestUrl: ApiUrlContext._currentValue.manage.media,
+        requestUrl: genReqUrl(apiUrlConfig.manage.media, this.searchArgs, '', 1),
       },
       function () {
         PageActions.addNotification('The media deleted successfully.', 'mediaRemovalSucceed');
@@ -141,10 +151,6 @@ export class ManageMediaPage extends Page {
     );
   }
 }
-
-ManageMediaPage.propTypes = {
-  title: PropTypes.string.isRequired,
-};
 
 ManageMediaPage.defaultProps = {
   title: 'Manage media',

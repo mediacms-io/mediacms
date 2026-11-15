@@ -1,8 +1,6 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { LinksContext } from '../../utils/contexts/';
+import { linksConfig } from '../../utils/contexts/';
 import { PlaylistViewStore } from '../../utils/stores/';
-import { PositiveIntegerOrZero } from '../../utils/helpers/';
 import { PageActions, PlaylistViewActions } from '../../utils/actions/';
 import { CircleIconButton } from '../_shared/';
 import { PlaylistPlaybackMedia } from './PlaylistPlaybackMedia';
@@ -21,7 +19,7 @@ export default class PlaylistView extends React.PureComponent {
       title: props.playlistData.title,
       link: props.playlistData.url,
       authorName: props.playlistData.user,
-      authorLink: LinksContext._currentValue.home + '/user/' + props.playlistData.user,
+      authorLink: linksConfig.home + '/user/' + props.playlistData.user,
       activeItem: props.activeItem,
       totalMedia: props.playlistData.media_count,
       items: props.playlistData.playlist_media,
@@ -162,10 +160,5 @@ export default class PlaylistView extends React.PureComponent {
     );
   }
 }
-
-PlaylistView.propTypes = {
-  playlistData: PropTypes.object.isRequired,
-  activeItem: PositiveIntegerOrZero,
-};
 
 PlaylistView.defaultProps = {};

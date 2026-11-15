@@ -1,6 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext, LinksConsumer, MemberContext } from '../utils/contexts';
+import { apiUrlConfig, LinksConsumer, memberConfig } from '../utils/contexts';
 import { PageStore, ProfilePageStore } from '../utils/stores';
 import { ProfilePageActions } from '../utils/actions';
 import { MediaListWrapper } from '../components/MediaListWrapper';
@@ -12,7 +11,7 @@ import { ProfileMediaTags } from '../components/search-filters/ProfileMediaTags'
 import { ProfileMediaSharing } from '../components/search-filters/ProfileMediaSharing';
 import { ProfileMediaSorting } from '../components/search-filters/ProfileMediaSorting';
 import { BulkActionsModals } from '../components/BulkActionsModals';
-import { inEmbeddedApp, inSelectMediaEmbedMode } from '../utils/helpers';
+import { inEmbeddedApp, inSelectMediaEmbedMode, isDeepLinkSelection, submitDeepLinkSelection } from '../utils/helpers';
 import { withBulkActions } from '../utils/hoc/withBulkActions';
 
 import { Page } from './_Page';
@@ -90,7 +89,7 @@ class ProfileSharedByMePage extends Page {
         if (author) {
             if (this.state.query) {
                 requestUrl =
-                    ApiUrlContext._currentValue.media +
+                    apiUrlConfig.media +
                     '?author=' +
                     author.id +
                     '&show=shared_by_me&q=' +
@@ -98,7 +97,7 @@ class ProfileSharedByMePage extends Page {
                     this.state.filterArgs;
             } else {
                 requestUrl =
-                    ApiUrlContext._currentValue.media +
+                    apiUrlConfig.media +
                     '?author=' +
                     author.id +
                     '&show=shared_by_me' +
@@ -152,7 +151,7 @@ class ProfileSharedByMePage extends Page {
 
         if (newQuery) {
             requestUrl =
-                ApiUrlContext._currentValue.media +
+                apiUrlConfig.media +
                 '?author=' +
                 this.state.author.id +
                 '&show=shared_by_me&q=' +
@@ -160,7 +159,7 @@ class ProfileSharedByMePage extends Page {
                 this.state.filterArgs;
         } else {
             requestUrl =
-                ApiUrlContext._currentValue.media +
+                apiUrlConfig.media +
                 '?author=' +
                 this.state.author.id +
                 '&show=shared_by_me' +
@@ -360,7 +359,7 @@ class ProfileSharedByMePage extends Page {
 
                 if (this.state.query) {
                     requestUrl =
-                        ApiUrlContext._currentValue.media +
+                        apiUrlConfig.media +
                         '?author=' +
                         this.state.author.id +
                         '&show=shared_by_me&q=' +
@@ -368,7 +367,7 @@ class ProfileSharedByMePage extends Page {
                         this.state.filterArgs;
                 } else {
                     requestUrl =
-                        ApiUrlContext._currentValue.media +
+                        apiUrlConfig.media +
                         '?author=' +
                         this.state.author.id +
                         '&show=shared_by_me' +
@@ -410,6 +409,11 @@ class ProfileSharedByMePage extends Page {
                     newSelectedMedia.add(mediaId);
                     console.log('Selected media item:', mediaId);
 
+                    if (isDeepLinkSelection()) {
+                        submitDeepLinkSelection(mediaId);
+                        return { selectedMedia: newSelectedMedia };
+                    }
+
                     // Send postMessage to parent window (Moodle TinyMCE plugin)
                     if (window.parent !== window) {
                         // Construct the embed URL
@@ -445,7 +449,7 @@ class ProfileSharedByMePage extends Page {
     pageContent() {
         const authorData = ProfilePageStore.get('author-data');
 
-        const isMediaAuthor = authorData && authorData.username === MemberContext._currentValue.username;
+        const isMediaAuthor = authorData && authorData.username === memberConfig.username;
         const isSelectMediaMode = inSelectMediaEmbedMode();
 
         // Check if any filters are active
@@ -564,11 +568,6 @@ class ProfileSharedByMePage extends Page {
         ];
     }
 }
-
-ProfileSharedByMePage.propTypes = {
-    title: PropTypes.string.isRequired,
-    bulkActions: PropTypes.object.isRequired,
-};
 
 ProfileSharedByMePage.defaultProps = {
     title: 'Shared by me',

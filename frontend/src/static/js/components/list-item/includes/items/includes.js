@@ -95,7 +95,6 @@ export function MediaItemViewLink(props) {
 
 export function MediaItemThumbnailLink(props) {
     const attr = {
-        key: 'item-thumb',
         href: props.link,
         title: props.title,
         tabIndex: '-1',
@@ -105,7 +104,7 @@ export function MediaItemThumbnailLink(props) {
     };
 
     return (
-        <a {...attr}>
+        <a key="item-thumb" {...attr}>
             {!props.src ? null : (
                 <div key="item-type-icon" className="item-type-icon">
                     <div></div>
@@ -117,7 +116,6 @@ export function MediaItemThumbnailLink(props) {
 
 export function UserItemThumbnailLink(props) {
     const attr = {
-        key: 'item-thumb',
         href: props.link,
         title: props.title,
         tabIndex: '-1',
@@ -126,7 +124,7 @@ export function UserItemThumbnailLink(props) {
         style: !props.src ? null : { backgroundImage: "url('" + props.src + "')" },
     };
 
-    return <a {...attr}></a>;
+    return <a key="item-thumb" {...attr}></a>;
 }
 
 export function MediaItemAuthor(props) {
@@ -177,13 +175,43 @@ export function MediaItemDuration(props) {
     );
 }
 
+const VIDEO_PREVIEW_EXTENSIONS = ['mp4', 'webm'];
+
 export function MediaItemVideoPreviewer(props) {
     if ('' === props.url) {
         return null;
     }
 
-    const src = props.url.split('.').slice(0, -1).join('.');
     const ext = imageExtension(props.url);
+
+    if (-1 < VIDEO_PREVIEW_EXTENSIONS.indexOf(ext)) {
+        return (
+            <video
+                className="item-video-preview"
+                src={props.url}
+                muted
+                loop
+                playsInline
+                preload="none"
+                tabIndex="-1"
+                aria-hidden="true"
+                onMouseEnter={(e) => {
+                    const video = e.currentTarget;
+                    video.muted = true;
+                    const started = video.play();
+                    if (started && started.catch) {
+                        started.catch(() => {});
+                    }
+                }}
+                onMouseLeave={(e) => {
+                    e.currentTarget.pause();
+                    e.currentTarget.currentTime = 0;
+                }}
+            />
+        );
+    }
+
+    const src = props.url.split('.').slice(0, -1).join('.');
 
     return <span className="item-img-preview" data-src={src} data-ext={ext}></span>;
 }

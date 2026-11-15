@@ -15,3 +15,6 @@ A clear and concise description of any alternative solutions or features you've 
 
 **Additional context**
 Add any other context or screenshots about the feature request here.
+
+**AI disclosure**
+- [ ] This request reflects a real need; AI-generated suggestions were reviewed and kept only what I can vouch for.

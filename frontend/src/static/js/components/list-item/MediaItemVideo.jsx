@@ -1,13 +1,14 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { useMediaItem } from '../../utils/hooks/';
-import { PositiveIntegerOrZero, inSelectMediaEmbedMode } from '../../utils/helpers/';
+import { inSelectMediaEmbedMode } from '../../utils/helpers/';
 import { MediaDurationInfo } from '../../utils/classes/';
 import { MediaPlaylistOptions } from '../media-playlist-options/MediaPlaylistOptions.jsx';
 import { MediaItemVideoPlayer, MediaItemDuration, MediaItemVideoPreviewer, MediaItemPlaylistIndex, itemClassname } from './includes/items/';
 import { MediaItem } from './MediaItem';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
-export function MediaItemVideo(props) {
+export function MediaItemVideo(rawProps) {
+  const props = applyDefaultProps(rawProps, MediaItemVideo.defaultPropValues);
   const type = props.type;
   const isSelectMediaMode = inSelectMediaEmbedMode();
 
@@ -61,7 +62,6 @@ export function MediaItemVideo(props) {
     }
 
     const attr = {
-      key: 'item-thumb',
       href: props.link,
       title: props.title,
       tabIndex: '-1',
@@ -71,7 +71,7 @@ export function MediaItemVideo(props) {
     };
 
     return (
-      <a {...attr}>
+      <a key="item-thumb" {...attr}>
         {props.inPlaylistView ? null : (
           <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
         )}
@@ -170,18 +170,8 @@ export function MediaItemVideo(props) {
   );
 }
 
-MediaItemVideo.propTypes = {
-  ...MediaItem.propTypes,
-  type: PropTypes.string.isRequired,
-  duration: PositiveIntegerOrZero,
-  hidePlaylistOptions: PropTypes.bool,
-  hasMediaViewer: PropTypes.bool,
-  hasMediaViewerDescr: PropTypes.bool,
-  playlist_id: PropTypes.string,
-};
-
-MediaItemVideo.defaultProps = {
-  ...MediaItem.defaultProps,
+MediaItemVideo.defaultPropValues = {
+  ...MediaItem.defaultPropValues,
   type: 'video',
   duration: 0,
   hidePlaylistOptions: true,

@@ -6,7 +6,7 @@
     padding-left: 0;
 }
 
-.media-author-actions {
+.media-delete-confirm {
     .popup-message-bottom {
         button {
             &.cancel-comment-removal {
@@ -82,13 +82,6 @@
                                 background-color: var(--media-actions-not-popup-circle-icon-active-bg-color);
                             }
                         }
-                    }
-                }
-
-                &.like,
-                &.dislike {
-                    &:before {
-                        border-color: var(--media-actions-like-before-border-color);
                     }
                 }
 
@@ -697,6 +690,23 @@
         width: 85%;
         height: 900px;
     }
+
+    iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    &.pdf-container-fallback {
+        height: auto;
+        padding: 48px 16px;
+        background-color: var(--item-thumb-bg-color);
+    }
+}
+
+.viewer-container .pdf-open-link {
+    display: inline-block;
+    margin: 8px 0;
 }
 
 .viewer-container .player-container.viewer-pdf-container,
@@ -728,90 +738,7 @@
     }
 }
 
-.media-author-actions {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    font-family: inherit;
-    margin-bottom: -8px;
-
-    button {
-        &:focus {
-            box-shadow: none;
-        }
-    }
-
-    .edit-media-icon,
-    .remove-media-icon {
-        text-decoration: none;
-        color: #fff;
-        border: 0;
-        line-height: 1;
-        padding: 0;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-
-        .material-icons {
-            font-size: 20px;
-            line-height: 1;
-        }
-
-        &:active {
-            transform: scale(0.98);
-        }
-    }
-
-    .edit-media-icon {
-        background-color: rgba(0, 153, 51, 0.9);
-
-        &:hover {
-            background-color: rgba(0, 153, 51, 1);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transform: scale(1.05);
-        }
-
-        .dark_theme & {
-            background-color: rgba(102, 187, 102, 0.9);
-
-            &:hover {
-                background-color: rgba(102, 187, 102, 1);
-            }
-        }
-    }
-
-    .remove-media-icon {
-        background-color: rgba(220, 53, 69, 0.9);
-
-        &:hover {
-            background-color: rgba(220, 53, 69, 1);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            transform: scale(1.05);
-        }
-
-        .dark_theme & {
-            background-color: rgba(255, 107, 107, 0.9);
-
-            &:hover {
-                background-color: rgba(255, 107, 107, 1);
-            }
-        }
-    }
-
-    .popup {
-        position: absolute;
-        bottom: 100%;
-        left: 0;
-        margin-bottom: 8px;
-    }
-
+.media-delete-confirm {
     .popup-message-bottom {
         button {
             position: relative;
@@ -905,6 +832,29 @@
             display: table-cell;
             vertical-align: middle;
         }
+
+        &.compact-actions,
+        &.stacked-actions {
+            .media-actions > * > * {
+                margin-left: 0;
+
+                > *:not(.popup) > *:nth-child(2) {
+                    display: none !important;
+                }
+            }
+        }
+
+        &.stacked-actions {
+            display: block;
+
+            > * {
+                display: block;
+            }
+
+            .media-actions {
+                display: flow-root;
+            }
+        }
     }
 
     .media-views {
@@ -981,8 +931,49 @@
                     margin-top: -4px;
                 }
 
+                &[data-action-tooltip]::after {
+                    content: attr(data-action-tooltip);
+                    position: absolute;
+                    top: 100%;
+                    left: 50%;
+                    z-index: 6;
+                    margin-top: -4px;
+                    padding: 6px 8px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    line-height: 1.25;
+                    letter-spacing: normal;
+                    white-space: nowrap;
+                    color: #fff;
+                    background-color: #595959;
+                    border-radius: 2px;
+                    pointer-events: none;
+                    opacity: 0;
+                    visibility: hidden;
+                    transform: translateX(var(--action-tooltip-x, -50%));
+                }
+
+                &[data-action-tooltip]:last-child::after {
+                    --action-tooltip-x: 0;
+                    left: auto;
+                    right: 0;
+                }
+
+                @media (hover: hover) {
+                    &[data-action-tooltip]:hover:not(:has(.popup))::after {
+                        opacity: 1;
+                        visibility: visible;
+                    }
+                }
+
+                &[data-action-tooltip]:has(:focus-visible):not(:has(.popup))::after {
+                    opacity: 1;
+                    visibility: visible;
+                }
+
                 &.like,
                 &.dislike,
+                &.edit,
                 &.share,
                 &.save,
                 &.download,
@@ -1003,24 +994,6 @@
                 &.dislike,
                 &.more-options {
                     letter-spacing: 0.0007px;
-                }
-
-                &.like,
-                &.dislike {
-                    &:before {
-                        content: "";
-                        position: absolute;
-                        bottom: 0;
-                        left: -4px;
-                        right: -4px;
-                        border-bottom: 2px solid;
-                    }
-                }
-
-                &.like {
-                }
-
-                &.dislike {
                 }
 
                 &.share {
@@ -1174,6 +1147,7 @@
                     }
                 }
 
+                &.edit a,
                 &.share,
                 &.save,
                 &.download a {
@@ -1188,6 +1162,7 @@
 
                     .nav-page-main,
                     .nav-page-mediaStatusInfo,
+                    .nav-page-mediaDelete,
                     .nav-page-videoDownloadOptions {
                         .popup {
                             width: auto;
@@ -1334,57 +1309,6 @@
                                         overflow-y: auto;
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        .disliked-media {
-            > * {
-                > * {
-                    &.dislike {
-                        &:before {
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    .media-views-actions {
-        &.liked-media {
-            .media-actions {
-                > * {
-                    > * {
-                        &.like,
-                        &.like button,
-                        &.like .circle-icon-button {
-                        }
-
-                        &.like,
-                        &.dislike {
-                            &:before {
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        &.disliked-media {
-            .media-actions {
-                > * {
-                    > * {
-                        &.dislike,
-                        &.dislike button,
-                        &.dislike .circle-icon-button {
-                        }
-
-                        &.like,
-                        &.dislike {
-                            &:before {
                             }
                         }
                     }

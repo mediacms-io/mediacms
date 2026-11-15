@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { FilterOptions } from '../_shared';
 import '../management-table/ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 const filters = {
   media_type: [
@@ -27,11 +27,12 @@ const filters = {
   ],
 };
 
-export function SearchResultsFilters(props) {
+export function SearchResultsFilters(rawProps) {
+  const props = applyDefaultProps(rawProps, SearchResultsFilters.defaultPropValues);
   const [isHidden, setIsHidden] = useState(props.hidden);
 
-  const [mediaTypeFilter, setFilter_media_type] = useState('all');
-  const [uploadDateFilter, setFilter_upload_date] = useState('all');
+  const [mediaTypeFilter, setFilter_media_type] = useState(props.mediaType);
+  const [uploadDateFilter, setFilter_upload_date] = useState(props.uploadDate);
   const [sortByFilter, setFilter_sort_by] = useState('date_added_desc');
 
   const containerRef = useRef(null);
@@ -117,10 +118,8 @@ export function SearchResultsFilters(props) {
   );
 }
 
-SearchResultsFilters.propTypes = {
-  hidden: PropTypes.bool,
-};
-
-SearchResultsFilters.defaultProps = {
+SearchResultsFilters.defaultPropValues = {
   hidden: false,
+  mediaType: 'all',
+  uploadDate: 'all',
 };

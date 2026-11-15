@@ -1,15 +1,16 @@
 import React, { useRef, useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { usePopup } from '../../utils/hooks/';
-import { LinksContext, MemberContext, SiteContext } from '../../utils/contexts/';
+import { linksConfig, memberConfig, siteConfig } from '../../utils/contexts/';
 import { PageStore, ProfilePageStore } from '../../utils/stores/';
 import { PageActions, ProfilePageActions } from '../../utils/actions/';
 import { CircleIconButton, PopupMain } from '../_shared';
 import { translateString, inEmbeddedApp, inSelectMediaEmbedMode, isSelectMediaMode, isShareMediaDisabled } from '../../utils/helpers/';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 class ProfileSearchBar extends React.PureComponent {
     constructor(props) {
         super(props);
+        this.searchInput = React.createRef();
 
         this.state = {
             visibleForm: false,
@@ -99,7 +100,7 @@ class ProfileSearchBar extends React.PureComponent {
     onInputFocus() {
         // console.log('FOCUS');
         /*if( this.state.predictionItems.length ){
-      this.refs.SearchInput.onkeydown = this.refs.SearchInput.onkeydown || this.onKeydown;
+      this.searchInput.current.onkeydown = this.searchInput.current.onkeydown || this.onKeydown;
     }*/
     }
 
@@ -143,7 +144,7 @@ class ProfileSearchBar extends React.PureComponent {
     }
 
     onFormSubmit(ev) {
-        if ('' === this.refs.SearchInput.value.trim()) {
+        if ('' === this.searchInput.current.value.trim()) {
             ev.preventDefault();
             ev.stopPropagation();
         }
@@ -153,11 +154,11 @@ class ProfileSearchBar extends React.PureComponent {
         const hasSearchText = this.state.queryVal && this.state.queryVal.length > 0;
 
         // Determine the correct action URL based on page type
-        let actionUrl = LinksContext._currentValue.profile.media;
+        let actionUrl = linksConfig.profile.media;
         if (this.props.type === 'shared_by_me') {
-            actionUrl = LinksContext._currentValue.profile.shared_by_me;
+            actionUrl = linksConfig.profile.shared_by_me;
         } else if (this.props.type === 'shared_with_me') {
-            actionUrl = LinksContext._currentValue.profile.shared_with_me;
+            actionUrl = linksConfig.profile.shared_with_me;
         }
 
         if (!this.state.visibleForm) {
@@ -211,7 +212,7 @@ class ProfileSearchBar extends React.PureComponent {
                 <span>
                     <input
                         autoFocus={true}
-                        ref="SearchInput"
+                        ref={this.searchInput}
                         type="text"
                         name="aq"
                         placeholder="Search"
@@ -227,11 +228,6 @@ class ProfileSearchBar extends React.PureComponent {
     }
 }
 
-ProfileSearchBar.propTypes = {
-    onQueryChange: PropTypes.func,
-    type: PropTypes.string,
-};
-
 ProfileSearchBar.defaultProps = {};
 
 function InlineTab(props) {
@@ -244,16 +240,10 @@ function InlineTab(props) {
     );
 }
 
-InlineTab.propTypes = {
-    id: PropTypes.string.isRequired,
-    label: PropTypes.string.isRequired,
-    link: PropTypes.string.isRequired,
-    isActive: PropTypes.bool.isRequired,
-};
-
 class NavMenuInlineTabs extends React.PureComponent {
     constructor(props) {
         super(props);
+        this.itemsListWrap = React.createRef();
 
         this.state = {
             displayNext: false,
@@ -312,34 +302,34 @@ class NavMenuInlineTabs extends React.PureComponent {
         );
 
         this.userIsAuthor =
-            !MemberContext._currentValue.is.anonymous &&
-            ProfilePageStore.get('author-data').username === MemberContext._currentValue.username;
+            !memberConfig.is.anonymous &&
+            ProfilePageStore.get('author-data').username === memberConfig.username;
     }
 
     componentDidMount() {
         this.updateSlider();
-        if (this.refs.itemsListWrap) {
-            this.refs.itemsListWrap.addEventListener('scroll', this.updateSliderButtonsView.bind(this));
+        if (this.itemsListWrap.current) {
+            this.itemsListWrap.current.addEventListener('scroll', this.updateSliderButtonsView.bind(this));
         }
     }
 
     componentWillUnmount() {
-        if (this.refs.itemsListWrap) {
-            this.refs.itemsListWrap.removeEventListener('scroll', this.updateSliderButtonsView.bind(this));
+        if (this.itemsListWrap.current) {
+            this.itemsListWrap.current.removeEventListener('scroll', this.updateSliderButtonsView.bind(this));
         }
     }
 
     nextSlide() {
-        if (!this.refs.itemsListWrap) return;
-        const scrollAmount = this.refs.itemsListWrap.offsetWidth * 0.7; // Scroll 70% of visible width
-        this.refs.itemsListWrap.scrollLeft += scrollAmount;
+        if (!this.itemsListWrap.current) return;
+        const scrollAmount = this.itemsListWrap.current.offsetWidth * 0.7; // Scroll 70% of visible width
+        this.itemsListWrap.current.scrollLeft += scrollAmount;
         setTimeout(() => this.updateSliderButtonsView(), 50);
     }
 
     prevSlide() {
-        if (!this.refs.itemsListWrap) return;
-        const scrollAmount = this.refs.itemsListWrap.offsetWidth * 0.7; // Scroll 70% of visible width
-        this.refs.itemsListWrap.scrollLeft -= scrollAmount;
+        if (!this.itemsListWrap.current) return;
+        const scrollAmount = this.itemsListWrap.current.offsetWidth * 0.7; // Scroll 70% of visible width
+        this.itemsListWrap.current.scrollLeft -= scrollAmount;
         setTimeout(() => this.updateSliderButtonsView(), 50);
     }
 
@@ -348,9 +338,9 @@ class NavMenuInlineTabs extends React.PureComponent {
     }
 
     updateSliderButtonsView() {
-        if (!this.refs.itemsListWrap) return;
+        if (!this.itemsListWrap.current) return;
 
-        const container = this.refs.itemsListWrap;
+        const container = this.itemsListWrap.current;
         const scrollLeft = container.scrollLeft;
         const scrollWidth = container.scrollWidth;
         const clientWidth = container.clientWidth;
@@ -377,32 +367,32 @@ class NavMenuInlineTabs extends React.PureComponent {
 
         // Append action=select_media to links when in select mode
         const mediaLink = isSelectMediaMode
-            ? `${LinksContext._currentValue.profile.media}${LinksContext._currentValue.profile.media.includes('?') ? '&' : '?'}action=select_media`
-            : LinksContext._currentValue.profile.media;
+            ? `${linksConfig.profile.media}${linksConfig.profile.media.includes('?') ? '&' : '?'}action=select_media`
+            : linksConfig.profile.media;
 
         const sharedByMeLink = isSelectMediaMode
-            ? `${LinksContext._currentValue.profile.shared_by_me}${LinksContext._currentValue.profile.shared_by_me.includes('?') ? '&' : '?'}action=select_media`
-            : LinksContext._currentValue.profile.shared_by_me;
+            ? `${linksConfig.profile.shared_by_me}${linksConfig.profile.shared_by_me.includes('?') ? '&' : '?'}action=select_media`
+            : linksConfig.profile.shared_by_me;
 
         const sharedWithMeBase = shareMediaDisabled
-            ? `${LinksContext._currentValue.profile.shared_with_me}${LinksContext._currentValue.profile.shared_with_me.includes('?') ? '&' : '?'}share_media=0`
-            : LinksContext._currentValue.profile.shared_with_me;
+            ? `${linksConfig.profile.shared_with_me}${linksConfig.profile.shared_with_me.includes('?') ? '&' : '?'}share_media=0`
+            : linksConfig.profile.shared_with_me;
         const sharedWithMeLink = isSelectMediaMode
             ? `${sharedWithMeBase}${sharedWithMeBase.includes('?') ? '&' : '?'}action=select_media`
             : sharedWithMeBase;
 
         return (
-            <nav ref="tabsNav" className="profile-nav items-list-outer list-inline list-slider">
+            <nav className="profile-nav items-list-outer list-inline list-slider">
                 <div className="profile-nav-inner items-list-outer">
                     {this.state.displayPrev ? this.previousBtn : null}
 
-                    <ul className="items-list-wrap" ref="itemsListWrap">
+                    <ul className="items-list-wrap" ref={this.itemsListWrap}>
                         {!isSelectMediaMode && !inEmbeddedApp() ? (
                             <InlineTab
                                 id="about"
                                 isActive={'about' === this.props.type}
                                 label={translateString('About')}
-                                link={LinksContext._currentValue.profile.about}
+                                link={linksConfig.profile.about}
                             />
                         ) : null}
                         <InlineTab
@@ -428,12 +418,12 @@ class NavMenuInlineTabs extends React.PureComponent {
                             />
                         ) : null}
 
-                        {!isSelectMediaMode && MemberContext._currentValue.can.saveMedia ? (
+                        {!isSelectMediaMode && memberConfig.can.saveMedia ? (
                             <InlineTab
                                 id="playlists"
                                 isActive={'playlists' === this.props.type}
                                 label={translateString('Playlists')}
-                                link={LinksContext._currentValue.profile.playlists}
+                                link={linksConfig.profile.playlists}
                             />
                         ) : null}
                         {PageStore.get('config-options').pages.profile.includeHistory && this.userIsAuthor ? (
@@ -441,7 +431,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                                 id="history"
                                 isActive={'history' === this.props.type}
                                 label={PageStore.get('config-enabled').pages.history.title}
-                                link={LinksContext._currentValue.user.history}
+                                link={linksConfig.user.history}
                             />
                         ) : null}
                         {PageStore.get('config-options').pages.profile.includeLikedMedia && this.userIsAuthor ? (
@@ -449,7 +439,7 @@ class NavMenuInlineTabs extends React.PureComponent {
                                 id="liked"
                                 isActive={'liked' === this.props.type}
                                 label={PageStore.get('config-enabled').pages.liked.title}
-                                link={LinksContext._currentValue.user.liked}
+                                link={linksConfig.user.liked}
                             />
                         ) : null}
 
@@ -603,19 +593,6 @@ class NavMenuInlineTabs extends React.PureComponent {
     }
 }
 
-NavMenuInlineTabs.propTypes = {
-    type: PropTypes.string.isRequired,
-    onQueryChange: PropTypes.func,
-    onToggleFiltersClick: PropTypes.func,
-    onToggleSharingClick: PropTypes.func,
-    onToggleTagsClick: PropTypes.func,
-    onToggleSortingClick: PropTypes.func,
-    hasActiveFilters: PropTypes.bool,
-    hasActiveSharing: PropTypes.bool,
-    hasActiveTags: PropTypes.bool,
-    hasActiveSort: PropTypes.bool,
-};
-
 function AddBannerButton(props) {
     let link = props.link;
 
@@ -656,22 +633,23 @@ function EditProfileButton(props) {
     );
 }
 
-export default function ProfilePagesHeader(props) {
+export default function ProfilePagesHeader(rawProps) {
+    const props = applyDefaultProps(rawProps, ProfilePagesHeader.defaultPropValues);
     const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
 
     const profilePageHeaderRef = useRef(null);
     const profileNavRef = useRef(null);
 
-    const userIsAdmin = !MemberContext._currentValue.is.anonymous && MemberContext._currentValue.is.admin;
+    const userIsAdmin = !memberConfig.is.anonymous && memberConfig.is.admin;
     const userIsAuthor =
-        !MemberContext._currentValue.is.anonymous &&
-        ProfilePageStore.get('author-data').username === MemberContext._currentValue.username;
+        !memberConfig.is.anonymous &&
+        ProfilePageStore.get('author-data').username === memberConfig.username;
     const userCanEditProfile =
-        userIsAuthor || (!MemberContext._currentValue.is.anonymous && MemberContext._currentValue.can.editProfile);
+        userIsAuthor || (!memberConfig.is.anonymous && memberConfig.can.editProfile);
     const userCanDeleteProfile =
         userIsAdmin ||
         userIsAuthor ||
-        (!MemberContext._currentValue.is.anonymous && MemberContext._currentValue.can.deleteProfile);
+        (!memberConfig.is.anonymous && memberConfig.can.deleteProfile);
 
     function cancelProfileRemoval() {
         popupContentRef.current.toggle();
@@ -687,7 +665,7 @@ export default function ProfilePagesHeader(props) {
         setTimeout(function () {
             PageActions.addNotification('Profile removed. Redirecting...', 'profileDelete');
             setTimeout(function () {
-                window.location.href = SiteContext._currentValue.url;
+                window.location.href = siteConfig.url;
             }, 2000);
         }, 100);
 
@@ -735,7 +713,7 @@ export default function ProfilePagesHeader(props) {
                             style={{
                                 backgroundImage:
                                     'url(' +
-                                    SiteContext._currentValue.url +
+                                    siteConfig.url +
                                     '/' +
                                     props.author.banner_thumbnail_url.replace(/^\//g, '') +
                                     ')',
@@ -828,20 +806,6 @@ export default function ProfilePagesHeader(props) {
     );
 }
 
-ProfilePagesHeader.propTypes = {
-    author: PropTypes.object.isRequired,
-    type: PropTypes.string.isRequired,
-    onQueryChange: PropTypes.func,
-    onToggleFiltersClick: PropTypes.func,
-    onToggleSharingClick: PropTypes.func,
-    onToggleTagsClick: PropTypes.func,
-    onToggleSortingClick: PropTypes.func,
-    hasActiveFilters: PropTypes.bool,
-    hasActiveSharing: PropTypes.bool,
-    hasActiveTags: PropTypes.bool,
-    hasActiveSort: PropTypes.bool,
-};
-
-ProfilePagesHeader.defaultProps = {
+ProfilePagesHeader.defaultPropValues = {
     type: 'media',
 };

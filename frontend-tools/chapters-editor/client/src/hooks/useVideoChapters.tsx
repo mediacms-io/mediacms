@@ -56,6 +56,7 @@ const useVideoChapters = () => {
 
     // Video element reference and state
     const videoRef = useRef<HTMLVideoElement>(null);
+    const pendingSeekRef = useRef<number | null>(null);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -205,7 +206,15 @@ const useVideoChapters = () => {
         };
 
         const handleTimeUpdate = () => {
+            if (pendingSeekRef.current !== null) return;
             setCurrentTime(video.currentTime);
+        };
+
+        const handleSeeked = () => {
+            if (pendingSeekRef.current === null) return;
+            const time = pendingSeekRef.current;
+            pendingSeekRef.current = null;
+            video.currentTime = time;
         };
 
         const handlePlay = () => {
@@ -225,6 +234,7 @@ const useVideoChapters = () => {
         // Add event listeners
         video.addEventListener('loadedmetadata', handleLoadedMetadata);
         video.addEventListener('timeupdate', handleTimeUpdate);
+        video.addEventListener('seeked', handleSeeked);
         video.addEventListener('play', handlePlay);
         video.addEventListener('pause', handlePause);
         video.addEventListener('ended', handleEnded);
@@ -245,6 +255,7 @@ const useVideoChapters = () => {
                 // Remove event listeners
                 video.removeEventListener('loadedmetadata', handleLoadedMetadata);
                 video.removeEventListener('timeupdate', handleTimeUpdate);
+                video.removeEventListener('seeked', handleSeeked);
                 video.removeEventListener('play', handlePlay);
                 video.removeEventListener('pause', handlePause);
                 video.removeEventListener('ended', handleEnded);
@@ -258,6 +269,7 @@ const useVideoChapters = () => {
             // Remove event listeners
             video.removeEventListener('loadedmetadata', handleLoadedMetadata);
             video.removeEventListener('timeupdate', handleTimeUpdate);
+            video.removeEventListener('seeked', handleSeeked);
             video.removeEventListener('play', handlePlay);
             video.removeEventListener('pause', handlePause);
             video.removeEventListener('ended', handleEnded);
@@ -425,7 +437,11 @@ const useVideoChapters = () => {
         const wasPlaying = !video.paused;
 
         // Update the video position
-        video.currentTime = time;
+        if (video.seeking) {
+            pendingSeekRef.current = time;
+        } else {
+            video.currentTime = time;
+        }
         setCurrentTime(time);
 
         // Store the position in a global state accessible to iOS Safari

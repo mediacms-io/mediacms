@@ -1,18 +1,11 @@
-FROM python:3.13.5-slim-bookworm AS build-image
+FROM python:3.13.16-slim-trixie AS build-image
 
 # Install system dependencies needed for downloading and extracting
 RUN apt-get update -y && \
-    apt-get install -y --no-install-recommends wget xz-utils unzip && \
+    apt-get install -y --no-install-recommends wget unzip && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get purge --auto-remove && \
     apt-get clean
-
-RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz
-
-RUN mkdir -p ffmpeg-tmp && \
-    tar -xf ffmpeg-release-amd64-static.tar.xz --strip-components 1 -C ffmpeg-tmp && \
-    cp -v ffmpeg-tmp/ffmpeg ffmpeg-tmp/ffprobe ffmpeg-tmp/qt-faststart /usr/local/bin && \
-    rm -rf ffmpeg-tmp ffmpeg-release-amd64-static.tar.xz
 
 # Install Bento4 in the specified location
 RUN mkdir -p /home/mediacms.io/bento4 && \
@@ -24,7 +17,7 @@ RUN mkdir -p /home/mediacms.io/bento4 && \
     rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
 
 ############ BASE RUNTIME IMAGE ############
-FROM python:3.13.5-slim-bookworm AS base
+FROM python:3.13.16-slim-trixie AS base
 
 SHELL ["/bin/bash", "-c"]
 
@@ -48,7 +41,7 @@ RUN apt-get update -y && \
         zlib1g \
         libxml2-dev \
         libxmlsec1-dev \
-        libxmlsec1-openssl \
+        libxmlsec1t64-openssl \
         libpq-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -76,10 +69,8 @@ RUN pip install --no-cache-dir uv && \
         libxmlsec1-dev \
         libpq-dev
 
-# Copy ffmpeg and Bento4 from build image
-COPY --from=build-image /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
-COPY --from=build-image /usr/local/bin/ffprobe /usr/local/bin/ffprobe
-COPY --from=build-image /usr/local/bin/qt-faststart /usr/local/bin/qt-faststart
+# Copy ffmpeg from a published MediaCMS image and Bento4 from build image
+COPY --from=mediacms/mediacms:7.2.0@sha256:2767185c22196008aa9af1df7d33f00010e0bacf7c2a974f9d59cf3383550005 /usr/local/bin/ffmpeg /usr/local/bin/ffprobe /usr/local/bin/qt-faststart /usr/local/bin/
 COPY --from=build-image /home/mediacms.io/bento4 /home/mediacms.io/bento4
 
 # Copy application files
@@ -87,7 +78,7 @@ COPY . /home/mediacms.io/mediacms
 WORKDIR /home/mediacms.io/mediacms
 
 # required for sprite thumbnail generation for large video files
-COPY deploy/docker/policy.xml /etc/ImageMagick-6/policy.xml
+COPY deploy/docker/policy.xml /etc/ImageMagick-7/policy.xml
 
 # Set process control environment variables
 ENV ENABLE_UWSGI='yes' \

@@ -10,6 +10,7 @@ from django.http import HttpResponse, HttpResponsePermanentRedirect, HttpRespons
 from django.shortcuts import render
 from django.urls import is_valid_path
 from django.utils.html import mark_safe, strip_tags
+from django.utils.html import strip_tags
 from django.views.decorators.csrf import csrf_exempt
 
 from cms.version import VERSION
@@ -18,6 +19,7 @@ from users.models import User
 
 from .. import helpers
 from ..forms import (
+    CategoryForm,
     ContactForm,
     EditSubtitleForm,
     MediaMetadataForm,
@@ -29,6 +31,7 @@ from ..forms import (
 from ..frontend_translations import translate_string
 from ..helpers import get_alphanumeric_and_spaces
 from ..methods import (
+    can_edit_category,
     can_transcribe_video,
     create_video_trim_request,
     get_user_or_session,
@@ -201,6 +204,32 @@ def categories(request):
 
     context = {}
     return render(request, "cms/categories.html", context)
+
+
+def edit_category(request, uid):
+    """Edit one category's title, description and thumbnail.
+
+    A plain Django form rather than part of the single page app: it is used rarely, by
+    administrators and group managers, and a server rendered form enforces who may open
+    it in one place instead of two.
+    """
+    category = Category.objects.filter(uid=uid).first()
+    if not category:
+        return HttpResponseRedirect("/")
+
+    if not can_edit_category(request.user, category):
+        return HttpResponseRedirect(category.get_absolute_url())
+
+    if request.method == "POST":
+        form = CategoryForm(request.POST, request.FILES, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.add_message(request, messages.INFO, "Category was updated")
+            return HttpResponseRedirect(category.get_absolute_url())
+    else:
+        form = CategoryForm(instance=category)
+
+    return render(request, "cms/edit_category.html", {"form": form, "category": category})
 
 
 def contact(request):
@@ -505,15 +534,14 @@ def edit_chapters(request):
     if not (is_mediacms_editor(request.user) or request.user.has_contributor_access_to_media(media)):
         return HttpResponseRedirect("/")
 
-    _html_escapes = str.maketrans({'<': r'\u003C', '>': r'\u003E', '&': r'\u0026'})
-    chapters_json = mark_safe(json.dumps(media.chapter_data).translate(_html_escapes))
+    chapters_json = helpers.json_for_script(media.chapter_data)
     return render(
         request,
         "cms/edit_chapters.html",
         {
             "media_object": media,
             "add_subtitle_url": media.add_subtitle_url,
-            "media_file_path": helpers.url_from_path(media.media_file.path),
+            "media_file_path": media.trim_video_url or helpers.url_from_path(media.media_file.path),
             "media_id": media.friendly_token,
             "chapters": chapters_json,
         },
@@ -607,13 +635,14 @@ def embed_media(request):
     if not friendly_token:
         return HttpResponseRedirect("/")
 
-    media = Media.objects.values("title").filter(friendly_token=friendly_token).first()
+    media = Media.objects.values("media_type").filter(friendly_token=friendly_token).first()
 
     if not media:
         return HttpResponse('This media no longer exists', status=404, content_type='text/plain; charset=utf-8')
 
     context = {}
     context["media"] = friendly_token
+    context["media_type"] = media["media_type"]
     return render(request, "cms/embed.html", context)
 
 
@@ -662,8 +691,8 @@ def manage_media(request):
     if not is_mediacms_editor(request.user):
         return HttpResponseRedirect("/")
 
-    categories = Category.objects.all().order_by('title').values_list('title', flat=True)
-    context = {'categories': list(categories)}
+    categories = Category.objects.all().order_by('title').values('uid', 'title')
+    context = {'categories': helpers.json_for_script(list(categories))}
     return render(request, "cms/manage_media.html", context)
 
 
@@ -760,7 +789,8 @@ def view_media(request):
     save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
     context = {}
     context["media"] = friendly_token
-    context["media_object"] = media
+    can_view = media.state != "private" or (request.user.is_authenticated and (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user)))
+    context["media_object"] = media if can_view else None
 
     context["CAN_DELETE_MEDIA"] = False
     context["CAN_EDIT_MEDIA"] = False
@@ -794,7 +824,7 @@ def view_playlist(request, friendly_token):
 
     try:
         playlist = Playlist.objects.get(friendly_token=friendly_token)
-    except BaseException:
+    except Playlist.DoesNotExist:
         playlist = None
 
     context = {}

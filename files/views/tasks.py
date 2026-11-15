@@ -24,7 +24,7 @@ class TaskDetail(APIView):
 
     permission_classes = (permissions.IsAdminUser,)
 
-    def delete(self, request, uid, format=None):
+    def delete(self, request, friendly_token, format=None):
         # This is not imported!
         # revoke(uid, terminate=True)
         return Response(status=status.HTTP_204_NO_CONTENT)

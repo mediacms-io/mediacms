@@ -79,6 +79,12 @@ You can deploy MediaCMS on Elestio using one-click deployment. Elestio supports 
 
 [![Deploy on Elestio](https://elest.io/images/logos/deploy-to-elestio-btn.png)](https://elest.io/open-source/mediacms)
 
+**ZopDay**
+
+You can deploy MediaCMS with ZopDay, on managed ZopCloud or in an AWS or GCP account you already own.
+
+[![Deploy to ZopDay](https://zop.dev/deploytozopday-inkhard.svg)](https://zop.dev/zopday/app/deploy?image=mediacms/mediacms:latest&port=80&name=mediacms&utm_source=github&utm_medium=one_click&utm_content=mediacms)
+
 ## Hardware considerations
 
 For a small to medium installation, with a few hours of video uploaded daily, and a few hundreds of active daily users viewing content, 4GB Ram / 2-4 CPUs as minimum is ok. For a larger installation with many hours of video uploaded daily, consider adding more CPUs and more Ram.
@@ -105,6 +111,9 @@ There are two ways to run MediaCMS, through Docker Compose and through installin
 * [Developer Experience](docs/dev_exp.md) page
 * [Media Permissions](docs/media_permissions.md) page
 * [Moodle Plugin](docs/moodle_plugin.md) page
+* [Kaltura migration](docs/kaltura_migration.md) page
+* [YouTube migration](docs/youtube_migration.md) page
+* [Panopto migration](docs/panopto_migration.md) page
 
 
 ## Technology

@@ -71,8 +71,6 @@ export class EndScreenHandler {
             relatedVideos,
             goToNextVideo,
             showRelated,
-            showUserAvatar,
-            linkTitle,
         } = this.options;
 
         // For embed players, show big play button when video ends

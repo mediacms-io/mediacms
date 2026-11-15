@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PageActions, PlaylistPageActions } from '../utils/actions/';
-import { MemberContext } from '../utils/contexts/';
+import { memberConfig } from '../utils/contexts/';
 import { usePopup } from '../utils/hooks/';
 import { PlaylistPageStore } from '../utils/stores/';
 import {
@@ -230,7 +230,7 @@ function PlaylistEdit(props) {
     setTimeout(function () {
       PageActions.addNotification('Playlist removed. Redirecting...', 'playlistDelete');
       setTimeout(function () {
-        window.location.href = MemberContext._currentValue.pages.playlists;
+        window.location.href = memberConfig.pages.playlists;
       }, 2000);
     }, 100);
   }

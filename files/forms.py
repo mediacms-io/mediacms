@@ -353,6 +353,30 @@ class EditSubtitleForm(forms.Form):
         self.fields["subtitle"].initial = subtitle.subtitle_file.read().decode("utf-8")
 
 
+class CategoryForm(forms.ModelForm):
+    """Editing a category's presentation, and nothing else.
+
+    uid is absent on purpose: it is the category's identity, it appears in every link to
+    it, and on a migrated category the source portal knows it by that id.
+    """
+
+    class Meta:
+        model = Category
+        fields = ("title", "description", "thumbnail")
+
+    def clean_title(self):
+        title = (self.cleaned_data.get("title") or "").strip()
+        if not title:
+            raise forms.ValidationError("A category needs a title.")
+        return title
+
+    def clean_thumbnail(self):
+        image = self.cleaned_data.get("thumbnail")
+        if image and getattr(image, "size", 0) > 5 * 1024 * 1024:
+            raise forms.ValidationError("Image file too large ( > 5mb )")
+        return image
+
+
 class ContactForm(forms.Form):
     from_email = forms.EmailField(required=True)
     name = forms.CharField(required=False)

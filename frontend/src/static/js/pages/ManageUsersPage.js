@@ -1,12 +1,17 @@
 import React from 'react';
-import PropTypes from 'prop-types';
-import { ApiUrlContext } from '../utils/contexts/';
+import { apiUrlConfig } from '../utils/contexts/';
 import { PageActions } from '../utils/actions/';
+import { SearchFieldStore } from '../utils/stores/';
 import { FiltersToggleButton } from '../components/_shared';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageUsersFilters } from '../components/management-table/ManageUsersFilters.jsx';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
 import { Page } from './_Page';
+
+function searchArgs() {
+  const query = SearchFieldStore.get('search-query');
+  return query ? 'name=' + encodeURIComponent(query) : '';
+}
 
 function genReqUrl(url, filters, sort, page) {
   const ret = url + '?' + filters + ('' === filters ? '' : '&') + sort + ('' === sort ? '' : '&') + 'page=' + page;
@@ -17,12 +22,14 @@ export class ManageUsersPage extends Page {
   constructor(props) {
     super(props, 'manage-users');
 
+    this.searchArgs = searchArgs();
+
     this.state = {
       resultsCount: null,
       currentPage: 1,
-      requestUrl: ApiUrlContext._currentValue.manage.users,
+      requestUrl: genReqUrl(apiUrlConfig.manage.users, this.searchArgs, '', 1),
       hiddenFilters: true,
-      filterArgs: '',
+      filterArgs: this.searchArgs,
       sortingArgs: '',
       sortBy: 'add_date',
       ordering: 'desc',
@@ -42,7 +49,7 @@ export class ManageUsersPage extends Page {
     this.setState({
       currentPage: updatedPage,
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.users,
+        apiUrlConfig.manage.users,
         this.state.filterArgs,
         this.state.sortingArgs,
         updatedPage
@@ -65,7 +72,7 @@ export class ManageUsersPage extends Page {
   onFiltersUpdate(updatedArgs) {
     // console.log( "==>", updatedArgs );
 
-    const newArgs = [];
+    const newArgs = '' === this.searchArgs ? [] : [this.searchArgs];
 
     for (let arg in updatedArgs) {
       if (null !== updatedArgs[arg] && 'all' !== updatedArgs[arg]) {
@@ -73,13 +80,13 @@ export class ManageUsersPage extends Page {
       }
     }
 
-    // console.log( ApiUrlContext._currentValue.manage.users + ( newArgs.length ? '?' + newArgs.join('&') : '' ) );
+    // console.log( apiUrlConfig.manage.users + ( newArgs.length ? '?' + newArgs.join('&') : '' ) );
 
     /*if( 1 === this.state.currentPage ){*/
     this.setState({
       filterArgs: newArgs.join('&'),
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.users,
+        apiUrlConfig.manage.users,
         newArgs.join('&'),
         this.state.sortingArgs,
         this.state.currentPage
@@ -89,7 +96,7 @@ export class ManageUsersPage extends Page {
     else{
       this.setState({
         filterArgs: newArgs.join('&'),
-        requestUrl: ApiUrlContext._currentValue.manage.users + ( newArgs.length ? '?' + newArgs.join('&') : '' ) + '&page=' + this.state.currentPage,
+        requestUrl: apiUrlConfig.manage.users + ( newArgs.length ? '?' + newArgs.join('&') : '' ) + '&page=' + this.state.currentPage,
       });
     }*/
   }
@@ -101,7 +108,7 @@ export class ManageUsersPage extends Page {
       ordering: order,
       sortingArgs: newArgs,
       requestUrl: genReqUrl(
-        ApiUrlContext._currentValue.manage.users,
+        apiUrlConfig.manage.users,
         this.state.filterArgs,
         newArgs,
         this.state.currentPage
@@ -114,7 +121,7 @@ export class ManageUsersPage extends Page {
       {
         resultsCount: null,
         refresh: this.state.refresh + 1,
-        requestUrl: ApiUrlContext._currentValue.manage.users,
+        requestUrl: genReqUrl(apiUrlConfig.manage.users, this.searchArgs, '', 1),
       },
       function () {
         if (multipleItems) {
@@ -159,10 +166,6 @@ export class ManageUsersPage extends Page {
     ];
   }
 }
-
-ManageUsersPage.propTypes = {
-  title: PropTypes.string.isRequired,
-};
 
 ManageUsersPage.defaultProps = {
   title: 'Manage users',

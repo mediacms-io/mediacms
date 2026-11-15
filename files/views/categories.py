@@ -1,6 +1,8 @@
 from django.conf import settings
+from django.db.models import Q
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.settings import api_settings
 from rest_framework.views import APIView
@@ -10,11 +12,38 @@ from ..models import Category, Tag
 from ..serializers import CategorySerializer, TagSerializer
 
 
+def visible_categories(request, show_lms=None):
+    """Categories the requesting user is allowed to see
+
+    One place where category visibility is decided, so listing a category and retrieving
+    one by uid cannot disagree.
+    """
+
+    if show_lms is None:
+        show_lms = getattr(settings, 'SHOW_LMS_COURSES_IN_CATEGORIES', True)
+
+    categories = Category.objects.prefetch_related("user")
+
+    if not show_lms:
+        categories = categories.filter(is_lms_course=False)
+
+    if not is_mediacms_editor(request.user):
+        visible = Q(is_rbac_category=False)
+        if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
+            member_of = request.user.get_rbac_categories_as_member().values_list("pk", flat=True)
+            visible |= Q(pk__in=member_of)
+        categories = categories.filter(visible)
+
+    return categories
+
+
 class CategoryList(APIView):
     """List categories"""
 
     @swagger_auto_schema(
-        manual_parameters=[],
+        manual_parameters=[
+            openapi.Parameter(name='q', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by title and description'),
+        ],
         tags=['Categories'],
         operation_summary='Lists Categories',
         operation_description='Lists all categories',
@@ -23,25 +52,36 @@ class CategoryList(APIView):
         },
     )
     def get(self, request, format=None):
-        show_lms = getattr(settings, 'SHOW_LMS_COURSES_IN_CATEGORIES', True)
-        categories = Category.objects.prefetch_related("user")
-
-        if not show_lms:
-            categories = categories.filter(is_lms_course=False)
-
-        if not is_mediacms_editor(request.user):
-            categories = categories.filter(is_rbac_category=False)
-            if getattr(settings, 'USE_RBAC', False) and request.user.is_authenticated:
-                rbac_categories = request.user.get_rbac_categories_as_member()
-                if not show_lms:
-                    rbac_categories = rbac_categories.filter(is_lms_course=False)
-                categories = categories.union(rbac_categories)
-
-        categories = categories.order_by("title")
+        categories = visible_categories(request).order_by("title")
+        query = request.GET.get("q", "").strip()
+        if query:
+            categories = categories.filter(Q(title__icontains=query) | Q(description__icontains=query))
 
         serializer = CategorySerializer(categories, many=True, context={"request": request})
         ret = serializer.data
         return Response(ret)
+
+
+class CategoryDetail(APIView):
+    """Get a single category by uid"""
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Categories'],
+        operation_summary='Get Category',
+        operation_description='Get a single category by uid',
+        responses={
+            200: openapi.Response('response description', CategorySerializer),
+            404: openapi.Response('category not found'),
+        },
+    )
+    def get(self, request, uid, format=None):
+        category = visible_categories(request).filter(uid=uid).first()
+        if not category:
+            return Response({"detail": "not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = CategorySerializer(category, context={"request": request})
+        return Response(serializer.data)
 
 
 class CategoryListContributor(APIView):
@@ -71,6 +111,7 @@ class TagList(APIView):
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='q', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='Search by title'),
         ],
         tags=['Tags'],
         operation_summary='Lists Tags',
@@ -81,6 +122,9 @@ class TagList(APIView):
     )
     def get(self, request, format=None):
         tags = Tag.objects.filter().order_by("-media_count")
+        query = request.GET.get("q", "").strip()
+        if query:
+            tags = tags.filter(title__icontains=query)
         pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
         paginator = pagination_class()
         page = paginator.paginate_queryset(tags, request)

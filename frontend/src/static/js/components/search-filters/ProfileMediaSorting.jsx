@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { FilterOptions } from '../_shared';
 import { translateString } from '../../utils/helpers/';
 import '../management-table/ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 const sortOptions = {
   sort_by: [
@@ -18,7 +18,8 @@ const sortOptions = {
   ],
 };
 
-export function ProfileMediaSorting(props) {
+export function ProfileMediaSorting(rawProps) {
+  const props = applyDefaultProps(rawProps, ProfileMediaSorting.defaultPropValues);
   const [isHidden, setIsHidden] = useState(props.hidden);
   const [sortByFilter, setFilter_sort_by] = useState('date_added_desc');
 
@@ -61,11 +62,6 @@ export function ProfileMediaSorting(props) {
   );
 }
 
-ProfileMediaSorting.propTypes = {
-  hidden: PropTypes.bool,
-  onSortSelect: PropTypes.func.isRequired,
-};
-
-ProfileMediaSorting.defaultProps = {
+ProfileMediaSorting.defaultPropValues = {
   hidden: false,
 };

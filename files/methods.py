@@ -104,6 +104,25 @@ def is_mediacms_editor(user):
     return editor
 
 
+def can_edit_category(user, category):
+    """Whether this user may change a category's title, description or thumbnail.
+
+    Portal managers always may, and beyond them only the managers of an RBAC category,
+    which belongs to their group rather than the portal at large. A contributor may put
+    media in such a category but not rename it.
+    """
+    if not (user and user.is_authenticated):
+        return False
+
+    if is_mediacms_manager(user):
+        return True
+
+    if getattr(settings, "USE_RBAC", False) and category.is_rbac_category:
+        return user.has_manager_access_to_category(category)
+
+    return False
+
+
 def is_mediacms_manager(user):
     """Whether user is MediaCMS manager"""
 
@@ -368,6 +387,8 @@ def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
         return False
 
     user = User.objects.filter(username=user_mentioned).first()
+    if not user:
+        return False
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:

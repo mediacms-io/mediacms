@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
 import { FilterOptions } from '../_shared';
 import { translateString } from '../../utils/helpers/';
 import '../management-table/ManageItemList-filters.scss';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 const filters = {
   media_type: [
@@ -42,7 +42,8 @@ const filters = {
   ],
 };
 
-export function ProfileMediaFilters(props) {
+export function ProfileMediaFilters(rawProps) {
+  const props = applyDefaultProps(rawProps, ProfileMediaFilters.defaultPropValues);
   const [isHidden, setIsHidden] = useState(props.hidden);
 
   const [mediaTypeFilter, setFilter_media_type] = useState('all');
@@ -181,15 +182,7 @@ export function ProfileMediaFilters(props) {
   );
 }
 
-ProfileMediaFilters.propTypes = {
-  hidden: PropTypes.bool,
-  tags: PropTypes.array,
-  onFiltersUpdate: PropTypes.func.isRequired,
-  selectedTag: PropTypes.string,
-  selectedSort: PropTypes.string,
-};
-
-ProfileMediaFilters.defaultProps = {
+ProfileMediaFilters.defaultPropValues = {
   hidden: false,
   tags: [],
 };

@@ -19,6 +19,7 @@ urlpatterns = [
     re_path(r"^categories$", views.categories, name="categories"),
     re_path(r"^contact$", views.contact, name="contact"),
     re_path(r"^publish", views.publish_media, name="publish_media"),
+    re_path(r"^edit_category/(?P<uid>[\w-]+)$", views.edit_category, name="edit_category"),
     re_path(r"^edit_chapters", views.edit_chapters, name="edit_chapters"),
     re_path(r"^replace_media", views.replace_media, name="replace_media"),
     re_path(r"^edit_video", views.edit_video, name="edit_video"),
@@ -52,6 +53,7 @@ urlpatterns = [
     re_path(r"^view", views.view_media, name="get_media"),
     re_path(r"^upload", views.upload_media, name="upload_media"),
     # API VIEWS
+    re_path(rf"^api/v1/media/{friendly_token}/pdf$", views.view_pdf, name="view_pdf"),
     re_path(r"^api/v1/media/user/bulk_actions$", views.MediaBulkUserActions.as_view()),
     re_path(r"^api/v1/media/user/bulk_actions/$", views.MediaBulkUserActions.as_view()),
     re_path(r"^api/v1/media$", views.MediaList.as_view()),
@@ -80,6 +82,7 @@ urlpatterns = [
     ),
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/categories/contributor$", views.CategoryListContributor.as_view()),
+    re_path(r"^api/v1/categories/(?P<uid>[\w.-]{1,36})$", views.CategoryDetail.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
     re_path(

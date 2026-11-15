@@ -1,5 +1,4 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import PropTypes from 'prop-types';
 import { usePopup } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
 import { PopupMain } from '../../_shared';
@@ -181,14 +180,3 @@ export function ManageCommentsItem(props) {
     </div>
   );
 }
-
-ManageCommentsItem.propTypes = {
-  author_name: PropTypes.string,
-  author_url: PropTypes.string,
-  author_thumbnail_url: PropTypes.string,
-  add_date: PropTypes.string,
-  text: PropTypes.string,
-  selectedRow: PropTypes.bool.isRequired,
-  hideDeleteAction: PropTypes.bool.isRequired,
-  uid: PropTypes.string.isRequired,
-};

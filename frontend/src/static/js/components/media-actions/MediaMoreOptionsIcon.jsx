@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { formatInnerLink } from '../../utils/helpers/';
+import { formatInnerLink, translateString } from '../../utils/helpers/';
 import { usePopup, useUser } from '../../utils/hooks/';
-import { SiteContext } from '../../utils/contexts/';
+import { siteConfig } from '../../utils/contexts/';
 import { PageActions, MediaPageActions } from '../../utils/actions/';
 import { MediaPageStore } from '../../utils/stores/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, NavigationMenuList, PopupMain } from '../_shared/';
 import { ReportForm } from '../report-form/ReportForm';
+import { applyDefaultProps } from '../../utils/helpers/applyDefaultProps';
 
 function downloadOptions(mediaData, allowDownload) {
-  const site = SiteContext._currentValue;
+  const site = siteConfig;
 
   const encodingsInfo = mediaData.encodings_info;
 
@@ -126,10 +126,22 @@ function optionsItems(userCan, mediaData, allowDownload, downloadLink, mediaRepo
     }
   }
 
+  if (userCan.deleteMedia) {
+    items.push({
+      itemType: 'open-subpage',
+      text: 'Delete',
+      icon: 'delete',
+      buttonAttr: {
+        className: 'change-page',
+        'data-page-id': 'mediaDelete',
+      },
+    });
+  }
+
   return items;
 }
 
-function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaReported, submitReportForm, cancelReportForm) {
+function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaReported, submitReportForm, cancelReportForm, proceedMediaRemoval, cancelMediaRemoval) {
 
   const mediaUrl = mediaData.url;
   const mediaType = mediaData.media_type;
@@ -197,6 +209,28 @@ function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaRep
     );
   }
 
+  if (userCan.deleteMedia) {
+    pages.mediaDelete = (
+      <div className="media-delete-confirm">
+        <PopupMain>
+          <div className="popup-message">
+            <span className="popup-message-title">Media removal</span>
+            <span className="popup-message-main">You're willing to remove media permanently?</span>
+          </div>
+          <hr />
+          <span className="popup-message-bottom">
+            <button className="button-link cancel-comment-removal" onClick={cancelMediaRemoval}>
+              CANCEL
+            </button>
+            <button className="button-link proceed-comment-removal" onClick={proceedMediaRemoval}>
+              PROCEED
+            </button>
+          </span>
+        </PopupMain>
+      </div>
+    );
+  }
+
   if (allowDownload && userCan.downloadMedia && mediaIsVideo) {
     pages.videoDownloadOptions = (
       <div className="video-download-options">
@@ -212,10 +246,11 @@ function getPopupPages(userCan, mediaData, allowDownload, downloadLink, mediaRep
 
 const defaultContainerClassname = 'more-options active-options';
 
-export function MediaMoreOptionsIcon(props) {
+export function MediaMoreOptionsIcon(rawProps) {
+  const props = applyDefaultProps(rawProps, MediaMoreOptionsIcon.defaultPropValues);
   const { userCan } = useUser();
 
-  const site = SiteContext._currentValue;
+  const site = siteConfig;
 
   const downloadLink = formatInnerLink(MediaPageStore.get('media-original-url'), site.url);
   const mediaData = MediaPageStore.get('media-data');
@@ -233,6 +268,13 @@ export function MediaMoreOptionsIcon(props) {
     MediaPageActions.reportMedia(reportDescription);
   }
   function cancelReportFormSubmission() {
+    popupContentRef.current.toggle();
+  }
+  function proceedMediaRemoval() {
+    MediaPageActions.removeMedia();
+    popupContentRef.current.toggle();
+  }
+  function cancelMediaRemoval() {
     popupContentRef.current.toggle();
   }
   function onPopupPageChange(newPage) {
@@ -263,7 +305,7 @@ export function MediaMoreOptionsIcon(props) {
   }, [visible]);
 
   useEffect(() => {
-    setVisible(Object.keys(popupPages).length && props.allowDownload && userCan.downloadMedia);
+    setVisible(!!popupPages.main);
   }, [popupPages]);
 
   useEffect(() => {
@@ -291,7 +333,9 @@ export function MediaMoreOptionsIcon(props) {
         downloadLink,
         reported,
         submitReportForm,
-        cancelReportFormSubmission
+        cancelReportFormSubmission,
+        proceedMediaRemoval,
+        cancelMediaRemoval
       )
     );
   }, [reported]);
@@ -305,7 +349,9 @@ export function MediaMoreOptionsIcon(props) {
         downloadLink,
         reported,
         submitReportForm,
-        cancelReportFormSubmission
+        cancelReportFormSubmission,
+        proceedMediaRemoval,
+        cancelMediaRemoval
       )
     );
     return () => {
@@ -316,7 +362,7 @@ export function MediaMoreOptionsIcon(props) {
   }, []);
 
   return !visible ? null : (
-    <div className={containerClassname}>
+    <div className={containerClassname} data-action-tooltip={translateString('More options')}>
       <PopupTrigger contentRef={popupContentRef}>
         <span>
           <CircleIconButton type="button">
@@ -341,10 +387,6 @@ export function MediaMoreOptionsIcon(props) {
   );
 }
 
-MediaMoreOptionsIcon.propTypes = {
-  allowDownload: PropTypes.bool.isRequired,
-};
-
-MediaMoreOptionsIcon.defaultProps = {
+MediaMoreOptionsIcon.defaultPropValues = {
   allowDownload: false,
 };

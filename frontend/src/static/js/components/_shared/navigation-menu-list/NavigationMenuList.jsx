@@ -1,11 +1,12 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { MaterialIcon } from '../material-icon/MaterialIcon.jsx';
 import './NavigationMenuList.scss';
+import { applyDefaultProps } from '../../../utils/helpers/applyDefaultProps';
 
 // TODO: Improve components.
 
-function NavigationMenuListItem(props) {
+function NavigationMenuListItem(rawProps) {
+  const props = applyDefaultProps(rawProps, NavigationMenuListItem.defaultPropValues);
   let children = [];
 
   const attr = props.itemAttr || {};
@@ -74,26 +75,14 @@ function NavigationMenuListItem(props) {
   return <li {...attr}>{children}</li>;
 }
 
-NavigationMenuListItem.propTypes = {
-  itemType: PropTypes.oneOf(['link', 'open-subpage', 'button', 'label', 'div']),
-  link: PropTypes.string,
-  icon: PropTypes.string,
-  iconPos: PropTypes.oneOf(['left', 'right']),
-  text: PropTypes.string,
-  active: PropTypes.bool,
-  divAttr: PropTypes.object,
-  buttonAttr: PropTypes.object,
-  itemAttr: PropTypes.object,
-  linkAttr: PropTypes.object,
-};
-
-NavigationMenuListItem.defaultProps = {
+NavigationMenuListItem.defaultPropValues = {
   itemType: 'link',
   iconPos: 'left',
   active: !1,
 };
 
-export function NavigationMenuList(props) {
+export function NavigationMenuList(rawProps) {
+  const props = applyDefaultProps(rawProps, NavigationMenuList.defaultPropValues);
   const menuItems = props.items.map((item, index) => <NavigationMenuListItem key={index} {...item} />);
   return menuItems.length ? (
     <div className={'nav-menu' + (props.removeVerticalPadding ? ' pv0' : '')}>
@@ -104,11 +93,6 @@ export function NavigationMenuList(props) {
   ) : null;
 }
 
-NavigationMenuList.propTypes = {
-  removeVerticalPadding: PropTypes.bool,
-  items: PropTypes.arrayOf(PropTypes.shape(NavigationMenuListItem.propTypes)).isRequired,
-};
-
-NavigationMenuList.defaultProps = {
+NavigationMenuList.defaultPropValues = {
   removeVerticalPadding: false,
 };
