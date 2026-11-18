@@ -1,5 +1,15 @@
 # Changelog
 
+## [9.5.1](https://github.com/mediacms-io/mediacms/compare/v9.5.0...v9.5.1) (2026-11-18)
+
+### Bug Fixes
+
+* store color_transfer from ffprobe color_transfer in media_file_info ([#1603](https://github.com/mediacms-io/mediacms/issues/1603)) ([bf48db3](https://github.com/mediacms-io/mediacms/commit/bf48db35a700d322922c9f44a7d3c4f5afe5df1d))
+
+### Documentation
+
+* update PostgreSQL Docker image guidance in admin documentation ([#1634](https://github.com/mediacms-io/mediacms/issues/1634)) ([cfc46ba](https://github.com/mediacms-io/mediacms/commit/cfc46bac4444aa7bd798a5a04b558bf467e6a095))
+
 ## [9.5.0](https://github.com/mediacms-io/mediacms/compare/v9.4.0...v9.5.0) (2026-11-18)
 
 ### Features
