@@ -382,6 +382,7 @@ LOGS_DIR = os.path.join(BASE_DIR, "logs")
 # LOGS_DIR can be overridden in local_settings.py, which is imported at the end of
 # this file, so the directory and the log file are created down there instead.
 error_filename = os.path.join(LOGS_DIR, "debug.log")
+_default_error_filename = error_filename
 
 LOGGING = {
     "version": 1,
@@ -669,7 +670,11 @@ except ImportError:
 # the LOGGING definition an overridden LOGS_DIR was ignored and errors kept being
 # written to <BASE_DIR>/logs/debug.log.
 error_filename = os.path.join(LOGS_DIR, "debug.log")
-LOGGING["handlers"]["file"]["filename"] = error_filename
+_file_handler = LOGGING.get("handlers", {}).get("file")
+if _file_handler and _file_handler.get("filename") == _default_error_filename:
+    # local_settings.py may replace LOGGING entirely (no "file" handler) or point
+    # the handler at an explicit path: only the untouched default follows LOGS_DIR.
+    _file_handler["filename"] = error_filename
 
 try:
     os.makedirs(LOGS_DIR, exist_ok=True)
