@@ -310,18 +310,41 @@ PRE_UPLOAD_MEDIA_MESSAGE = 'custom message'
 
 ### 5.12 Set email settings
 
-Set correct settings per provider
+Set correct settings per provider. `EMAIL_USE_TLS` and `EMAIL_USE_SSL` are mutually exclusive — only set one of them to `True`.
+
+STARTTLS example (typical port 587):
 
 ```
 DEFAULT_FROM_EMAIL = 'info@mediacms.io'
 EMAIL_HOST_PASSWORD = 'xyz'
 EMAIL_HOST_USER = 'info@mediacms.io'
 EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_HOST = 'mediacms.io'
 EMAIL_PORT = 587
 ADMIN_EMAIL_LIST = ['info@mediacms.io']
+EMAIL_TIMEOUT = 10
 ```
+
+SSL example (typical port 465). You must set `EMAIL_USE_TLS = False` when enabling SSL:
+
+```
+DEFAULT_FROM_EMAIL = 'info@mediacms.io'
+EMAIL_HOST_PASSWORD = 'xyz'
+EMAIL_HOST_USER = 'info@mediacms.io'
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_HOST = 'mediacms.io'
+EMAIL_PORT = 465
+ADMIN_EMAIL_LIST = ['info@mediacms.io']
+EMAIL_TIMEOUT = 10
+```
+
+`EMAIL_TIMEOUT` (seconds) is passed to the SMTP connection so a bad TLS/SSL handshake fails instead of hanging forever.
+
+Most notification mail is queued through Celery (`short_tasks`). The site contact form, profile contact form, and authentication emails (password reset, email confirmation) send synchronously so users see a real success or failure message.
 
 ### 5.13 Disallow user registrations from specific domains
 
@@ -755,7 +778,13 @@ Instructions contributed by @alberto98fx
 
 ## 15. Debugging email issues
 On the [Configuration](https://github.com/mediacms-io/mediacms/blob/main/docs/admins_docs.md#5-configuration) section of this guide we've see how to edit the email settings.
-In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password or TLS option
+In case we are yet unable to receive email from MediaCMS, the following may help us debug the issue - in most cases it is an issue of setting the correct username, password, TLS/SSL option, or port.
+
+Common pitfalls:
+- Port 587 usually needs `EMAIL_USE_TLS = True` and `EMAIL_USE_SSL = False`
+- Port 465 usually needs `EMAIL_USE_SSL = True` and `EMAIL_USE_TLS = False`
+- Leaving both `EMAIL_USE_TLS` and `EMAIL_USE_SSL` as `True` raises an error (they are mutually exclusive)
+- Connecting to port 465 with STARTTLS (TLS only) can hang until `EMAIL_TIMEOUT` expires
 
 Enter the Django shell and inside the shell
 

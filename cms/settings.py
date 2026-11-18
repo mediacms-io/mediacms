@@ -73,6 +73,8 @@ SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_HOST = "mediacms.io"
 EMAIL_PORT = 587
 ADMIN_EMAIL_LIST = ["info@mediacms.io"]
+# Avoid indefinite hangs when SMTP/TLS handshake fails (e.g. wrong SSL vs TLS).
+EMAIL_TIMEOUT = 10
 
 
 MEDIA_IS_REVIEWED = True  # whether an admin needs to review a media file.

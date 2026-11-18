@@ -42,9 +42,12 @@
 <div class="user-action-form-wrap">
     <div class="user-action-form-inner">
         {% if success_msg %}
-            <h1>{{success_msg}}<h1>
+            <h1>{{success_msg}}</h1>
         {% else %}
             <h1>Contact us</h1>
+            {% if error_msg %}
+                <p class="errorlist">{{ error_msg }}</p>
+            {% endif %}
             <form enctype="multipart/form-data" action="" method="post" class="post-form">
                 {% csrf_token %}
                 {{ form.as_p }}

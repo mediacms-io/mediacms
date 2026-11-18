@@ -1,4 +1,5 @@
 import uuid
+from unittest import mock
 
 from django.core import mail
 from django.test import TestCase, override_settings
@@ -399,6 +400,15 @@ class ContactUserApiTest(TestCase):
     def test_contacting_an_unknown_user_sends_nothing(self):
         self.client.force_authenticate(self.sender)
         self.assertEqual(self.contact(User(username="nobody_here_at_all")).status_code, 204)
+        self.assertEqual(mail.outbox, [])
+
+    def test_send_failure_returns_bad_gateway(self):
+        self.client.force_authenticate(self.sender)
+        with mock.patch("users.views.EmailMessage") as email_cls:
+            email_cls.return_value.send.side_effect = OSError("smtp down")
+            response = self.contact(self.open_user, "Nice video!")
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.json()["detail"], "Message could not be sent. Please try again later.")
         self.assertEqual(mail.outbox, [])
 
 

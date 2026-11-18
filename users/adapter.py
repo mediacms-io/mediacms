@@ -3,6 +3,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 
+from files.methods import get_interactive_email_connection
+
 
 class MyAccountAdapter(DefaultAccountAdapter):
     def get_email_confirmation_url(self, request, emailconfirmation):
@@ -26,4 +28,5 @@ class MyAccountAdapter(DefaultAccountAdapter):
 
     def send_mail(self, template_prefix, email, context):
         msg = self.render_mail(template_prefix, email, context)
-        msg.send(fail_silently=True)
+        msg.connection = get_interactive_email_connection()
+        msg.send(fail_silently=False)
