@@ -71,12 +71,66 @@ class MediaUploadTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertTrue(Media.objects.get(friendly_token=response.data["friendly_token"]).title.startswith("holiday"))
 
-    def test_client_cannot_choose_read_only_fields(self):
-        response = self.upload(title="sneaky", state="private", featured=True, reported_times=5)
+    def test_client_cannot_choose_editor_only_read_only_fields(self):
+        response = self.upload(title="sneaky", featured=True, reported_times=5)
         media = Media.objects.get(friendly_token=response.data["friendly_token"])
-        self.assertEqual(media.state, "public")
         self.assertFalse(media.featured)
         self.assertEqual(media.reported_times, 0)
+
+    def test_upload_can_set_state_category_tags_and_flags(self):
+        category = Category.objects.create(title="Upload Cat", user=self.user, uid="upload-cat-1")
+        response = self.upload(
+            title="with meta",
+            state="unlisted",
+            category_uids=category.uid,
+            tag_titles="alpha,beta",
+            enable_comments=False,
+            allow_download=False,
+        )
+        self.assertEqual(response.status_code, 201)
+        media = Media.objects.get(friendly_token=response.data["friendly_token"])
+        self.assertEqual(media.state, "unlisted")
+        self.assertFalse(media.enable_comments)
+        self.assertFalse(media.allow_download)
+        self.assertEqual(list(media.category.values_list("uid", flat=True)), [category.uid])
+        self.assertEqual(set(media.tags.values_list("title", flat=True)), {"alpha", "beta"})
+
+    def test_upload_can_set_category_by_title(self):
+        category = Category.objects.create(title="By Title Cat", user=self.user)
+        by_titles = self.upload(title="via category_titles", category_titles=category.title)
+        self.assertEqual(by_titles.status_code, 201)
+        media = Media.objects.get(friendly_token=by_titles.data["friendly_token"])
+        self.assertEqual(list(media.category.values_list("uid", flat=True)), [category.uid])
+
+        by_uids_field = self.upload(title="via category_uids title", category_uids=category.title)
+        self.assertEqual(by_uids_field.status_code, 201)
+        media = Media.objects.get(friendly_token=by_uids_field.data["friendly_token"])
+        self.assertEqual(list(media.category.values_list("uid", flat=True)), [category.uid])
+
+    @override_settings(PORTAL_WORKFLOW="private")
+    def test_non_editor_cannot_upload_as_public_when_workflow_forbids_it(self):
+        response = self.upload(title="want public", state="public")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("state", response.data)
+        self.assertFalse(Media.objects.filter(user=self.user).exists())
+
+    def test_non_editor_cannot_set_owner_on_upload(self):
+        other = create_account()
+        response = self.upload(title="as other", owner=other.username)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("owner", response.data)
+        self.assertFalse(Media.objects.filter(user=self.user).exists())
+
+    def test_editor_can_upload_as_another_user(self):
+        editor = create_account(is_editor=True)
+        other = create_account()
+        client = APIClient()
+        client.force_authenticate(editor)
+        response = self.upload(client=client, title="owned by other", owner=other.username)
+        self.assertEqual(response.status_code, 201)
+        media = Media.objects.get(friendly_token=response.data["friendly_token"])
+        self.assertEqual(media.user, other)
+        self.assertEqual(response.data["user"], other.username)
 
     def test_anonymous_cannot_upload(self):
         self.assertIn(self.upload(client=APIClient()).status_code, (401, 403))

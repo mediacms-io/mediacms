@@ -88,12 +88,16 @@ class UploadSingleRequestTest(TestCase):
         response = upload(self.client, read_fixture(IMAGE), "pipeline_single.png")
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["success"])
+        payload = response.json()
+        self.assertTrue(payload["success"])
         media = media_from_response(response)
         self.assertEqual(media.user, self.user)
         self.assertEqual(media.title, "pipeline_single.png")
         self.assertEqual(media.media_type, "image")
         self.assertEqual(media.encoding_status, "success")
+        self.assertEqual(payload.get("friendly_token"), media.friendly_token)
+        self.assertTrue(payload.get("thumbnailUrl"))
+        self.assertIn(media.thumbnail_url, payload["thumbnailUrl"])
         with open(media.media_file.path, "rb") as handle:
             self.assertEqual(md5(handle.read()), md5(read_fixture(IMAGE)))
 
