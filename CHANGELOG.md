@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.6.1](https://github.com/mediacms-io/mediacms/compare/v9.6.0...v9.6.1) (2026-11-19)
+
+### Bug Fixes
+
+* use timezone-aware popularity cutoffs ([#1621](https://github.com/mediacms-io/mediacms/issues/1621))d ([9dbcda4](https://github.com/mediacms-io/mediacms/commit/9dbcda44284c142cf6f2a3aac290711c7702f47f))
+
 ## [9.6.0](https://github.com/mediacms-io/mediacms/compare/v9.5.2...v9.6.0) (2026-11-19)
 
 ### Features
