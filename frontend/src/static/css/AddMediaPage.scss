@@ -585,3 +585,77 @@ $media-upload-item-name-line-height: 20px;
 .qq-hide {
   display: none;
 }
+
+.media-upload-defaults-bar {
+  position: relative;
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  border-radius: 2px;
+}
+
+.media-upload-defaults-fields,
+.media-upload-item-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+}
+
+.media-upload-meta-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 12px;
+  font-weight: 500;
+
+  select {
+    min-width: 10rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    font-size: 13px;
+    font-weight: 400;
+  }
+}
+
+.media-upload-apply-defaults,
+.media-upload-item-save {
+  height: 2rem;
+  padding: 0 0.875rem;
+  border: 0;
+  border-radius: 1px;
+  background-color: var(--default-color, #1a75ff);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.media-upload-apply-defaults:disabled,
+.media-upload-item-save:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.media-upload-defaults-status,
+.media-upload-item-meta-status {
+  font-size: 12px;
+  line-height: 2rem;
+
+  &.is-error {
+    color: #b00020;
+  }
+}
+
+.media-upload-item-metadata {
+  width: 100%;
+  float: left;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(17, 17, 17, 0.06);
+}
+
+.is-lms-embed .media-upload-defaults-bar {
+  display: none;
+}

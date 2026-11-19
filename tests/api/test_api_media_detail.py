@@ -152,13 +152,41 @@ class MediaDetailPutTest(TestCase):
         self.assertNotIn("<script>", self.media.description)
 
     def test_read_only_fields_cannot_be_changed_through_put(self):
-        response = self.put_as(self.owner, {"title": "t", "state": "public", "featured": True, "is_reviewed": False, "views": 1000, "reported_times": 0})
+        response = self.put_as(self.owner, {"title": "t", "featured": True, "is_reviewed": False, "views": 1000, "reported_times": 0})
         self.assertEqual(response.status_code, 201)
         self.media.refresh_from_db()
         self.assertEqual(self.media.state, "private")
         self.assertFalse(self.media.featured)
         self.assertTrue(self.media.is_reviewed)
         self.assertEqual(self.media.views, 1)
+
+    def test_owner_can_update_state_category_tags_and_flags(self):
+        category = Category.objects.create(title="put category")
+        response = self.put_as(
+            self.owner,
+            {
+                "title": "updated",
+                "state": "unlisted",
+                "category_uids": category.uid,
+                "tag_titles": "gamma",
+                "enable_comments": False,
+                "allow_download": False,
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        self.media.refresh_from_db()
+        self.assertEqual(self.media.state, "unlisted")
+        self.assertFalse(self.media.enable_comments)
+        self.assertFalse(self.media.allow_download)
+        self.assertEqual(list(self.media.category.values_list("uid", flat=True)), [category.uid])
+        self.assertEqual(list(self.media.tags.values_list("title", flat=True)), ["gamma"])
+
+    def test_editor_can_change_owner_through_put(self):
+        editor = create_account(is_editor=True)
+        response = self.put_as(editor, {"title": self.media.title, "owner": self.other.username})
+        self.assertEqual(response.status_code, 201)
+        self.media.refresh_from_db()
+        self.assertEqual(self.media.user, self.other)
 
     def test_too_long_title_is_rejected(self):
         response = self.put_as(self.owner, {"title": "x" * 200})
