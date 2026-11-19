@@ -63,6 +63,11 @@ class ContextProcessorTests(TestCase):
         self.assertTrue(self.context_for(self.regular)["CAN_SEE_MEMBERS_PAGE"])
         self.assertFalse(self.context_for(AnonymousUser())["CAN_SEE_MEMBERS_PAGE"])
 
+    @override_settings(CAN_SEE_MEMBERS_PAGE="anonymous")
+    def test_members_page_open_to_anonymous_users(self):
+        self.assertTrue(self.context_for(AnonymousUser())["CAN_SEE_MEMBERS_PAGE"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEE_MEMBERS_PAGE"])
+
     @override_settings(CAN_SEE_MEMBERS_PAGE="editors")
     def test_members_page_for_editors_only(self):
         self.assertTrue(self.context_for(self.editor)["CAN_SEE_MEMBERS_PAGE"])
@@ -78,8 +83,18 @@ class ContextProcessorTests(TestCase):
         self.assertTrue(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
         self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
 
+    @override_settings(CAN_SEE_MEMBERS_PAGE="anonymous", ALLOW_ANONYMOUS_USER_LISTING=True)
+    def test_authors_are_searchable_when_members_page_is_anonymous(self):
+        self.assertTrue(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+
     @override_settings(CAN_SEE_MEMBERS_PAGE="all", ALLOW_ANONYMOUS_USER_LISTING=False)
     def test_anonymous_users_cannot_search_authors_when_listing_needs_a_login(self):
+        self.assertFalse(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
+        self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
+
+    @override_settings(CAN_SEE_MEMBERS_PAGE="anonymous", ALLOW_ANONYMOUS_USER_LISTING=False)
+    def test_anonymous_users_cannot_search_authors_when_anonymous_members_but_listing_disabled(self):
         self.assertFalse(self.context_for(AnonymousUser())["CAN_SEARCH_AUTHORS"])
         self.assertTrue(self.context_for(self.regular)["CAN_SEARCH_AUTHORS"])
 
