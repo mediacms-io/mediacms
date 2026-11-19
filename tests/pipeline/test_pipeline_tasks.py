@@ -1,7 +1,9 @@
 import os
 import tempfile
 import uuid
-from datetime import timedelta
+import warnings
+from datetime import datetime, timedelta
+from datetime import timezone as datetime_timezone
 from types import SimpleNamespace
 from unittest import mock
 
@@ -262,6 +264,25 @@ class PopularMediaTest(TestCase):
 
         popular = cache.get("popular_media_ids")
         self.assertEqual(sorted(popular), sorted([self.watched.friendly_token, self.liked.friendly_token]))
+
+    @override_settings(USE_TZ=True, TIME_ZONE="Europe/London")
+    def test_popularity_cutoffs_keep_the_correct_instant_across_daylight_saving_time(self):
+        now = datetime(2026, 10, 28, 12, tzinfo=datetime_timezone.utc)
+        for media, action, days, offset in (
+            (self.watched, "watch", 7, timedelta()),
+            (self.liked, "like", 180, timedelta()),
+            (self.stale, "watch", 7, timedelta(seconds=-1)),
+            (self.stale, "like", 180, timedelta(seconds=-1)),
+        ):
+            event = MediaAction.objects.create(media=media, action=action, session_key="cutoff-test")
+            MediaAction.objects.filter(pk=event.pk).update(action_date=now - timedelta(days=days) + offset)
+
+        with mock.patch.object(tasks, "datetime", wraps=datetime) as local_clock, mock.patch("django.utils.timezone.now", return_value=now), warnings.catch_warnings():
+            local_clock.now.return_value = now.replace(tzinfo=None)
+            warnings.simplefilter("error", RuntimeWarning)
+            self.assertTrue(tasks.get_list_of_popular_media())
+
+        self.assertCountEqual(cache.get("popular_media_ids"), [self.watched.friendly_token, self.liked.friendly_token])
 
 
 class ListingsThumbnailsTest(TestCase):
