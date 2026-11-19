@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.6.0](https://github.com/mediacms-io/mediacms/compare/v9.5.2...v9.6.0) (2026-11-19)
+
+### Features
+
+* allow anonymous member page views ([#1635](https://github.com/mediacms-io/mediacms/issues/1635)) ([9d5d476](https://github.com/mediacms-io/mediacms/commit/9d5d476938db79b47f3e402072d5c41217259da0))
+
 ## [9.5.2](https://github.com/mediacms-io/mediacms/compare/v9.5.1...v9.5.2) (2026-11-19)
 
 ### Bug Fixes
