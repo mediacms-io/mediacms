@@ -88,3 +88,9 @@ export function addNewPlaylist(playlist_data) {
     playlist_data,
   });
 }
+
+export function loadPlaylistsForSave() {
+  Dispatcher.dispatch({
+    type: 'LOAD_PLAYLISTS_FOR_SAVE',
+  });
+}
