@@ -29,6 +29,7 @@ export default defineConfig({
       name: 'VideoEditor',
       formats: ['iife'],
       fileName: () => 'video-editor.js',
+      cssFileName: 'video-editor',
     },
     rollupOptions: {
       output: {

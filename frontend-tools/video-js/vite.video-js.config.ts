@@ -28,6 +28,7 @@ export default defineConfig({
             name: 'VideoJS',
             formats: ['iife'],
             fileName: () => 'video-js.js',
+            cssFileName: 'video-js',
         },
         rollupOptions: {
             external: ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime'],

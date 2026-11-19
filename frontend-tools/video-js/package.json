@@ -28,7 +28,7 @@
         "globals": "^16.0.0",
         "prettier": "^3.6.0",
         "sass": "^1.89.2",
-        "vite": "^4.5.14",
+        "vite": "^6.4.6",
         "vite-plugin-svgr": "^4.5.0"
     }
 }

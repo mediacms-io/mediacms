@@ -27,6 +27,7 @@ export default defineConfig({
             name: 'ChaptersEditor',
             formats: ['iife'],
             fileName: () => 'chapters-editor.js',
+            cssFileName: 'chapters-editor',
         },
         rollupOptions: {
             output: {
