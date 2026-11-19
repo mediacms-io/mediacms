@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.5.2](https://github.com/mediacms-io/mediacms/compare/v9.5.1...v9.5.2) (2026-11-19)
+
+### Bug Fixes
+
+* nov 19 2026 updates ([#1645](https://github.com/mediacms-io/mediacms/issues/1645)) ([ab0759a](https://github.com/mediacms-io/mediacms/commit/ab0759ad40b5442f205a69b818c3dc694b56294e))
+
 ## [9.5.1](https://github.com/mediacms-io/mediacms/compare/v9.5.0...v9.5.1) (2026-11-18)
 
 ### Bug Fixes
