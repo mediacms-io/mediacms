@@ -21,6 +21,8 @@ class CustomChaptersOverlay extends Component {
         this.touchThreshold = 150; // ms for tap vs scroll detection
         this.isSmallScreen = window.innerWidth <= 480;
         this.scrollY = 0; // Track scroll position before locking
+        this.chaptersButtonEl = null;
+        this.chaptersButtonClickHandler = null;
 
         // Bind methods
         this.createOverlay = this.createOverlay.bind(this);
@@ -348,6 +350,13 @@ class CustomChaptersOverlay extends Component {
     setupChaptersButton() {
         const chaptersButton = this.player().getChild('controlBar').getChild('chaptersButton');
         if (chaptersButton) {
+            if (this.chaptersButtonEl && this.chaptersButtonClickHandler) {
+                this.chaptersButtonEl.removeEventListener('click', this.chaptersButtonClickHandler);
+            }
+            
+            this.chaptersButtonEl = null;
+            this.chaptersButtonClickHandler = null;
+            
             chaptersButton.off('click');
             chaptersButton.off('touchstart');
 
@@ -358,7 +367,16 @@ class CustomChaptersOverlay extends Component {
                     this.toggleOverlay();
                 });
             } else {
-                chaptersButton.on('click', this.toggleOverlay);
+                const buttonEl = chaptersButton.el();
+                if (buttonEl) {
+                    this.chaptersButtonEl = buttonEl;
+                    this.chaptersButtonClickHandler = (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.toggleOverlay();
+                    };
+                    buttonEl.addEventListener('click', this.chaptersButtonClickHandler);
+                }
             }
         }
     }
@@ -515,6 +533,12 @@ class CustomChaptersOverlay extends Component {
         if (this.handleResize) {
             window.removeEventListener('resize', this.handleResize);
             window.removeEventListener('orientationchange', this.handleResize);
+        }
+
+        if (this.chaptersButtonEl && this.chaptersButtonClickHandler) {
+            this.chaptersButtonEl.removeEventListener('click', this.chaptersButtonClickHandler);
+            this.chaptersButtonEl = null;
+            this.chaptersButtonClickHandler = null;
         }
 
         super.dispose();
