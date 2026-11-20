@@ -428,6 +428,37 @@
       }
     }
 
+    .delete-playlist {
+      > button.circle-icon-button {
+        width: auto;
+        height: auto;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 1px;
+
+        > * {
+          border-radius: 1px;
+
+          > * {
+            display: table;
+            padding: 6px 16px;
+
+            > * {
+              display: table-cell;
+              vertical-align: bottom;
+              line-height: 1.5;
+            }
+          }
+        }
+
+        .material-icons {
+          line-height: 1;
+          padding-right: 8px;
+          vertical-align: bottom;
+        }
+      }
+    }
+
     .playlist-options-wrap {
       .popup {
         position: absolute;
