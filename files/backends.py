@@ -70,7 +70,7 @@ class FFmpegBackend(object):
             buf = buf[-500:] + out
             try:
                 line, buf = buf.split("\r", 1)
-            except ValueError:
+            except BaseException:
                 continue
 
             progress = RE_TIMECODE.findall(line)

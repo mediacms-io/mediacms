@@ -198,23 +198,15 @@ def url_from_path(filename):
 
 
 def create_temp_file(suffix=None, dir=settings.TEMP_DIRECTORY):
-    try:
-        tf = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=dir)
-        logger.debug("Created temporary file - filename=%s, suffix=%s", tf.name, suffix)
-        return tf.name
-    except Exception:
-        logger.exception("Error creating temporary file - suffix=%s, dir=%s", suffix, dir)
-        raise
+    tf = tempfile.NamedTemporaryFile(delete=False, suffix=suffix, dir=dir)
+    logger.debug("Created temporary file - filename=%s", tf.name)
+    return tf.name
 
 
 def create_temp_dir(suffix=None, dir=settings.TEMP_DIRECTORY):
-    try:
-        td = tempfile.mkdtemp(dir=dir)
-        logger.debug("Created temporary directory - dir=%s, suffix=%s", td, suffix)
-        return td
-    except Exception:
-        logger.exception("Error creating temporary directory - suffix=%s, dir=%s", suffix, dir)
-        raise
+    td = tempfile.mkdtemp(dir=dir)
+    logger.debug("Created temporary directory - dir=%s", td)
+    return td
 
 
 def produce_friendly_token(token_len=settings.FRIENDLY_TOKEN_LEN):
@@ -253,17 +245,9 @@ def run_command(cmd, cwd=None):
         logger.debug("Command executed successfully - cmd=%s, cwd=%s", cmd, cwd)
         try:
             ret["out"] = stdout.decode("utf-8")
-        except UnicodeDecodeError as e:
+        except BaseException as e:
             logger.warning(
-                "Unicode decode error for command stdout - cmd=%s, cwd=%s, error=%s",
-                cmd,
-                cwd,
-                str(e),
-            )
-            ret["out"] = ""
-        except Exception as e:
-            logger.warning(
-                "Error decoding command stdout - cmd=%s, cwd=%s, error=%s",
+                "Failed to decode command stdout - cmd=%s, cwd=%s, error=%s",
                 cmd,
                 cwd,
                 str(e),
@@ -271,17 +255,9 @@ def run_command(cmd, cwd=None):
             ret["out"] = ""
         try:
             ret["error"] = stderr.decode("utf-8")
-        except UnicodeDecodeError as e:
+        except BaseException as e:
             logger.warning(
-                "Unicode decode error for command stderr - cmd=%s, cwd=%s, error=%s",
-                cmd,
-                cwd,
-                str(e),
-            )
-            ret["error"] = ""
-        except Exception as e:
-            logger.warning(
-                "Error decoding command stderr - cmd=%s, cwd=%s, error=%s",
+                "Failed to decode command stderr - cmd=%s, cwd=%s, error=%s",
                 cmd,
                 cwd,
                 str(e),
@@ -296,18 +272,9 @@ def run_command(cmd, cwd=None):
         )
         try:
             ret["error"] = stderr.decode("utf-8")
-        except UnicodeDecodeError as e:
+        except BaseException as e:
             logger.warning(
-                "Unicode decode error for failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
-                cmd,
-                process.returncode,
-                cwd,
-                str(e),
-            )
-            ret["error"] = ""
-        except Exception as e:
-            logger.warning(
-                "Error decoding failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
+                "Failed to decode failed command stderr - cmd=%s, returncode=%s, cwd=%s, error=%s",
                 cmd,
                 process.returncode,
                 cwd,
@@ -380,7 +347,7 @@ def media_file_info(input_file):
     stdout = run_command(cmd).get("out")
     try:
         info = json.loads(stdout)
-    except (TypeError, json.JSONDecodeError) as e:
+    except TypeError as e:
         logger.error(
             "Failed to parse ffprobe JSON output - input_file=%s, error=%s",
             input_file,
@@ -448,9 +415,9 @@ def media_file_info(input_file):
             video_duration = float(format_info["duration"])
         except KeyError:
             logger.error(
-                "Duration not found in format info - input_file=%s, format_info=%s",
+                "Duration not found in format info - input_file=%s, format_keys=%s",
                 input_file,
-                format_info,
+                sorted(format_info.keys()),
             )
             ret["fail"] = True
             return ret
@@ -805,7 +772,7 @@ def get_base_ffmpeg_command(
 def produce_ffmpeg_commands(media_file, media_info, resolution, codec, output_filename, pass_file, chunk=False):
     try:
         media_info = json.loads(media_info)
-    except (TypeError, json.JSONDecodeError) as e:
+    except BaseException as e:
         logger.warning(
             "Failed to parse media_info JSON, using empty dict - media_file=%s, error=%s",
             media_file,

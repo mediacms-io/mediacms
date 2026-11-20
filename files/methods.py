@@ -115,19 +115,10 @@ def is_mediacms_editor(user):
 
     editor = False
     try:
-        if user and user.is_authenticated and (user.is_superuser or user.is_manager or user.is_editor):
+        if user.is_superuser or user.is_manager or user.is_editor:
             editor = True
-    except AttributeError as e:
-        logger.warning(
-            "User object missing expected attributes for editor check - user_id=%s, error=%s",
-            getattr(user, 'id', None),
-            str(e),
-        )
-    except Exception:
-        logger.exception(
-            "Unexpected error checking editor status - user_id=%s",
-            getattr(user, 'id', None),
-        )
+    except BaseException:
+        pass
     return editor
 
 
@@ -155,19 +146,10 @@ def is_mediacms_manager(user):
 
     manager = False
     try:
-        if user and user.is_authenticated and (user.is_superuser or user.is_manager):
+        if user.is_superuser or user.is_manager:
             manager = True
-    except AttributeError as e:
-        logger.warning(
-            "User object missing expected attributes for manager check - user_id=%s, error=%s",
-            getattr(user, 'id', None),
-            str(e),
-        )
-    except Exception:
-        logger.exception(
-            "Unexpected error checking manager status - user_id=%s",
-            getattr(user, 'id', None),
-        )
+    except BaseException:
+        pass
     return manager
 
 

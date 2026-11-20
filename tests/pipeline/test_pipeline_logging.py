@@ -11,7 +11,7 @@ class TaskLoggingTest(TestCase):
     def test_missing_media_is_logged_by_media_init(self):
         with self.assertLogs("files.tasks", level="WARNING") as logs:
             self.assertFalse(tasks.media_init("doesnotexist"))
-        self.assertIn("Media not found for initialization - friendly_token=doesnotexist", logs.output[0])
+        self.assertIn("Failed to get media for initialization - friendly_token=doesnotexist", logs.output[0])
 
     def test_missing_encoding_is_logged_by_encode_media(self):
         with self.assertLogs("files.tasks", level="WARNING") as logs:
