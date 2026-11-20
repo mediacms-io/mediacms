@@ -35,7 +35,7 @@ class MediaPlaylistMembershipTest(TestCase):
 
     def test_anonymous_user_is_rejected(self):
         response = Client().get(membership_url(self.media))
-        self.assertIn(response.status_code, (401, 403))
+        self.assertEqual(response.status_code, 403)
 
     def test_returns_only_requesting_users_playlists_containing_media(self):
         response = logged_in(self.owner).get(membership_url(self.media))

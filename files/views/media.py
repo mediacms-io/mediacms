@@ -823,7 +823,6 @@ class MediaBulkUserActions(APIView):
 
 class MediaPlaylistMembership(APIView):
     permission_classes = (permissions.IsAuthenticated,)
-    parser_classes = (JSONParser,)
 
     @swagger_auto_schema(
         manual_parameters=[
