@@ -13,6 +13,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase, override_settings
 from PIL import Image
 
+from files import methods
 from files.models import Category, Media, MediaPermission, Tag
 from files.tests import create_account, create_media
 from rbac.models import RBACGroup, RBACMembership
@@ -128,6 +129,16 @@ class UserMediaCountTest(TestCase):
         annotated = UserAdmin(User, admin_site).get_queryset(request).get(pk=user.pk)
         self.assertEqual(annotated.media_count_annot, 1)
         self.assertEqual(UserAdmin(User, admin_site).media_count(annotated), 1)
+
+    def test_user_admin_count_follows_an_owner_change(self):
+        old_owner = make_user("old_owner")
+        new_owner = make_user("new_owner")
+        media = create_media(old_owner, title=unique("moved"), state="public")
+        methods.change_media_owner(media.id, new_owner)
+        request = RequestFactory().get("/admin/")
+        request.user = make_user("admin_owner_change", is_superuser=True)
+        counts = dict(UserAdmin(User, admin_site).get_queryset(request).filter(pk__in=[old_owner.pk, new_owner.pk]).values_list("pk", "media_count_annot"))
+        self.assertEqual(counts, {old_owner.pk: 0, new_owner.pk: 1})
 
 
 class SetRoleFromMappingTest(TestCase):
