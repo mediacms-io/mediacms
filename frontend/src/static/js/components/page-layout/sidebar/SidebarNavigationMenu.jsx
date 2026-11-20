@@ -18,7 +18,7 @@ export function SidebarNavigationMenu() {
   function formatItems(items) {
     return items.map((item) => {
       const url = urlParse(item.link);
-      const active = currentHostPath === url.host + url.pathname;
+      const active = currentHostPath === (url.host + url.pathname).replace(/\/+$/, '');
 
       return {
         active,

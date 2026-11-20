@@ -61,6 +61,18 @@ describe('components/page-layout', () => {
             unmount();
         });
 
+        test('Marks the home link active on the home page', () => {
+            window.history.replaceState(null, '', '/');
+            const { container, unmount } = renderIntoContainer(
+                <UserProvider>
+                    <SidebarNavigationMenu />
+                </UserProvider>
+            );
+            expect(container.querySelector('.nav-item-home')?.className).toContain('active');
+            expect(container.querySelector('.nav-item-tags')?.className).not.toContain('active');
+            unmount();
+        });
+
         test('Respects sidebar hide flags and anonymous users', () => {
             const user = { isAnonymous: true, userCan: { canSeeMembersPage: false }, pages: {} };
             const { container, unmount } = renderIntoContainer(
