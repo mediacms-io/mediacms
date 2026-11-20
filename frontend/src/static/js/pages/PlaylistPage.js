@@ -3,13 +3,7 @@ import { PageActions, PlaylistPageActions } from '../utils/actions/';
 import { memberConfig } from '../utils/contexts/';
 import { usePopup } from '../utils/hooks/';
 import { PlaylistPageStore } from '../utils/stores/';
-import {
-  CircleIconButton,
-  MaterialIcon,
-  NavigationContentApp,
-  NavigationMenuList,
-  PopupMain,
-} from '../components/_shared/';
+import { CircleIconButton, MaterialIcon, PopupMain } from '../components/_shared/';
 import { PlaylistCreationForm } from '../components/playlist-form/PlaylistCreationForm';
 import { PlaylistMediaList } from '../components/playlist-page/PlaylistMediaList';
 
@@ -117,55 +111,8 @@ function PlaylistMeta(props) {
   );
 }
 
-function playlistOptionsList() {
-  const items = {
-    deleteMedia: {
-      itemType: 'open-subpage',
-      text: 'Delete',
-      icon: 'delete',
-      buttonAttr: {
-        className: 'change-page',
-        'data-page-id': 'proceedPlaylistRemovalPopup',
-      },
-    },
-  };
-
-  return items;
-}
-
-function playlistOptionsPopupPages(proceedPlaylistRemoval, cancelPlaylistRemoval) {
-  const optionsList = playlistOptionsList();
-
-  return {
-    main: (
-      <PopupMain>
-        <NavigationMenuList items={[optionsList.deleteMedia]} />
-      </PopupMain>
-    ),
-    proceedPlaylistRemovalPopup: (
-      <PopupMain>
-        <div className="popup-message">
-          <span className="popup-message-title">Playlist removal</span>
-          <span className="popup-message-main">You're willing to remove playlist permanently?</span>
-        </div>
-        <hr />
-        <span className="popup-message-bottom">
-          <button className="button-link cancel-playlist-removal" onClick={cancelPlaylistRemoval}>
-            CANCEL
-          </button>
-          <button className="button-link proceed-playlist-removal" onClick={proceedPlaylistRemoval}>
-            PROCEED
-          </button>
-        </span>
-      </PopupMain>
-    ),
-  };
-}
-
-function PlaylistOptions(props) {
+export function PlaylistDelete() {
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
-
-  const [popupCurrentPage, setPopupCurrentPage] = useState('main');
 
   function proceedPlaylistRemoval() {
     PlaylistPageActions.removePlaylist();
@@ -177,22 +124,30 @@ function PlaylistOptions(props) {
   }
 
   return (
-    <div className={'playlist-options-wrap' + ('main' === popupCurrentPage ? ' playlist-options-main' : '')}>
+    <div className="playlist-options-wrap delete-playlist">
       <PopupTrigger contentRef={popupContentRef}>
         <CircleIconButton>
-          <MaterialIcon type="more_horiz" />
+          <MaterialIcon type="delete" />
+          <span>DELETE</span>
         </CircleIconButton>
       </PopupTrigger>
 
       <PopupContent contentRef={popupContentRef}>
-        <NavigationContentApp
-          pageChangeCallback={setPopupCurrentPage}
-          initPage="main"
-          focusFirstItemOnPageChange={false}
-          pages={playlistOptionsPopupPages(proceedPlaylistRemoval, cancelPlaylistRemoval)}
-          pageChangeSelector={'.change-page'}
-          pageIdSelectorAttr={'data-page-id'}
-        />
+        <PopupMain>
+          <div className="popup-message">
+            <span className="popup-message-title">Playlist removal</span>
+            <span className="popup-message-main">You're willing to remove playlist permanently?</span>
+          </div>
+          <hr />
+          <span className="popup-message-bottom">
+            <button className="button-link cancel-playlist-removal" onClick={cancelPlaylistRemoval}>
+              CANCEL
+            </button>
+            <button className="button-link proceed-playlist-removal" onClick={proceedPlaylistRemoval}>
+              PROCEED
+            </button>
+          </span>
+        </PopupMain>
       </PopupContent>
     </div>
   );
@@ -289,9 +244,11 @@ function PlaylistEdit(props) {
   );
 }
 
-function PlaylistActions(props) {
+export function PlaylistActions(props) {
   return props.loggedinUserPlaylist ? (
-    <div className="playlist-actions">{props.loggedinUserPlaylist ? <PlaylistOptions /> : null}</div>
+    <div className="playlist-actions">
+      <PlaylistDelete />
+    </div>
   ) : null;
 }
 
