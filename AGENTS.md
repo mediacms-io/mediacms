@@ -8,9 +8,9 @@ MediaCMS is an open source video and media CMS built with **Django + React**, ex
 
 ## Tech Stack
 
-- **Backend**: Python 3.11+, Django 5.2, Django REST Framework, Celery (task queue), Redis (cache/broker), PostgreSQL (psycopg3), django-allauth (auth)
-- **Frontend**: React 19 + TypeScript/JavaScript, Webpack, SCSS; runs on Node >= 20.9.0 (`frontend/package.json`)
-- **Packaging**: Docker (supervisord manages uwsgi/nginx/celery/migrations services inside the image)
+- **Backend**: Python 3.13 (Dockerfile), Django 5.2, Django REST Framework, Celery (task queue), Redis (cache/broker), PostgreSQL 17.2 (dev compose; psycopg3), django-allauth (auth)
+- **Frontend**: React 19 + TypeScript/JavaScript, Webpack, SCSS; Node 24 (dev compose `frontend` service)
+- **Packaging**: Docker (supervisord manages gunicorn/nginx/celery inside the image; migrations run at startup via `prestart.sh`, not under supervisord)
 
 ## Repository Layout
 
@@ -61,7 +61,8 @@ make admin-shell          # shell into the web container
 Direct equivalents:
 
 ```bash
-# Backend tests — TESTING=True is REQUIRED (runs Celery tasks as plain functions)
+# Backend tests — cms/test_settings.py sets TESTING=True and eager Celery
+# automatically; CI and the docs still pass it explicitly (harmless, keep doing it)
 docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest
 
 # Single test file
@@ -71,11 +72,13 @@ docker compose -f docker-compose-dev.yaml exec --env TESTING=True -T web pytest 
 docker compose -f docker-compose-dev.yaml exec -T frontend npm run test -- --ci
 ```
 
+All `manage.py` commands run inside the web container (`docker compose -f docker-compose-dev.yaml exec -T web ...`) — running them on the host fails.
+
 ## Code Style & Linting
 
 - **Python**: `black` (formatting), `isort` (black profile), `flake8` — enforced via pre-commit.
 - Before committing: run `pre-commit run --all` and fix everything. Install the hook once with `pre-commit install`.
-- **Frontend**: Prettier (`.prettierrc`).
+- **Frontend**: a `.prettierrc` exists but is not enforced — pre-commit and CI run Python hooks only.
 
 ## Commit Conventions
 
@@ -96,7 +99,7 @@ This repo uses **semantic-release with Conventional Commits** (`.releaserc.json`
 
 ### Configuration pattern
 
-All portal configuration is in `cms/settings.py`. Overrides go in `cms/local_settings.py` (never edit `settings.py` for a deployment). **Docker installs:** the container entrypoint (`deploy/docker/entrypoint.sh`) copies `deploy/docker/local_settings.py` over `cms/local_settings.py` at every startup — edit the `deploy/docker/` copy (or pass environment variables), or your changes will be lost on restart. **Any settings change requires a restart** (`docker compose restart web celery_worker celery_beat`). Notable settings:
+All portal configuration is in `cms/settings.py`. Overrides go in `cms/local_settings.py` (never edit `settings.py` for a deployment). **Docker installs:** the container entrypoint (`deploy/docker/entrypoint.sh`) copies `deploy/docker/local_settings.py` over `cms/local_settings.py` at every startup — edit the `deploy/docker/` copy (or pass environment variables), or your changes will be lost on restart. **Any settings change requires a restart** — dev stack: `docker compose -f docker-compose-dev.yaml restart web celery_worker` (no `celery_beat` service in dev); production compose: `docker compose restart web celery_worker celery_beat`. Notable settings:
 
 - `PORTAL_WORKFLOW`: `public` / `private` / `unlisted` — what happens to newly uploaded media
 - `CAN_ADD_MEDIA`, `CAN_COMMENT`: `"all"` / `"email_verified"` / `"advancedUser"`
@@ -114,7 +117,7 @@ Originals are uploaded to the app server as FileFields. Videos longer than `CHUN
 
 1. Mark it translatable in code (Django templates: see `templates/cms/about.html`; React: see how `translateString` is used in `frontend/`).
 2. Add the string to `files/frontend_translations/en.py` **first**.
-3. Run `python manage.py process_translations` to populate the string across all language files.
+3. Run `docker compose -f docker-compose-dev.yaml exec -T web python manage.py process_translations` to populate the string across all language files (all `manage.py` commands run inside the web container).
 4. Then translate into your language in `files/frontend_translations/<lang>.py`.
 
 Django template changes don't need a frontend rebuild; frontend string changes do (`make build-frontend`).
@@ -129,10 +132,10 @@ Django templates load bundles from `static/js/<name>.js`. After `npm run dist`, 
 
 ## Gotchas
 
-- Never run pytest without `TESTING=True` — Celery tasks would be dispatched to a broker that isn't running in tests.
+- pytest runs via `cms/test_settings.py` (`pytest.ini`), which sets `TESTING=True` and eager Celery automatically — never run tests against non-test settings (Celery tasks would hit a broker that isn't running).
 - The frontend dev server (8088) and the "real" app (80) can look out of sync — the real app only shows built bundles.
 - Whisper transcription only works with the `mediacms/mediacms:full` image or `docker-compose.full.yaml`.
-- Version 3+ uses Python 3.11 / PostgreSQL 15+; older PostgreSQL 13 data dirs are incompatible (see admins docs, section 3).
+- PostgreSQL data dirs are incompatible across major versions — check the admins docs (section 3) before a major upgrade.
 - The repo root `package.json` version is managed by semantic-release — don't edit it manually.
 
 ## Useful Docs
