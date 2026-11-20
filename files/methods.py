@@ -115,10 +115,19 @@ def is_mediacms_editor(user):
 
     editor = False
     try:
-        if user.is_superuser or user.is_manager or user.is_editor:
+        if user and user.is_authenticated and (user.is_superuser or user.is_manager or user.is_editor):
             editor = True
-    except BaseException:
-        pass
+    except AttributeError as e:
+        logger.warning(
+            "User object missing expected attributes for editor check - user_id=%s, error=%s",
+            getattr(user, 'id', None),
+            str(e),
+        )
+    except Exception:
+        logger.exception(
+            "Unexpected error checking editor status - user_id=%s",
+            getattr(user, 'id', None),
+        )
     return editor
 
 
@@ -146,10 +155,19 @@ def is_mediacms_manager(user):
 
     manager = False
     try:
-        if user.is_superuser or user.is_manager:
+        if user and user.is_authenticated and (user.is_superuser or user.is_manager):
             manager = True
-    except BaseException:
-        pass
+    except AttributeError as e:
+        logger.warning(
+            "User object missing expected attributes for manager check - user_id=%s, error=%s",
+            getattr(user, 'id', None),
+            str(e),
+        )
+    except Exception:
+        logger.exception(
+            "Unexpected error checking manager status - user_id=%s",
+            getattr(user, 'id', None),
+        )
     return manager
 
 
@@ -158,12 +176,26 @@ def get_next_state(user, current_state, next_state):
     and the user object.
     Users may themselves perform only allowed transitions
     """
+    original_next_state = next_state
 
     if next_state not in ["public", "private", "unlisted"]:
         next_state = settings.PORTAL_WORKFLOW  # get default state
+        logger.debug(
+            "Invalid state provided, using default - user_id=%s, provided_state=%s, default_state=%s",
+            getattr(user, 'id', None),
+            original_next_state,
+            next_state,
+        )
 
     if is_mediacms_editor(user):
         # allow any transition
+        if current_state != next_state:
+            logger.info(
+                "State transition allowed (editor) - user_id=%s, current_state=%s, next_state=%s",
+                getattr(user, 'id', None),
+                current_state,
+                next_state,
+            )
         return next_state
 
     if settings.PORTAL_WORKFLOW == "private":
@@ -171,11 +203,31 @@ def get_next_state(user, current_state, next_state):
             next_state = next_state
         else:
             next_state = current_state
+            logger.debug(
+                "State transition blocked by workflow - user_id=%s, current_state=%s, requested_state=%s, workflow=private",
+                getattr(user, 'id', None),
+                current_state,
+                original_next_state,
+            )
 
     if settings.PORTAL_WORKFLOW == "unlisted":
         # don't allow to make media public in this case
         if next_state == "public":
             next_state = current_state
+            logger.debug(
+                "State transition blocked by workflow - user_id=%s, current_state=%s, requested_state=%s, workflow=unlisted",
+                getattr(user, 'id', None),
+                current_state,
+                original_next_state,
+            )
+
+    if current_state != next_state:
+        logger.info(
+            "State transition - user_id=%s, current_state=%s, next_state=%s",
+            getattr(user, 'id', None),
+            current_state,
+            next_state,
+        )
 
     return next_state
 
@@ -183,11 +235,21 @@ def get_next_state(user, current_state, next_state):
 def notify_users(friendly_token=None, action=None, extra=None):
     """Notify users through email, for a set of actions"""
 
+    logger.debug(
+        "Notification requested - friendly_token=%s, action=%s",
+        friendly_token,
+        action,
+    )
     notify_items = []
     media = None
     if friendly_token:
         media = models.Media.objects.filter(friendly_token=friendly_token).first()
         if not media:
+            logger.warning(
+                "Media not found for notification - friendly_token=%s, action=%s",
+                friendly_token,
+                action,
+            )
             return False
         media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
@@ -250,6 +312,12 @@ URL: %s
     for item in notify_items:
         email = EmailMessage(item["title"], item["msg"], settings.DEFAULT_FROM_EMAIL, item["to"])
         email.send(fail_silently=True)
+        logger.info(
+            "Notification email sent - action=%s, friendly_token=%s, recipients=%s",
+            action,
+            friendly_token,
+            len(item["to"]),
+        )
     return True
 
 
@@ -329,7 +397,10 @@ def show_related_media_content(media, request, limit):
     try:
         m.remove(media)  # remove media from results
     except ValueError:
-        pass
+        logger.debug(
+            "Media not found in related media results (expected) - friendly_token=%s",
+            media.friendly_token if media else None,
+        )
 
     random.shuffle(m)
     return m
@@ -350,7 +421,10 @@ def show_related_media_author(media, request, limit):
     try:
         m.remove(media)  # remove media from results
     except ValueError:
-        pass
+        logger.debug(
+            "Media not found in related media results (expected) - friendly_token=%s",
+            media.friendly_token if media else None,
+        )
 
     random.shuffle(m)
     return m
@@ -496,17 +570,23 @@ def kill_ffmpeg_process(filepath):
         bool: True if the lookup ran, False if input was unusable
     """
     if not filepath or not isinstance(filepath, str):
+        logger.debug("kill_ffmpeg_process called with empty filepath")
         return False
     try:
         ps = subprocess.run(["ps", "aux"], stdout=subprocess.PIPE, check=False)
     except OSError:
         return False
+    killed = False
     for line in ps.stdout.decode("utf-8", "replace").splitlines():
         if "ffmpeg" not in line or filepath not in line or "grep" in line:
             continue
         parts = line.split()
         if len(parts) > 1 and parts[1].isdigit():
+            logger.info("Killing FFmpeg process - filepath=%s, pid=%s", filepath, parts[1])
             subprocess.run(["kill", "-9", parts[1]], check=False)
+            killed = True
+    if not killed:
+        logger.debug("No FFmpeg process found for filepath - filepath=%s", filepath)
     return True
 
 
@@ -520,6 +600,12 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
     Returns:
         New Media object
     """
+    logger.info(
+        "Starting video copy - original_friendly_token=%s, copy_encodings=%s, title_suffix=%s",
+        original_media.friendly_token,
+        copy_encodings,
+        title_suffix,
+    )
 
     while True:
         friendly_token = helpers.produce_friendly_token()
@@ -606,6 +692,11 @@ def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
             # of the paths entirely.
             shutil.copytree(p, new_p, dirs_exist_ok=True)
 
+    logger.info(
+        "Video copy completed - original_friendly_token=%s, new_friendly_token=%s",
+        original_media.friendly_token,
+        friendly_token,
+    )
     return new_media
 
 
