@@ -391,24 +391,35 @@ if not os.path.exists(LOGS_DIR):
 if not os.path.isfile(error_filename):
     open(error_filename, 'a').close()
 
+LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR").upper()
+ENABLE_SQL_DEBUG_LOGGING = os.environ.get("ENABLE_SQL_DEBUG_LOGGING", "False").lower() == "true"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {funcName}:{lineno} {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "file": {
-            "level": "ERROR",
+            "level": LOGLEVEL,
             "class": "logging.FileHandler",
             "filename": error_filename,
+            "formatter": "verbose",
         },
     },
     "loggers": {
         "django": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": LOGLEVEL,
             "propagate": True,
         },
     },
 }
+_default_logging = LOGGING
 
 DATABASES = {
     "default": {
@@ -675,6 +686,21 @@ try:
 except ImportError:
     pass
 
+
+if LOGGING is _default_logging:
+    LOGLEVEL = LOGLEVEL.upper()
+    _app_log_level = "DEBUG" if DEBUG else LOGLEVEL
+    LOGGING["handlers"]["file"]["level"] = _app_log_level
+    LOGGING["loggers"]["django"]["level"] = LOGLEVEL
+    if _app_log_level != "ERROR":
+        for _app in ("actions", "cms", "files", "identity_providers", "rbac", "saml_auth", "uploader", "users"):
+            LOGGING["loggers"][_app] = {"handlers": ["file"], "level": _app_log_level, "propagate": True}
+    if DEBUG:
+        LOGGING["handlers"]["console"] = {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "verbose"}
+        for _logger in LOGGING["loggers"].values():
+            _logger["handlers"].append("console")
+        if ENABLE_SQL_DEBUG_LOGGING:
+            LOGGING["loggers"]["django.db.backends"] = {"handlers": ["console"], "level": "DEBUG", "propagate": False}
 
 if GLOBAL_LOGIN_REQUIRED:
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
