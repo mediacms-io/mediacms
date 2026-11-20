@@ -1083,7 +1083,6 @@ def media_save(sender, instance, created, **kwargs):
         if not getattr(instance, "_skip_admin_notification", False):
             notify_users(friendly_token=instance.friendly_token, action="media_added")
 
-    instance.user.update_user_media()
     if instance.category.all():
         # this won't catch when a category
         # is removed from a media, which is what we want...
@@ -1130,8 +1129,6 @@ def media_file_delete(sender, instance, **kwargs):
     if instance.hls_file:
         p = os.path.dirname(instance.hls_file)
         helpers.rm_dir(p)
-
-    instance.user.update_user_media()
 
     # remove extra zombie thumbnails
     if instance.thumbnail:

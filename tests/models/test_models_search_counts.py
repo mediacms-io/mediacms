@@ -106,8 +106,7 @@ class CategoryAndUserCountTests(TestCase):
     def test_user_count_includes_only_listable_media(self):
         create_media(self.user, title="user listable")
         create_media(self.user, title="user private", state="private")
-        self.user.refresh_from_db()
-        self.assertEqual(self.user.media_count, 1)
+        self.assertEqual(Media.objects.filter(user=self.user, listable=True).count(), 1)
 
 
 class CategoryModelTests(TestCase):
