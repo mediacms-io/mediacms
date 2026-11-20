@@ -634,6 +634,10 @@ WHISPER_MODEL = "base"
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
 
+TRUSTED_PROXIES = []
+PROXY_AWARE_MIDDLEWARE_ENABLED = None
+SET_REAL_IP_IN_META = False
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
@@ -684,6 +688,12 @@ if USERS_NEEDS_TO_BE_APPROVED:
     )
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
+
+if PROXY_AWARE_MIDDLEWARE_ENABLED is None:
+    PROXY_AWARE_MIDDLEWARE_ENABLED = bool(TRUSTED_PROXIES)
+
+if PROXY_AWARE_MIDDLEWARE_ENABLED:
+    MIDDLEWARE.insert(MIDDLEWARE.index("django.middleware.security.SecurityMiddleware") + 1, "cms.middleware.ProxyAwareMiddleware")
 
 
 # LTI 1.3 Integration Settings
