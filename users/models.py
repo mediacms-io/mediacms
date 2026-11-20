@@ -270,9 +270,8 @@ class User(AbstractUser):
                 'is_staff': self.is_staff,
             }
             logger.info(
-                "User role changed - user_id=%s, username=%s, role_mapping=%s, old_roles=%s, new_roles=%s",
+                "User role changed - user_id=%s, role_mapping=%s, old_roles=%s, new_roles=%s",
                 self.id,
-                self.username,
                 role_mapping,
                 old_roles,
                 new_roles,
@@ -327,12 +326,11 @@ class Channel(models.Model):
 def channel_save(sender, instance, created, **kwargs):
     if created:
         logger.info(
-            "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            "Channel created - channel_id=%s, friendly_token=%s, title=%s, user_id=%s",
             instance.id,
             instance.friendly_token,
             instance.title,
             instance.user.id if instance.user else None,
-            instance.user.username if instance.user else None,
         )
     else:
         logger.debug(
@@ -347,12 +345,11 @@ def channel_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Channel)
 def channel_delete(sender, instance, **kwargs):
     logger.info(
-        "Channel deleted - channel_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+        "Channel deleted - channel_id=%s, friendly_token=%s, title=%s, user_id=%s",
         instance.id,
         instance.friendly_token,
         instance.title,
         instance.user.id if instance.user else None,
-        instance.user.username if instance.user else None,
     )
 
 
@@ -361,10 +358,8 @@ def post_user_create(sender, instance, created, **kwargs):
     # create a Channel object upon user creation, name it default
     if created:
         logger.info(
-            "User registered - user_id=%s, username=%s, email=%s",
+            "User registered - user_id=%s",
             instance.id,
-            instance.username,
-            instance.email,
         )
         new = Channel.objects.create(title="default", user=instance)
         new.save()
@@ -387,9 +382,8 @@ Visit user profile page at %s
 def log_user_login(sender, request, user, **kwargs):
     client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
-        "Login successful (django-allauth) - user_id=%s, username=%s, ip=%s",
+        "Login successful (django-allauth) - user_id=%s, ip=%s",
         user.id,
-        user.username,
         client_ip,
     )
 
@@ -398,9 +392,8 @@ def log_user_login(sender, request, user, **kwargs):
 def log_user_logout(sender, request, user, **kwargs):
     if user:
         logger.info(
-            "Logout (django-allauth) - user_id=%s, username=%s",
+            "Logout (django-allauth) - user_id=%s",
             user.id,
-            user.username,
         )
 
 
@@ -408,10 +401,8 @@ def log_user_logout(sender, request, user, **kwargs):
 def log_password_reset(sender, request, user, **kwargs):
     client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
-        "Password reset requested - user_id=%s, username=%s, email=%s, ip=%s",
+        "Password reset requested - user_id=%s, ip=%s",
         user.id if user else None,
-        user.username if user else None,
-        user.email if user else None,
         client_ip,
     )
 
@@ -420,10 +411,8 @@ def log_password_reset(sender, request, user, **kwargs):
 def log_email_confirmed(sender, request, email_address, **kwargs):
     user = email_address.user if email_address else None
     logger.info(
-        "Email confirmed - user_id=%s, username=%s, email=%s",
+        "Email confirmed - user_id=%s",
         user.id if user else None,
-        user.username if user else None,
-        email_address.email if email_address else None,
     )
 
 
@@ -431,9 +420,8 @@ def log_email_confirmed(sender, request, email_address, **kwargs):
 def log_password_changed(sender, request, user, **kwargs):
     client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
-        "Password changed - user_id=%s, username=%s, ip=%s",
+        "Password changed - user_id=%s, ip=%s",
         user.id if user else None,
-        user.username if user else None,
         client_ip,
     )
 
@@ -442,10 +430,8 @@ def log_password_changed(sender, request, user, **kwargs):
 def log_account_signup(sender, request, user, **kwargs):
     client_ip = get_client_ip_for_logging(request) if request else 'unknown'
     logger.info(
-        "Account signup (django-allauth) - user_id=%s, username=%s, email=%s, ip=%s",
+        "Account signup (django-allauth) - user_id=%s, ip=%s",
         user.id if user else None,
-        user.username if user else None,
-        user.email if user else None,
         client_ip,
     )
 
@@ -481,10 +467,8 @@ def delete_content(sender, instance, **kwargs):
     category_count = Category.objects.filter(user=instance).count()
 
     logger.info(
-        "User deletion - user_id=%s, username=%s, email=%s, media_count=%s, tag_count=%s, category_count=%s",
+        "User deletion - user_id=%s, media_count=%s, tag_count=%s, category_count=%s",
         instance.id,
-        instance.username,
-        instance.email,
         media_count,
         tag_count,
         category_count,

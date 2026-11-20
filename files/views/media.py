@@ -649,10 +649,10 @@ class MediaBulkUserActions(APIView):
                     MediaPermission.objects.update_or_create(user=user, media=m, defaults={'owner_user': request.user, 'permission': ownership_type})
 
             logger.info(
-                "Bulk action: ownership set - count=%s, ownership_type=%s, assigned_to_users=%s, assigned_by_user_id=%s, media_ids=%s",
+                "Bulk action: ownership set - count=%s, ownership_type=%s, assigned_to_user_ids=%s, assigned_by_user_id=%s, media_ids=%s",
                 count,
                 ownership_type,
-                usernames,
+                list(users.values_list('id', flat=True)),
                 request.user.id,
                 media_tokens,
             )
@@ -680,10 +680,10 @@ class MediaBulkUserActions(APIView):
             MediaPermission.objects.filter(media__in=media, permission=ownership_type, user__in=users).delete()
 
             logger.info(
-                "Bulk action: ownership removed - count=%s, ownership_type=%s, removed_from_users=%s, removed_by_user_id=%s, media_ids=%s",
+                "Bulk action: ownership removed - count=%s, ownership_type=%s, removed_from_user_ids=%s, removed_by_user_id=%s, media_ids=%s",
                 count,
                 ownership_type,
-                usernames,
+                list(users.values_list('id', flat=True)),
                 request.user.id,
                 media_tokens,
             )

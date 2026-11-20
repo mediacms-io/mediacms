@@ -1118,10 +1118,9 @@ def media_save(sender, instance, created, **kwargs):
         from ..methods import notify_users
 
         logger.info(
-            "Media created - friendly_token=%s, user_id=%s, username=%s, media_type=%s, title=%s",
+            "Media created - friendly_token=%s, user_id=%s, media_type=%s, title=%s",
             instance.friendly_token,
             instance.user.id if instance.user else None,
-            instance.user.username if instance.user else None,
             instance.media_type,
             instance.title[:50] if instance.title else None,
         )

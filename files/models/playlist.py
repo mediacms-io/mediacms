@@ -106,12 +106,11 @@ class PlaylistMedia(models.Model):
 def playlist_save(sender, instance, created, **kwargs):
     if created:
         logger.info(
-            "Playlist created - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+            "Playlist created - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s",
             instance.id,
             instance.friendly_token,
             instance.title,
             instance.user.id if instance.user else None,
-            instance.user.username if instance.user else None,
         )
     else:
         logger.debug(
@@ -126,12 +125,11 @@ def playlist_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Playlist)
 def playlist_delete(sender, instance, **kwargs):
     logger.info(
-        "Playlist deleted - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s, username=%s",
+        "Playlist deleted - playlist_id=%s, friendly_token=%s, title=%s, user_id=%s",
         instance.id,
         instance.friendly_token,
         instance.title,
         instance.user.id if instance.user else None,
-        instance.user.username if instance.user else None,
     )
 
 

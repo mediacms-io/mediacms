@@ -38,9 +38,8 @@ class ApprovalMiddleware:
             ]
             if request.path not in allowed_paths:
                 logger.warning(
-                    "User access blocked - approval required - user_id=%s, username=%s, path=%s, method=%s",
+                    "User access blocked - approval required - user_id=%s, path=%s, method=%s",
                     request.user.id,
-                    request.user.username,
                     request.path,
                     request.method,
                 )

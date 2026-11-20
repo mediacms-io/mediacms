@@ -145,10 +145,9 @@ class MediaList(APIView):
             count = Media.objects.filter(friendly_token__in=tokens).count()
             Media.objects.filter(friendly_token__in=tokens).delete()
             logger.info(
-                "Admin action: media deleted - count=%s, admin_user_id=%s, admin_username=%s, media_tokens=%s",
+                "Admin action: media deleted - count=%s, admin_user_id=%s, media_tokens=%s",
                 count,
                 request.user.id,
-                request.user.username,
                 tokens,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -208,10 +207,9 @@ class CommentList(APIView):
             count = Comment.objects.filter(uid__in=comments).count()
             Comment.objects.filter(uid__in=comments).delete()
             logger.info(
-                "Admin action: comments deleted - count=%s, admin_user_id=%s, admin_username=%s, comment_ids=%s",
+                "Admin action: comments deleted - count=%s, admin_user_id=%s, comment_ids=%s",
                 count,
                 request.user.id,
-                request.user.username,
                 comments,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -296,13 +294,12 @@ class UserList(APIView):
             users = User.objects.filter(username__in=tokens.split(","))
             if not request.user.is_superuser and users.filter(is_superuser=True).exists():
                 return Response({"detail": "You do not have permission to delete a superuser."}, status=status.HTTP_403_FORBIDDEN)
-            usernames_list = list(users.values_list("username", flat=True))
+            user_ids = list(users.values_list("id", flat=True))
             users.delete()
             logger.info(
-                "Admin action: users deleted - count=%s, admin_user_id=%s, admin_username=%s, deleted_usernames=%s",
-                len(usernames_list),
+                "Admin action: users deleted - count=%s, admin_user_id=%s, deleted_user_ids=%s",
+                len(user_ids),
                 request.user.id,
-                request.user.username,
-                usernames_list,
+                user_ids,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)

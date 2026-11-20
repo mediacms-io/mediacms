@@ -57,10 +57,9 @@ class Rating(models.Model):
 def rating_save(sender, instance, created, **kwargs):
     if created:
         logger.info(
-            "Rating created - rating_id=%s, user_id=%s, username=%s, media_friendly_token=%s, rating_category_id=%s, rating_category_title=%s, score=%s",
+            "Rating created - rating_id=%s, user_id=%s, media_friendly_token=%s, rating_category_id=%s, rating_category_title=%s, score=%s",
             instance.id,
             instance.user.id if instance.user else None,
-            instance.user.username if instance.user else None,
             instance.media.friendly_token if instance.media else None,
             instance.rating_category.id if instance.rating_category else None,
             instance.rating_category.title if instance.rating_category else None,
@@ -79,10 +78,9 @@ def rating_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Rating)
 def rating_delete(sender, instance, **kwargs):
     logger.info(
-        "Rating deleted - rating_id=%s, user_id=%s, username=%s, media_friendly_token=%s, rating_category_title=%s, score=%s",
+        "Rating deleted - rating_id=%s, user_id=%s, media_friendly_token=%s, rating_category_title=%s, score=%s",
         instance.id,
         instance.user.id if instance.user else None,
-        instance.user.username if instance.user else None,
         instance.media.friendly_token if instance.media else None,
         instance.rating_category.title if instance.rating_category else None,
         instance.score,

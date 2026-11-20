@@ -41,9 +41,8 @@ class SAMLAccountAdapter(DefaultSocialAccountAdapter):
         user = super().save_user(request, sociallogin, form)
         # Runs after new user is created
         logger.info(
-            "SAML user created - user_id=%s, username=%s, provider=%s",
+            "SAML user created - user_id=%s, provider=%s",
             user.id if user.id else None,
-            user.username,
             sociallogin.account.provider,
         )
         perform_user_actions(user, sociallogin.account)
@@ -57,9 +56,8 @@ def social_account_updated(sender, request, sociallogin, **kwargs):
     # data is there due to populate_user
     common_fields = sociallogin.data
     logger.info(
-        "SAML user updated - user_id=%s, username=%s, provider=%s",
+        "SAML user updated - user_id=%s, provider=%s",
         user.id if user.id else None,
-        user.username,
         sociallogin.account.provider,
     )
     perform_user_actions(user, sociallogin.account, common_fields)
@@ -117,9 +115,8 @@ def add_user_logo(user, extra_data, saml_configuration=None):
             )
     except Exception as e:
         logger.exception(
-            "Error adding SAML user logo - user_id=%s, username=%s, error=%s",
+            "Error adding SAML user logo - user_id=%s, error=%s",
             user.id if user.id else None,
-            user.username,
             str(e),
         )
     return True

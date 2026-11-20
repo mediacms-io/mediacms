@@ -55,10 +55,9 @@ class Comment(MPTTModel):
 def comment_save(sender, instance, created, **kwargs):
     if created:
         logger.info(
-            "Comment created - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s, has_parent=%s",
+            "Comment created - comment_id=%s, user_id=%s, media_friendly_token=%s, has_parent=%s",
             instance.id,
             instance.user.id if instance.user else None,
-            instance.user.username if instance.user else None,
             instance.media.friendly_token if instance.media else None,
             bool(instance.parent),
         )
@@ -74,9 +73,8 @@ def comment_save(sender, instance, created, **kwargs):
 @receiver(post_delete, sender=Comment)
 def comment_delete(sender, instance, **kwargs):
     logger.info(
-        "Comment deleted - comment_id=%s, user_id=%s, username=%s, media_friendly_token=%s",
+        "Comment deleted - comment_id=%s, user_id=%s, media_friendly_token=%s",
         instance.id,
         instance.user.id if instance.user else None,
-        instance.user.username if instance.user else None,
         instance.media.friendly_token if instance.media else None,
     )

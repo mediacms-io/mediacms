@@ -142,6 +142,8 @@ class LoginSerializer(serializers.Serializer):
             logger.warning("Login failed - user_not_approved, ip=%s", client_ip)
             raise serializers.ValidationError(NOT_APPROVED_MESSAGE)
 
+        logger.info("Login successful - user_id=%s, ip=%s", user.id, client_ip)
+
         token = Token.objects.filter(user=user).first()
         if not token:
             token = Token.objects.create(user=user)
