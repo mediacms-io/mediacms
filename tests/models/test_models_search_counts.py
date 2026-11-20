@@ -78,6 +78,60 @@ class SearchVectorTests(TestCase):
         self.assertIn(media, search("whats"))
 
 
+class TagAndCategorySyncTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = make_user("sync_user")
+
+    def test_adding_a_tag_makes_media_searchable_without_resaving(self):
+        media = create_media(self.user, title="river clip")
+        media.tags.add(Tag.objects.create(title="kayaking"))
+        self.assertIn(media, search("kayaking"))
+
+    def test_removing_a_tag_drops_it_from_the_index(self):
+        tag = Tag.objects.create(title="canoeing")
+        media = create_media(self.user, title="lake clip", tags=[tag])
+        self.assertIn(media, search("canoeing"))
+
+        media.tags.remove(tag)
+        self.assertNotIn(media, search("canoeing"))
+
+    def test_tag_count_follows_add_remove_and_clear(self):
+        tag = Tag.objects.create(title="wombat")
+        media = create_media(self.user, title="tag counted")
+        media.tags.add(tag)
+        tag.refresh_from_db()
+        self.assertEqual(tag.media_count, 1)
+
+        media.tags.remove(tag)
+        tag.refresh_from_db()
+        self.assertEqual(tag.media_count, 0)
+
+        media.tags.add(tag)
+        media.tags.clear()
+        tag.refresh_from_db()
+        self.assertEqual(tag.media_count, 0)
+        self.assertNotIn(media, search("wombat"))
+
+    def test_category_count_follows_remove_and_clear(self):
+        category = Category.objects.create(title="Cleared")
+        media = create_media(self.user, title="category counted", category=[category])
+        media.category.remove(category)
+        category.refresh_from_db()
+        self.assertEqual(category.media_count, 0)
+
+        media.category.add(category)
+        media.category.clear()
+        category.refresh_from_db()
+        self.assertEqual(category.media_count, 0)
+        self.assertNotIn(media, search("cleared"))
+
+    def test_tags_info_is_sorted_case_insensitively(self):
+        media = create_media(self.user, title="sorted tags")
+        media.tags.add(*[Tag.objects.create(title=title) for title in ["banana", "Cherry", "apple"]])
+        self.assertEqual([tag["title"] for tag in media.tags_info], ["apple", "banana", "Cherry"])
+
+
 class CategoryAndUserCountTests(TestCase):
     @classmethod
     def setUpTestData(cls):
