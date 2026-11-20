@@ -61,12 +61,11 @@ class MediaAction(models.Model):
 @receiver(post_save, sender=MediaAction)
 def mediaaction_save(sender, instance, created, **kwargs):
     if created:
-        logger.info(
-            "User action - action_id=%s, action=%s, user_id=%s, media_friendly_token=%s, session_key=%s, remote_ip=%s",
+        log = logger.debug if instance.action == "watch" else logger.info
+        log(
+            "User action - action_id=%s, action=%s, user_id=%s, media_friendly_token=%s",
             instance.id,
             instance.action,
             instance.user.id if instance.user else None,
             instance.media.friendly_token if instance.media else None,
-            instance.session_key if instance.session_key else None,
-            instance.remote_ip if instance.remote_ip else None,
         )

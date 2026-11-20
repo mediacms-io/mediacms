@@ -1042,10 +1042,7 @@ class MediaDetail(APIView):
 
         serializer = MediaSerializer(media, data=request.data, context={"request": request})
         if serializer.is_valid():
-            changed_fields = []
-            for field in request.data.keys():
-                if hasattr(media, field) and getattr(media, field) != request.data.get(field):
-                    changed_fields.append(field)
+            changed_fields = [field for field, value in serializer.validated_data.items() if getattr(media, field, None) != value]
 
             # if request.data.get('media_file'):
             #     media_file = request.data["media_file"]

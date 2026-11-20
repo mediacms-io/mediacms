@@ -1,5 +1,6 @@
 from django.test import TestCase
 
+from actions.models import MediaAction
 from files import tasks
 from files.models import Category, Media
 from files.tests import create_account, create_media
@@ -67,3 +68,23 @@ class ModelSignalLoggingTest(TestCase):
         with self.assertLogs("files.models.category", level="INFO") as logs:
             Category.objects.create(title="Another category")
         self.assertIn("Another category", logs.output[0])
+
+
+class MediaActionLoggingTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = create_account()
+        cls.media = create_media(cls.user)
+
+    def test_anonymous_action_log_has_no_session_key_or_ip(self):
+        with self.assertLogs("actions.models", level="INFO") as logs:
+            MediaAction.objects.create(session_key="secretsessionkey123", remote_ip="198.51.100.77", media=self.media, action="like")
+        self.assertIn(f"action=like, user_id=None, media_friendly_token={self.media.friendly_token}", logs.output[0])
+        self.assertNotIn("secretsessionkey123", logs.output[0])
+        self.assertNotIn("198.51.100.77", logs.output[0])
+
+    def test_watch_actions_are_debug_only(self):
+        with self.assertLogs("actions.models", level="DEBUG") as logs:
+            MediaAction.objects.create(user=self.user, media=self.media, action="watch")
+        self.assertEqual(logs.records[0].levelname, "DEBUG")
+        self.assertNotIn(self.user.username, logs.output[0])
