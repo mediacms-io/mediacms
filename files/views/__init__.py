@@ -13,6 +13,7 @@ from .media import MediaActions  # noqa: F401
 from .media import MediaBulkUserActions  # noqa: F401
 from .media import MediaDetail  # noqa: F401
 from .media import MediaList  # noqa: F401
+from .media import MediaPlaylistMembership  # noqa: F401
 from .media import MediaSearch  # noqa: F401
 from .media import media_share  # noqa: F401
 from .media_auth import media_auth, view_pdf  # noqa: F401
