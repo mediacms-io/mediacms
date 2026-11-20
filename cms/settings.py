@@ -391,24 +391,35 @@ if not os.path.exists(LOGS_DIR):
 if not os.path.isfile(error_filename):
     open(error_filename, 'a').close()
 
+LOGLEVEL = os.environ.get("LOGLEVEL", "ERROR").upper()
+ENABLE_SQL_DEBUG_LOGGING = os.environ.get("ENABLE_SQL_DEBUG_LOGGING", "False").lower() == "true"
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {funcName}:{lineno} {message}",
+            "style": "{",
+        },
+    },
     "handlers": {
         "file": {
-            "level": "ERROR",
+            "level": LOGLEVEL,
             "class": "logging.FileHandler",
             "filename": error_filename,
+            "formatter": "verbose",
         },
     },
     "loggers": {
         "django": {
             "handlers": ["file"],
-            "level": "ERROR",
+            "level": LOGLEVEL,
             "propagate": True,
         },
     },
 }
+_default_logging = LOGGING
 
 DATABASES = {
     "default": {
@@ -634,6 +645,10 @@ WHISPER_MODEL = "base"
 # show a custom text in the sidebar footer, otherwise the default will be shown if this is empty
 SIDEBAR_FOOTER_TEXT = ""
 
+TRUSTED_PROXIES = []
+PROXY_AWARE_MIDDLEWARE_ENABLED = None
+SET_REAL_IP_IN_META = False
+
 try:
     # keep a local_settings.py file for local overrides
     from .local_settings import *  # noqa
@@ -672,6 +687,21 @@ except ImportError:
     pass
 
 
+if LOGGING is _default_logging:
+    LOGLEVEL = LOGLEVEL.upper()
+    _app_log_level = "DEBUG" if DEBUG else LOGLEVEL
+    LOGGING["handlers"]["file"]["level"] = _app_log_level
+    LOGGING["loggers"]["django"]["level"] = LOGLEVEL
+    if _app_log_level != "ERROR":
+        for _app in ("actions", "cms", "files", "identity_providers", "rbac", "saml_auth", "uploader", "users"):
+            LOGGING["loggers"][_app] = {"handlers": ["file"], "level": _app_log_level, "propagate": True}
+    if DEBUG:
+        LOGGING["handlers"]["console"] = {"level": "DEBUG", "class": "logging.StreamHandler", "formatter": "verbose"}
+        for _logger in LOGGING["loggers"].values():
+            _logger["handlers"].append("console")
+        if ENABLE_SQL_DEBUG_LOGGING:
+            LOGGING["loggers"]["django.db.backends"] = {"handlers": ["console"], "level": "DEBUG", "propagate": False}
+
 if GLOBAL_LOGIN_REQUIRED:
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "django.contrib.auth.middleware.LoginRequiredMiddleware")
@@ -684,6 +714,12 @@ if USERS_NEEDS_TO_BE_APPROVED:
     )
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
+
+if PROXY_AWARE_MIDDLEWARE_ENABLED is None:
+    PROXY_AWARE_MIDDLEWARE_ENABLED = bool(TRUSTED_PROXIES)
+
+if PROXY_AWARE_MIDDLEWARE_ENABLED:
+    MIDDLEWARE.insert(MIDDLEWARE.index("django.middleware.security.SecurityMiddleware") + 1, "cms.middleware.ProxyAwareMiddleware")
 
 
 # LTI 1.3 Integration Settings

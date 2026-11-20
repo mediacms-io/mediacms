@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 import shutil
 
@@ -15,6 +16,8 @@ from files.models import Media
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
+
+logger = logging.getLogger(__name__)
 
 
 class FineUploaderView(generic.FormView):
@@ -46,6 +49,11 @@ class FineUploaderView(generic.FormView):
 
     def dispatch(self, request, *args, **kwargs):
         if not user_allowed_to_upload(request):
+            logger.warning(
+                "Upload denied - user not allowed to upload - user_id=%s, path=%s",
+                getattr(request.user, 'id', None),
+                request.path,
+            )
             raise PermissionDenied  # HTTP 403
         return super(FineUploaderView, self).dispatch(request, *args, **kwargs)
 
@@ -54,7 +62,13 @@ class FineUploaderView(generic.FormView):
         if self.upload.concurrent and self.chunks_done:
             try:
                 self.upload.combine_chunks()
-            except FileNotFoundError:
+            except FileNotFoundError as e:
+                logger.error(
+                    "File not found during chunk combination - user_id=%s, filename=%s, error=%s",
+                    getattr(self.request.user, 'id', None),
+                    self.upload.original_filename,
+                    str(e),
+                )
                 data = {"success": False, "error": "Error with File Uploading"}
                 return self.make_response(data, status=400)
         elif self.upload.total_parts == 1:
@@ -68,11 +82,22 @@ class FineUploaderView(generic.FormView):
             myfile = File(f)
             new = Media.objects.create(media_file=myfile, user=self.request.user, title=self.upload.original_filename)
         MediaAction.objects.create(user=self.request.user, media=new, action="watch")
+        logger.info(
+            "Media uploaded - user_id=%s, friendly_token=%s, filename=%s",
+            self.request.user.id,
+            new.friendly_token,
+            self.upload.original_filename,
+        )
 
         rm_file(media_file)
         shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.upload.file_path))
         return self.make_response({"success": True, "media_url": new.get_absolute_url()})
 
     def form_invalid(self, form):
+        logger.warning(
+            "Upload form validation failed - user_id=%s, errors=%s",
+            getattr(self.request.user, 'id', None),
+            form.errors,
+        )
         data = {"success": False, "error": "%s" % repr(form.errors)}
         return self.make_response(data, status=400)

@@ -1,7 +1,29 @@
+import logging
+
 from django.conf import settings
 from django.http import JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+
+from .utils import get_client_ip
+
+logger = logging.getLogger(__name__)
+
+
+class ProxyAwareMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        remote_addr = request.META.get("REMOTE_ADDR")
+        client_ip = get_client_ip(request) if settings.PROXY_AWARE_MIDDLEWARE_ENABLED else None
+        request.client_ip = client_ip or remote_addr
+
+        if client_ip and client_ip != remote_addr and settings.SET_REAL_IP_IN_META:
+            request.META["ORIGINAL_REMOTE_ADDR"] = remote_addr
+            request.META["REMOTE_ADDR"] = client_ip
+
+        return self.get_response(request)
 
 
 class ApprovalMiddleware:
@@ -15,6 +37,12 @@ class ApprovalMiddleware:
                 reverse('account_logout'),
             ]
             if request.path not in allowed_paths:
+                logger.warning(
+                    "User access blocked - approval required - user_id=%s, path=%s, method=%s",
+                    request.user.id,
+                    request.path,
+                    request.method,
+                )
                 if request.path.startswith('/api/'):
                     return JsonResponse({'detail': 'User account not approved.'}, status=403)
                 return redirect('approval_required')
