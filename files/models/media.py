@@ -1145,14 +1145,15 @@ def media_file_delete(sender, instance, **kwargs):
 def media_m2m(sender, instance, **kwargs):
     action = kwargs.get('action', '')
     pk_set = kwargs.get('pk_set', set())
+    if action == 'pre_clear':
+        instance._cleared_category_ids = list(instance.category.values_list('pk', flat=True))
     if action in ['post_add', 'post_remove', 'post_clear']:
         from .category import Category
 
         categories_to_update = set()
 
         if action == 'post_clear':
-            if instance.category.all():
-                categories_to_update.update(instance.category.all())
+            categories_to_update.update(Category.objects.filter(pk__in=getattr(instance, '_cleared_category_ids', [])))
         else:
             if pk_set:
                 categories_to_update.update(Category.objects.filter(pk__in=pk_set))
@@ -1170,14 +1171,15 @@ def media_m2m(sender, instance, **kwargs):
 def media_tags_m2m(sender, instance, **kwargs):
     action = kwargs.get('action', '')
     pk_set = kwargs.get('pk_set', set())
+    if action == 'pre_clear':
+        instance._cleared_tag_ids = list(instance.tags.values_list('pk', flat=True))
     if action in ['post_add', 'post_remove', 'post_clear']:
         from .category import Tag
 
         tags_to_update = set()
 
         if action == 'post_clear':
-            if instance.tags.all():
-                tags_to_update.update(instance.tags.all())
+            tags_to_update.update(Tag.objects.filter(pk__in=getattr(instance, '_cleared_tag_ids', [])))
         else:
             if pk_set:
                 tags_to_update.update(Tag.objects.filter(pk__in=pk_set))
