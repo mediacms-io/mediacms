@@ -379,8 +379,6 @@ FILE_UPLOAD_HANDLERS = [
 
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
-# LOGS_DIR can be overridden in local_settings.py, which is imported at the end of
-# this file, so the directory and the log file are created down there instead.
 error_filename = os.path.join(LOGS_DIR, "debug.log")
 _default_error_filename = error_filename
 
@@ -665,15 +663,10 @@ except ImportError:
     pass
 
 
-# LOGS_DIR may have been overridden in local_settings.py or dev_settings.py, so the
-# log file is resolved, and its directory created, only now. While this ran next to
-# the LOGGING definition an overridden LOGS_DIR was ignored and errors kept being
-# written to <BASE_DIR>/logs/debug.log.
+# resolved after local_settings.py so an overridden LOGS_DIR is respected
 error_filename = os.path.join(LOGS_DIR, "debug.log")
 _file_handler = LOGGING.get("handlers", {}).get("file")
 if _file_handler and _file_handler.get("filename") == _default_error_filename:
-    # local_settings.py may replace LOGGING entirely (no "file" handler) or point
-    # the handler at an explicit path: only the untouched default follows LOGS_DIR.
     _file_handler["filename"] = error_filename
 
 try:
@@ -681,7 +674,6 @@ try:
     if not os.path.isfile(error_filename):
         open(error_filename, 'a').close()
 except OSError:
-    # read-only or missing parent directory: let logging surface it when it writes
     pass
 
 

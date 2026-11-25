@@ -7,9 +7,6 @@ import unittest
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Runs cms.settings in a fresh interpreter with a fake ``cms.local_settings`` module
-# injected into ``sys.modules``, so the module-level code at the end of settings.py
-# is exercised without writing a local_settings.py into the source tree.
 _SCRIPT = """
 import json, os, sys, types
 local_settings = types.ModuleType("cms.local_settings")
