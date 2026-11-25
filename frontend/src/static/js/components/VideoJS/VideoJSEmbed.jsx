@@ -18,6 +18,33 @@ import * as ReactJSXRuntime from 'react/jsx-runtime';
 
 const DEFAULT_DATA = {};
 
+const CSS_WAIT_TIMEOUT_MS = 5000;
+
+function whenStylesheetReady(link, callback) {
+    if (link.sheet) {
+        callback();
+        return;
+    }
+
+    let done = false;
+    let timer = null;
+
+    const finish = () => {
+        if (done) {
+            return;
+        }
+        done = true;
+        clearTimeout(timer);
+        link.removeEventListener('load', finish);
+        link.removeEventListener('error', finish);
+        callback();
+    };
+
+    link.addEventListener('load', finish);
+    link.addEventListener('error', finish);
+    timer = setTimeout(finish, CSS_WAIT_TIMEOUT_MS);
+}
+
 const VideoJSEmbed = ({
     data = DEFAULT_DATA,
     useRoundedCorners,
@@ -222,19 +249,21 @@ const VideoJSEmbed = ({
 
     const loadVideoJSAssets = () => {
         // Check if assets are already loaded
-        const existingCSS = document.querySelector('link[href*="video-js.css"]');
-        const existingJS = document.querySelector('script[src*="video-js.js"]');
+        let cssLink = document.querySelector('link[rel="stylesheet"][href*="video-js.css"]');
 
         // Load CSS if not already loaded
-        if (!existingCSS) {
-            const cssLink = document.createElement('link');
+        if (!cssLink) {
+            cssLink = document.createElement('link');
             cssLink.rel = 'stylesheet';
             cssLink.href = siteUrl + '/static/video_js/video-js.css?v=' + version;
             document.head.appendChild(cssLink);
         }
 
         // Load JS if not already loaded
-        if (!existingJS) {
+        whenStylesheetReady(cssLink, () => {
+            if (document.querySelector('script[src*="video-js.js"]')) {
+                return;
+            }
             window.React = React;
             window.ReactDOM = ReactDOM;
             window.ReactDOMClient = ReactDOMClient;
@@ -242,7 +271,7 @@ const VideoJSEmbed = ({
             const script = document.createElement('script');
             script.src = siteUrl + '/static/video_js/video-js.js?v=' + version;
             document.head.appendChild(script);
-        }
+        });
     };
 
     return (

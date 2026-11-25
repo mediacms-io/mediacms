@@ -16,11 +16,33 @@
 		<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i&display=swap" rel="stylesheet">
 		{% else %}
+		<link href="{% static "lib/material-icons/v77/icons.woff2" %}" rel="preload" as="font" type="font/woff2" crossorigin>
 		<link href="{% static "lib/material-icons/material-icons.css" %}" rel="preload" as="style">
 		<link href="{% static "lib/gfonts/gfonts.css" %}" rel="preload" as="style">
 		<link href="{% static "lib/material-icons/material-icons.css" %}" rel="stylesheet">
 		<link href="{% static "lib/gfonts/gfonts.css" %}" rel="stylesheet">
 		{% endif %}
+
+		<style>
+			html.material-icons-loading .material-icons {
+				visibility: hidden;
+				overflow: hidden;
+				max-width: 1em;
+			}
+		</style>
+		<script>
+			(function () {
+				if (!document.fonts || !document.fonts.load) {
+					return;
+				}
+				var root = document.documentElement;
+				root.classList.add('material-icons-loading');
+				var done = function () {
+					root.classList.remove('material-icons-loading');
+				};
+				document.fonts.load('24px "Material Icons"').then(done, done);
+			})();
+		</script>
 
 		<link href="{% static "css/_commons.css" %}?v={{ VERSION }}" rel="preload" as="style">
 		<link href="{% static "css/_commons.css" %}?v={{ VERSION }}" rel="stylesheet">
