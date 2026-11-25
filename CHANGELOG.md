@@ -1,5 +1,11 @@
 # Changelog
 
+## [9.7.0](https://github.com/mediacms-io/mediacms/compare/v9.6.1...v9.7.0) (2026-11-25)
+
+### Features
+
+* prevent unstyled video player and icon text on slow connections ([#1654](https://github.com/mediacms-io/mediacms/issues/1654)) ([01660ab](https://github.com/mediacms-io/mediacms/commit/01660ab220b1a832e8d2d83e4e76291ff138f196))
+
 ## [9.6.1](https://github.com/mediacms-io/mediacms/compare/v9.6.0...v9.6.1) (2026-11-19)
 
 ### Bug Fixes
