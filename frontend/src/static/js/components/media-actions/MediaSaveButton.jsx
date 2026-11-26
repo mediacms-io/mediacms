@@ -3,6 +3,7 @@ import { usePopup } from '../../utils/hooks/';
 import { CircleIconButton, MaterialIcon, NavigationContentApp, PopupMain } from '../_shared/';
 import { PlaylistsSelection } from '../playlists-selection/PlaylistsSelection';
 import { translateString } from '../../utils/helpers/';
+import { MediaPageActions } from '../../utils/actions/';
 
 function mediaSavePopupPages(onTriggerPopupClose) {
   return {
@@ -44,7 +45,7 @@ export function MediaSaveButton(props) {
         </button>
       </PopupTrigger>
 
-      <PopupContent contentRef={popupContentRef}>
+      <PopupContent contentRef={popupContentRef} showCallback={() => MediaPageActions.loadPlaylistsForSave()}>
         <NavigationContentApp
           initPage={popupCurrentPage}
           pageChangeSelector={'.change-page'}
