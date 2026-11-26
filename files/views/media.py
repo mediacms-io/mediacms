@@ -941,10 +941,10 @@ class MediaDetail(APIView):
             media.encode(profiles=valid_profiles)
             return Response({"detail": "media will be encoded"}, status=status.HTTP_201_CREATED)
         elif action == "review":
-            if result:
-                media.is_reviewed = True
-            elif result is False:
+            if result is False or (isinstance(result, str) and result.strip().lower() in ("false", "0", "no")):
                 media.is_reviewed = False
+            else:
+                media.is_reviewed = True
             media.save(update_fields=["is_reviewed", "listable"])
             return Response({"detail": "media reviewed set"}, status=status.HTTP_201_CREATED)
         return Response(
