@@ -382,14 +382,7 @@ FILE_UPLOAD_HANDLERS = [
 LOGS_DIR = os.path.join(BASE_DIR, "logs")
 
 error_filename = os.path.join(LOGS_DIR, "debug.log")
-if not os.path.exists(LOGS_DIR):
-    try:
-        os.mkdir(LOGS_DIR)
-    except PermissionError:
-        pass
-
-if not os.path.isfile(error_filename):
-    open(error_filename, 'a').close()
+_default_error_filename = error_filename
 
 LOGGING = {
     "version": 1,
@@ -669,6 +662,20 @@ try:
         # keep a dev_settings.py file for local overrides
         from .dev_settings import *  # noqa
 except ImportError:
+    pass
+
+
+# resolved after local_settings.py so an overridden LOGS_DIR is respected
+error_filename = os.path.join(LOGS_DIR, "debug.log")
+_file_handler = LOGGING.get("handlers", {}).get("file")
+if _file_handler and _file_handler.get("filename") == _default_error_filename:
+    _file_handler["filename"] = error_filename
+
+try:
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    if not os.path.isfile(error_filename):
+        open(error_filename, 'a').close()
+except OSError:
     pass
 
 
