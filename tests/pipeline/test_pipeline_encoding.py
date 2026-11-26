@@ -160,6 +160,16 @@ class EncodingStatusTest(TestCase):
         self.assertEqual(self.video.encoding_status, "pending")
         self.assertTrue(self.video.preview_file_path)
 
+    def test_a_successful_preview_finishes_original_playback_when_no_regular_profiles_are_active(self):
+        EncodeProfile.objects.exclude(name="preview").update(active=False)
+
+        self.add_encoding("preview", "success")
+        self.video.refresh_from_db()
+
+        self.assertEqual(self.video.encoding_status, "success")
+        self.assertTrue(self.video.listable)
+        self.assertEqual(self.video.encodings_info["0-original"]["h264"]["url"], helpers.url_from_path(self.video.media_file.path))
+
     def test_deleting_the_preview_encoding_clears_the_preview_path(self):
         preview = self.add_encoding("preview", "success")
 
