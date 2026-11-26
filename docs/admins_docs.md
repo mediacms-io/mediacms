@@ -585,6 +585,31 @@ INCLUDE_LISTING_NUMBERS = True
 
 This setting affects only the visual display on the categories and tags listing pages and does not impact the functionality of filtering by categories or tags.
 
+### 5.31 Running behind a reverse proxy
+
+Behind nginx, Apache or a load balancer, `REMOTE_ADDR` is the proxy's address. To use the real client IP in logs and in anonymous action counts (views, likes, reports), list the proxies in `local_settings.py`:
+
+```
+TRUSTED_PROXIES = ['127.0.0.1', '10.0.0.0/8', 'fd00::/8']
+```
+
+Entries are IPs or CIDR ranges, IPv4 or IPv6. Setting `TRUSTED_PROXIES` turns on `cms.middleware.ProxyAwareMiddleware`. To keep it off, set `PROXY_AWARE_MIDDLEWARE_ENABLED = False`.
+
+The client IP is taken from `X-Forwarded-For` only when the request comes from a trusted proxy. MediaCMS walks the header from right to left, skips trusted proxies and invalid entries, and uses the first address left. Ports are removed (`203.0.113.7:51234`, `[2001:db8::7]:443`). If there is no `X-Forwarded-For`, a valid `X-Real-IP` is used. Requests from untrusted peers always use `REMOTE_ADDR`, so the headers can't be spoofed.
+
+The proxy must send the headers, for example in nginx:
+
+```
+proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+proxy_set_header X-Real-IP $remote_addr;
+```
+
+By default `REMOTE_ADDR` is left as is and the client IP is stored on `request.client_ip`. To also replace `REMOTE_ADDR` (the original is kept in `ORIGINAL_REMOTE_ADDR`):
+
+```
+SET_REAL_IP_IN_META = True
+```
+
 
 ## 6. Manage pages
 to be written
@@ -840,6 +865,18 @@ For example, while specifying wrong password for my Gmail account I get
 ```
 SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. Learn more at\n5.7.8  https://support.google.com/mail/?p=BadCredentials d4sm12687785wrc.34 - gsmtp')
 ```
+
+## 15b. Logging levels
+
+Errors are written to `logs/debug.log`. Set the level with the `LOGLEVEL` environment variable or in `local_settings.py` (`DEBUG`, `INFO`, `WARNING` or `ERROR`; default `ERROR`):
+
+```
+LOGLEVEL = "INFO"
+```
+
+Any level other than `ERROR` also turns on the MediaCMS app loggers (`files`, `users`, `uploader`, `saml_auth`, `rbac`, `identity_providers`, `actions`, `cms`). With `DEBUG = True` they log at `DEBUG` and also print to the console. To print SQL queries as well, set the environment variable `ENABLE_SQL_DEBUG_LOGGING=True`.
+
+A `LOGGING` dict in `local_settings.py` replaces all of this and is used as is.
 
 ## 16. Frequently Asked Questions
 Video is playing but preview thumbnails are not showing for large video files

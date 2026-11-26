@@ -1,3 +1,5 @@
+import logging
+
 from django.conf import settings
 from django.db.models import Q
 from drf_yasg import openapi as openapi
@@ -15,6 +17,8 @@ from .methods import is_mediacms_manager
 from .models import Category, Comment, Media
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
+
+logger = logging.getLogger(__name__)
 
 
 class MediaList(APIView):
@@ -138,7 +142,14 @@ class MediaList(APIView):
         tokens = request.GET.get("tokens")
         if tokens:
             tokens = [t for t in tokens.split(",") if t][:50]
+            count = Media.objects.filter(friendly_token__in=tokens).count()
             Media.objects.filter(friendly_token__in=tokens).delete()
+            logger.info(
+                "Admin action: media deleted - count=%s, admin_user_id=%s, media_tokens=%s",
+                count,
+                request.user.id,
+                tokens,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -193,7 +204,14 @@ class CommentList(APIView):
         comment_ids = request.GET.get("comment_ids")
         if comment_ids:
             comments = [c for c in comment_ids.split(",") if c][:50]
+            count = Comment.objects.filter(uid__in=comments).count()
             Comment.objects.filter(uid__in=comments).delete()
+            logger.info(
+                "Admin action: comments deleted - count=%s, admin_user_id=%s, comment_ids=%s",
+                count,
+                request.user.id,
+                comments,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -276,5 +294,12 @@ class UserList(APIView):
             users = User.objects.filter(username__in=tokens.split(","))
             if not request.user.is_superuser and users.filter(is_superuser=True).exists():
                 return Response({"detail": "You do not have permission to delete a superuser."}, status=status.HTTP_403_FORBIDDEN)
+            user_ids = list(users.values_list("id", flat=True))
             users.delete()
+            logger.info(
+                "Admin action: users deleted - count=%s, admin_user_id=%s, deleted_user_ids=%s",
+                len(user_ids),
+                request.user.id,
+                user_ids,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
