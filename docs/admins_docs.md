@@ -841,6 +841,18 @@ For example, while specifying wrong password for my Gmail account I get
 SMTPAuthenticationError: (535, b'5.7.8 Username and Password not accepted. Learn more at\n5.7.8  https://support.google.com/mail/?p=BadCredentials d4sm12687785wrc.34 - gsmtp')
 ```
 
+## 15b. Logging levels
+
+Errors are written to `logs/debug.log`. Set the level with the `LOGLEVEL` environment variable or in `local_settings.py` (`DEBUG`, `INFO`, `WARNING` or `ERROR`; default `ERROR`):
+
+```
+LOGLEVEL = "INFO"
+```
+
+Any level other than `ERROR` also turns on the MediaCMS app loggers (`files`, `users`, `uploader`, `saml_auth`, `rbac`, `identity_providers`, `actions`, `cms`). With `DEBUG = True` they log at `DEBUG` and also print to the console. To print SQL queries as well, set the environment variable `ENABLE_SQL_DEBUG_LOGGING=True`.
+
+A `LOGGING` dict in `local_settings.py` replaces all of this and is used as is.
+
 ## 16. Frequently Asked Questions
 Video is playing but preview thumbnails are not showing for large video files
 
