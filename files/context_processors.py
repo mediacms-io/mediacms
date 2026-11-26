@@ -5,6 +5,11 @@ from cms.version import VERSION
 from .frontend_translations import get_translation, get_translation_strings
 from .methods import is_mediacms_editor, is_mediacms_manager
 
+try:
+    from django.contrib.sites.shortcuts import get_current_site
+except ImportError:
+    get_current_site = None
+
 
 def stuff(request):
     """Pass settings to the frontend"""
@@ -66,6 +71,22 @@ def stuff(request):
     ret["INCLUDE_LISTING_NUMBERS"] = settings.INCLUDE_LISTING_NUMBERS
     ret["ALLOW_MEDIA_REPLACEMENT"] = getattr(settings, 'ALLOW_MEDIA_REPLACEMENT', False)
     ret["VERSION"] = VERSION
+
+    ret["CAN_EDIT"] = False
+    ret["CAN_EDIT_MEDIA"] = False
+    ret["CAN_DELETE_MEDIA"] = False
+    ret["CAN_DELETE_COMMENTS"] = False
+    ret["CAN_DELETE"] = False
+
+    ret["media"] = None
+
+    if get_current_site:
+        try:
+            ret["current_site"] = get_current_site(request)
+        except Exception:
+            ret["current_site"] = None
+    else:
+        ret["current_site"] = None
 
     if request.user.is_superuser:
         ret["DJANGO_ADMIN_URL"] = settings.DJANGO_ADMIN_URL
