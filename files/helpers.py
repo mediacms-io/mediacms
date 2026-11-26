@@ -312,6 +312,9 @@ def media_file_info(input_file):
     has_audio = False
     for stream_info in info["streams"]:
         if stream_info["codec_type"] == "video":
+            if has_video and stream_info.get("disposition", {}).get("attached_pic") == 1:
+                # embedded thumbnail / cover art (e.g. DJI drones): keep the real video stream found earlier
+                continue
             video_info = stream_info
             has_video = True
             if info.get("format") and info["format"].get("format_name", "") in [
