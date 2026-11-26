@@ -29,6 +29,19 @@ a.item-thumb {
   background-color: var(--item-thumb-bg-color);
 }
 
+.item-video-thumb {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+
+  &.is-portrait {
+    object-fit: contain;
+  }
+}
+
 .item-thumb.no-thumb {
   &:before {
     position: absolute;
