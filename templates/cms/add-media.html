@@ -134,6 +134,20 @@
                                             <button type="button" class="continue-media-upload-item qq-upload-continue-selector" aria-label="Continue"><i class="material-icons">play_circle_outline</i> Continue</button>
                                             <button type="button" class="pause-media-upload-item qq-upload-pause-selector" aria-label="Pause"><i class="material-icons">pause_circle_outline</i> Pause</button>
                                         </div>
+                                        <div class="media-upload-item-metadata qq-hide">
+                                            <label class="media-upload-meta-field">
+                                                <span>{{ "Visibility" | custom_translate:LANGUAGE_CODE}}</span>
+                                                <select class="media-upload-item-state"></select>
+                                            </label>
+                                            <label class="media-upload-meta-field">
+                                                <span>{{ "Category" | custom_translate:LANGUAGE_CODE}}</span>
+                                                <select class="media-upload-item-category">
+                                                    <option value="">{{ "None" | custom_translate:LANGUAGE_CODE}}</option>
+                                                </select>
+                                            </label>
+                                            <button type="button" class="media-upload-item-save">{{ "Save" | custom_translate:LANGUAGE_CODE}}</button>
+                                            <span class="media-upload-item-meta-status" aria-live="polite"></span>
+                                        </div>
                                     </div>
                                 </div>
                             </li>
@@ -162,6 +176,26 @@
                     </div>
                 </div>
             </script>
+            <div class="media-upload-defaults-bar" id="media-upload-defaults-bar">
+                <div class="media-upload-defaults-fields">
+                    <label class="media-upload-meta-field">
+                        <span>{{ "Default visibility" | custom_translate:LANGUAGE_CODE}}</span>
+                        <select id="upload-default-state">
+                            {% for value, label in allowed_media_states %}
+                            <option value="{{ value }}"{% if value == default_media_state %} selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </label>
+                    <label class="media-upload-meta-field">
+                        <span>{{ "Default category" | custom_translate:LANGUAGE_CODE}}</span>
+                        <select id="upload-default-category">
+                            <option value="">{{ "None" | custom_translate:LANGUAGE_CODE}}</option>
+                        </select>
+                    </label>
+                    <button type="button" id="upload-apply-defaults" class="media-upload-apply-defaults">{{ "Apply to all completed" | custom_translate:LANGUAGE_CODE}}</button>
+                    <span id="upload-defaults-status" class="media-upload-defaults-status" aria-live="polite"></span>
+                </div>
+            </div>
             <div class="media-uploader"></div>
         </div>
 
@@ -197,6 +231,10 @@
                 wrap.classList.add('is-lms-embed');
             }
             document.body.classList.add('lms-embed-mode');
+            var defaultsBar = document.getElementById('media-upload-defaults-bar');
+            if (defaultsBar) {
+                defaultsBar.classList.add('qq-hide');
+            }
         }
 
         function getCSRFToken() {
@@ -214,6 +252,208 @@
                 }
             }
             return cookieVal;
+        }
+
+        var allowedStates = [
+            {% for value, label in allowed_media_states %}
+            { value: "{{ value }}", label: "{{ label|escapejs }}" }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        var completedUploads = [];
+        var categoryOptions = [];
+        var defaultStateSelect = document.getElementById('upload-default-state');
+        var defaultCategorySelect = document.getElementById('upload-default-category');
+        var applyDefaultsBtn = document.getElementById('upload-apply-defaults');
+        var defaultsStatus = document.getElementById('upload-defaults-status');
+
+        function getDefaultState() {
+            return defaultStateSelect ? defaultStateSelect.value : "{{ default_media_state|escapejs }}";
+        }
+
+        function getDefaultCategory() {
+            return defaultCategorySelect ? defaultCategorySelect.value : "";
+        }
+
+        function setStatus(el, message, isError) {
+            if (!el) {
+                return;
+            }
+            el.textContent = message || "";
+            el.classList.toggle('is-error', !!isError);
+        }
+
+        function postBulkAction(payload) {
+            return fetch('/api/v1/media/user/bulk_actions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload),
+            }).then(function(response) {
+                return response.json().then(function(data) {
+                    if (!response.ok) {
+                        var detail = (data && data.detail) ? data.detail : 'Request failed';
+                        throw new Error(detail);
+                    }
+                    return data;
+                });
+            });
+        }
+
+        function applyMetadata(tokens, state, categoryUid) {
+            if (!tokens.length) {
+                return Promise.resolve();
+            }
+            var chain = postBulkAction({
+                action: 'set_state',
+                media_ids: tokens,
+                state: state,
+            });
+            if (categoryUid) {
+                chain = chain.then(function() {
+                    return postBulkAction({
+                        action: 'add_to_category',
+                        media_ids: tokens,
+                        category_uids: [categoryUid],
+                    });
+                });
+            }
+            return chain;
+        }
+
+        function fillStateSelect(selectEl, selected) {
+            if (!selectEl) {
+                return;
+            }
+            selectEl.innerHTML = '';
+            allowedStates.forEach(function(state) {
+                var option = document.createElement('option');
+                option.value = state.value;
+                option.textContent = state.label;
+                if (state.value === selected) {
+                    option.selected = true;
+                }
+                selectEl.appendChild(option);
+            });
+        }
+
+        function fillCategorySelect(selectEl, selected) {
+            if (!selectEl) {
+                return;
+            }
+            var noneLabel = selectEl.options.length ? selectEl.options[0].textContent : 'None';
+            selectEl.innerHTML = '';
+            var noneOption = document.createElement('option');
+            noneOption.value = '';
+            noneOption.textContent = noneLabel;
+            selectEl.appendChild(noneOption);
+            categoryOptions.forEach(function(category) {
+                var option = document.createElement('option');
+                option.value = category.uid;
+                option.textContent = category.title;
+                if (category.uid === selected) {
+                    option.selected = true;
+                }
+                selectEl.appendChild(option);
+            });
+        }
+
+        function refreshCategorySelects() {
+            fillCategorySelect(defaultCategorySelect, getDefaultCategory());
+            completedUploads.forEach(function(item) {
+                var select = item.listEl.querySelector('.media-upload-item-category');
+                fillCategorySelect(select, select ? select.value : getDefaultCategory());
+            });
+        }
+
+        function setupItemMetadata(listEl, token, mediaUrl) {
+            var metaEl = listEl.querySelector('.media-upload-item-metadata');
+            if (!metaEl) {
+                return;
+            }
+            metaEl.classList.remove('qq-hide');
+            var stateSelect = metaEl.querySelector('.media-upload-item-state');
+            var categorySelect = metaEl.querySelector('.media-upload-item-category');
+            var saveBtn = metaEl.querySelector('.media-upload-item-save');
+            var statusEl = metaEl.querySelector('.media-upload-item-meta-status');
+            fillStateSelect(stateSelect, getDefaultState());
+            fillCategorySelect(categorySelect, getDefaultCategory());
+
+            var viewFileEl = listEl.querySelector('.view-uploaded-media-link');
+            if (viewFileEl) {
+                viewFileEl.setAttribute('href', mediaUrl);
+                viewFileEl.classList.remove('qq-hide');
+                viewFileEl.addEventListener('click', function(ev) {
+                    ev.stopPropagation();
+                });
+            }
+
+            if (saveBtn) {
+                saveBtn.addEventListener('click', function(ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    setStatus(statusEl, 'Saving…', false);
+                    saveBtn.disabled = true;
+                    applyMetadata([token], stateSelect.value, categorySelect.value).then(function() {
+                        setStatus(statusEl, 'Saved', false);
+                    }).catch(function(error) {
+                        setStatus(statusEl, error.message || 'Save failed', true);
+                    }).then(function() {
+                        saveBtn.disabled = false;
+                    });
+                });
+            }
+
+            completedUploads.push({ token: token, listEl: listEl });
+        }
+
+        function loadCategories() {
+            return fetch('/api/v1/categories', { credentials: 'same-origin' })
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    categoryOptions = Array.isArray(data) ? data : [];
+                    refreshCategorySelects();
+                })
+                .catch(function() {
+                    categoryOptions = [];
+                });
+        }
+
+        if (applyDefaultsBtn) {
+            applyDefaultsBtn.addEventListener('click', function() {
+                var tokens = completedUploads.map(function(item) { return item.token; });
+                if (!tokens.length) {
+                    setStatus(defaultsStatus, 'No completed uploads yet', true);
+                    return;
+                }
+                var state = getDefaultState();
+                var categoryUid = getDefaultCategory();
+                setStatus(defaultsStatus, 'Applying…', false);
+                applyDefaultsBtn.disabled = true;
+                applyMetadata(tokens, state, categoryUid).then(function() {
+                    completedUploads.forEach(function(item) {
+                        var stateSelect = item.listEl.querySelector('.media-upload-item-state');
+                        var categorySelect = item.listEl.querySelector('.media-upload-item-category');
+                        if (stateSelect) {
+                            stateSelect.value = state;
+                        }
+                        if (categorySelect) {
+                            categorySelect.value = categoryUid;
+                        }
+                    });
+                    setStatus(defaultsStatus, 'Applied to ' + tokens.length + ' item(s)', false);
+                }).catch(function(error) {
+                    setStatus(defaultsStatus, error.message || 'Apply failed', true);
+                }).then(function() {
+                    applyDefaultsBtn.disabled = false;
+                });
+            });
+        }
+
+        if (!isLmsEmbedMode) {
+            loadCategories();
         }
 
         var default_concurrent_chunked_uploader = new qq.FineUploader({
@@ -255,12 +495,14 @@
                             if ( 1 === this._currentItemLimit ) {
                                 if (isLmsEmbedMode && window.parent !== window) {
                                     var mediaUrl = response.media_url;
-                                    var mediaId = '';
-                                    if (mediaUrl.indexOf('m=') > -1) {
-                                        mediaId = mediaUrl.split('m=')[1].split('&')[0];
-                                    } else {
-                                        var parts = mediaUrl.split('/').filter(Boolean);
-                                        mediaId = parts[parts.length - 1];
+                                    var mediaId = response.friendly_token || '';
+                                    if (!mediaId) {
+                                        if (mediaUrl.indexOf('m=') > -1) {
+                                            mediaId = mediaUrl.split('m=')[1].split('&')[0];
+                                        } else {
+                                            var parts = mediaUrl.split('/').filter(Boolean);
+                                            mediaId = parts[parts.length - 1];
+                                        }
                                     }
                                     var baseUrl = window.location.origin;
                                     var embedUrl = baseUrl + '/embed?m=' + mediaId;
@@ -276,27 +518,28 @@
                                     sendPostMsg();
                                     return;
                                 }
-                                setTimeout(function(){ window.location.href = response.media_url; }, 500);
-                                return;
+                                // Stay on the page so metadata controls can be used.
                             }
                         }
 
                         var listEl = document.querySelector( '.qq-file-id-' + id );
-                        var viewFileEl = listEl.querySelector( '.view-uploaded-media-link' );
-
-                        if ( listEl ) {
-                            var fileUrl = response.media_url;
-                            listEl.style.cursor = 'pointer';
-                            listEl.addEventListener( 'click', function(ev) {
-                                ev.preventDefault();
-                                ev.stopPropagation();
-                                window.location.href = fileUrl;
-                            });
+                        if (!listEl) {
+                            return;
                         }
 
+                        var token = response.friendly_token || '';
+                        if (!token && response.media_url && response.media_url.indexOf('m=') > -1) {
+                            token = response.media_url.split('m=')[1].split('&')[0];
+                        }
+
+                        var viewFileEl = listEl.querySelector( '.view-uploaded-media-link' );
                         if ( viewFileEl ) {
                             viewFileEl.setAttribute( 'href', response.media_url );
-                            viewFileEl.setAttribute( 'class', 'view-uploaded-media-link' );
+                            viewFileEl.classList.remove('qq-hide');
+                        }
+
+                        if (!isLmsEmbedMode && token) {
+                            setupItemMetadata(listEl, token, response.media_url);
                         }
                     }
                 },
