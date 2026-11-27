@@ -24,9 +24,9 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2026101901; // 2026-10-19
+$plugin->version   = 2026112700; // 2026-11-27
 $plugin->requires  = 2024100700; // Requires Moodle 4.5+
 $plugin->component = 'tiny_mediacms';
 $plugin->maturity  = MATURITY_STABLE;
-$plugin->release   = 'v1.0.2';
+$plugin->release   = 'v1.0.3';
 $plugin->dependencies = ['filter_mediacms' => 2026051100]; // Requires filter plugin for shared settings

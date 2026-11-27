@@ -214,13 +214,13 @@ def edit_category(request, uid):
         return HttpResponseRedirect(category.get_absolute_url())
 
     if request.method == "POST":
-        form = CategoryForm(request.POST, request.FILES, instance=category)
+        form = CategoryForm(request.POST, request.FILES, instance=category, user=request.user)
         if form.is_valid():
             form.save()
             messages.add_message(request, messages.INFO, "Category was updated")
             return HttpResponseRedirect(category.get_absolute_url())
     else:
-        form = CategoryForm(instance=category)
+        form = CategoryForm(instance=category, user=request.user)
 
     return render(request, "cms/edit_category.html", {"form": form, "category": category})
 
@@ -785,11 +785,11 @@ def view_media(request):
         context["media"] = None
         return render(request, "cms/media.html", context)
 
-    user_or_session = get_user_or_session(request)
-    save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
     context = {}
     context["media"] = friendly_token
     can_view = media.state != "private" or (request.user.is_authenticated and (request.user.has_member_access_to_media(media) or is_mediacms_editor(request.user)))
+    if can_view:
+        save_user_action.delay(get_user_or_session(request), friendly_token=friendly_token, action="watch")
     context["media_object"] = media if can_view else None
 
     context["CAN_DELETE_MEDIA"] = False

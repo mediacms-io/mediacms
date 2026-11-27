@@ -685,7 +685,6 @@ if USERS_NEEDS_TO_BE_APPROVED:
     auth_index = MIDDLEWARE.index("django.contrib.auth.middleware.AuthenticationMiddleware")
     MIDDLEWARE.insert(auth_index + 1, "cms.middleware.ApprovalMiddleware")
 
-
 # LTI 1.3 Integration Settings
 if USE_LTI:
     # Session timeout for LTI launches (seconds)

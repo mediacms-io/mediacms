@@ -1,6 +1,6 @@
 # MediaCMS for Moodle
 
-Version: 1.0.2, tested on Moodle 5
+Version: 1.0.3, tested on Moodle 5
 
 > **Moodle plugins directory**
 > - Filter plugin: https://moodle.org/plugins/filter_mediacms
@@ -27,23 +27,23 @@ The suite ships as **two separate ZIP packages**, one per plugin:
 
 | Order | Package | Plugin | Notes |
 |-------|---------|--------|-------|
-| 1 | `filter_mediacms-v1.0.2.zip` | `filter_mediacms` | Install **first** — provides the shared core settings |
-| 2 | `tiny_mediacms-v1.0.2.zip` | `tiny_mediacms` | Depends on `filter_mediacms`; Moodle will block install until the filter is present |
+| 1 | `filter_mediacms-v1.0.3.zip` | `filter_mediacms` | Install **first** — provides the shared core settings |
+| 2 | `tiny_mediacms-v1.0.3.zip` | `tiny_mediacms` | Depends on `filter_mediacms`; Moodle will block install until the filter is present |
 
 `tiny_mediacms` declares a hard dependency on `filter_mediacms` in its `version.php`, so the two are always installed together — the editor plugin cannot be installed on its own.
 
 Build both packages with:
 
 ```bash
-./build.sh   # produces dist/filter_mediacms-v1.0.2.zip and dist/tiny_mediacms-v1.0.2.zip
+./build.sh   # produces dist/filter_mediacms-v1.0.3.zip and dist/tiny_mediacms-v1.0.3.zip
 ```
 
 ### Option A — Upload through Moodle (recommended)
 
 1.  Log in to Moodle as an Administrator.
 2.  Go to **Site administration > Plugins > Install plugins**.
-3.  Upload `filter_mediacms-v1.0.2.zip` and complete the install.
-4.  Upload `tiny_mediacms-v1.0.2.zip` and complete the install.
+3.  Upload `filter_mediacms-v1.0.3.zip` and complete the install.
+4.  Upload `tiny_mediacms-v1.0.3.zip` and complete the install.
 
 ### Option B — Extract manually
 
@@ -51,8 +51,8 @@ Upload both packages to Moodle's public directory and unzip each to its plugin t
 
 ```bash
 cd /var/www/moodle/public
-unzip filter_mediacms-v1.0.2.zip -d filter/
-unzip tiny_mediacms-v1.0.2.zip   -d lib/editor/tiny/plugins/
+unzip filter_mediacms-v1.0.3.zip -d filter/
+unzip tiny_mediacms-v1.0.3.zip   -d lib/editor/tiny/plugins/
 ```
 
 Ensure the web server user (typically `www-data`) has ownership of the new directories:

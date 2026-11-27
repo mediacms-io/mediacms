@@ -6,7 +6,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 
 from .. import helpers
-from .utils import category_thumb_path, generate_uid
+from .utils import bump_access_version, category_thumb_path, generate_uid
 
 DEFAULT_CATEGORY_THUMBNAIL = "images/category_default.jpg"
 
@@ -125,6 +125,8 @@ class Category(models.Model):
                 kwargs["update_fields"] = set(update_fields) | {"listings_thumbnail"}
 
         super(Category, self).save(*args, **kwargs)
+        if self.is_rbac_category != self.__original_is_rbac_category:
+            bump_access_version()
         self.__original_is_rbac_category = self.is_rbac_category
 
 

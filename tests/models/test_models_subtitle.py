@@ -4,7 +4,7 @@ from django.core.files.base import ContentFile
 from django.test import TestCase
 
 from files import helpers, tasks
-from files.models import Language, Subtitle, TranscriptionRequest
+from files.models import Language, Media, Subtitle, TranscriptionRequest
 from files.models.utils import subtitles_file_path
 from files.tests import create_account, create_media
 
@@ -78,3 +78,46 @@ class SubtitleTests(TestCase):
     def test_transcription_request_str(self):
         request = TranscriptionRequest.objects.create(media=self.media)
         self.assertEqual(str(request), "Transcription request for subtitled - pending")
+
+
+class WhisperSubtitleDeleteTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = make_user("whisper_user")
+        cls.media = create_media(cls.user, title="transcribed")
+        cls.transcription = Language.objects.create(code="whisper", title="Transcription")
+        cls.translation = Language.objects.create(code="whisper-translation", title="English Translation")
+        cls.english = Language.objects.create(code="en", title="English")
+
+    def setUp(self):
+        Media.objects.filter(pk=self.media.pk).update(allow_whisper_transcribe=True, allow_whisper_transcribe_and_translate=True)
+        TranscriptionRequest.objects.create(media=self.media, translate_to_english=False, status="success")
+        TranscriptionRequest.objects.create(media=self.media, translate_to_english=True, status="success")
+
+    def delete_subtitle(self, language):
+        subtitle = Subtitle(language=language, media=self.media, user=self.user)
+        subtitle.subtitle_file.save("captions.vtt", ContentFile(VTT), save=False)
+        subtitle.save()
+        subtitle.delete()
+        return Media.objects.get(pk=self.media.pk)
+
+    def remaining_requests(self):
+        return list(TranscriptionRequest.objects.filter(media=self.media).values_list("translate_to_english", flat=True))
+
+    def test_deleting_the_transcription_lets_it_be_requested_again(self):
+        media = self.delete_subtitle(self.transcription)
+        self.assertEqual(self.remaining_requests(), [True])
+        self.assertFalse(media.allow_whisper_transcribe)
+        self.assertTrue(media.allow_whisper_transcribe_and_translate)
+
+    def test_deleting_the_translation_lets_it_be_requested_again(self):
+        media = self.delete_subtitle(self.translation)
+        self.assertEqual(self.remaining_requests(), [False])
+        self.assertTrue(media.allow_whisper_transcribe)
+        self.assertFalse(media.allow_whisper_transcribe_and_translate)
+
+    def test_deleting_an_uploaded_subtitle_keeps_the_requests(self):
+        media = self.delete_subtitle(self.english)
+        self.assertEqual(sorted(self.remaining_requests()), [False, True])
+        self.assertTrue(media.allow_whisper_transcribe)
+        self.assertTrue(media.allow_whisper_transcribe_and_translate)

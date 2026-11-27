@@ -123,9 +123,11 @@ function pageSearchScopes(canSearchAuthors) {
   if (linksConfig.manage.media && path === trimmedPath(linksConfig.manage.media)) {
     return [
       { id: 'media', title: 'Media', action: linksConfig.manage.media, name: 'q', placeholder: 'Search media' },
-      { id: 'members', title: 'Members', action: linksConfig.manage.users, name: 'q', placeholder: 'Search members' },
       { id: 'owner', title: 'Owner', action: linksConfig.manage.media, name: 'owner', placeholder: 'Search owners' },
     ];
+  }
+  if (linksConfig.manage.users && path === trimmedPath(linksConfig.manage.users)) {
+    return [{ id: 'members', title: 'Members', action: linksConfig.manage.users, name: 'q', placeholder: 'Search members' }];
   }
   return [];
 }

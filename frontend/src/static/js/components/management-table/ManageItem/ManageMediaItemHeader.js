@@ -40,7 +40,7 @@ export function ManageMediaItemHeader(props) {
           </span>
         </div>
       </div>
-      <div className="mi-author">Author</div>
+      <div className="mi-author">Owner</div>
       <div className="mi-type">Media type</div>
       <div className="mi-encoding">Encoding status</div>
       <div className="mi-state">State</div>

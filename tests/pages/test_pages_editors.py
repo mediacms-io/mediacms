@@ -19,6 +19,7 @@ from files.models import (
 )
 from files.tests import create_account, create_media, fixture_path
 from files.tests.media_utils import IMAGE_JPG, SMALL_VIDEO
+from rbac.models import RBACGroup, RBACMembership
 
 
 def message_texts(response):
@@ -406,6 +407,72 @@ class EditCategoryPageTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("title", response.context["form"].errors)
         self.assertEqual(Category.objects.get(pk=self.category.pk).title, "Art")
+
+
+@override_settings(USE_RBAC=True)
+class EditCategoryGroupsTest(TestCase):
+    fixtures = ["fixtures/categories.json"]
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.manager = create_account(is_manager=True)
+        cls.group_manager = create_account()
+        cls.category = Category.objects.get(title="Art")
+        cls.linked = RBACGroup.objects.create(name="Zeta linked")
+        cls.other = RBACGroup.objects.create(name="Alpha other")
+        cls.linked.categories.add(cls.category)
+        Category.objects.filter(pk=cls.category.pk).update(is_rbac_category=True)
+        RBACMembership.objects.create(user=cls.group_manager, rbac_group=cls.linked, role="manager")
+
+    def url(self, category=None):
+        return f"/edit_category/{(category or self.category).uid}"
+
+    def post(self, groups, category=None):
+        category = category or self.category
+        return self.client.post(self.url(category), {"title": category.title, "description": "", "rbac_groups": [group.pk for group in groups]})
+
+    def test_manager_gets_the_group_picker_with_linked_groups_selected(self):
+        self.client.force_login(self.manager)
+        response = self.client.get(self.url())
+        field = response.context["form"].fields["rbac_groups"]
+        self.assertEqual(list(field.queryset), [self.other, self.linked])
+        self.assertEqual(list(field.initial), [self.linked])
+        self.assertContains(response, "group-picker")
+
+    def test_manager_replaces_the_groups(self):
+        self.client.force_login(self.manager)
+        response = self.post([self.other])
+        self.assertRedirects(response, self.category.get_absolute_url(), fetch_redirect_response=False)
+        self.assertEqual(list(self.category.rbac_groups.all()), [self.other])
+
+    def test_manager_removes_every_group(self):
+        self.client.force_login(self.manager)
+        self.post([])
+        self.assertFalse(self.category.rbac_groups.exists())
+
+    def test_adding_a_group_makes_the_category_rbac(self):
+        category = Category.objects.create(title="Open category")
+        self.client.force_login(self.manager)
+        self.post([self.other], category)
+        category.refresh_from_db()
+        self.assertTrue(category.is_rbac_category)
+        self.assertEqual(list(category.rbac_groups.all()), [self.other])
+
+    def test_group_manager_edits_the_category_but_not_its_groups(self):
+        self.client.force_login(self.group_manager)
+        response = self.client.get(self.url())
+        self.assertNotIn("rbac_groups", response.context["form"].fields)
+        self.assertNotContains(response, "group-picker")
+        self.post([self.other])
+        self.assertEqual(list(self.category.rbac_groups.all()), [self.linked])
+
+    @override_settings(USE_RBAC=False)
+    def test_groups_are_not_offered_without_rbac(self):
+        self.client.force_login(self.manager)
+        response = self.client.get(self.url())
+        self.assertNotIn("rbac_groups", response.context["form"].fields)
+        self.post([self.other])
+        self.assertEqual(list(self.category.rbac_groups.all()), [self.linked])
 
 
 class UploadAndRecordPagesTest(TestCase):

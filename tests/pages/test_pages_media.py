@@ -68,6 +68,11 @@ class MediaPageAccessTest(TestCase):
         self.view(self.other)
         self.assertTrue(MediaAction.objects.filter(media=self.media, user=self.other, action="watch").exists())
 
+    def test_a_refused_view_of_a_private_media_records_no_watch_action(self):
+        private = create_media(self.owner, title="private page media", state="private")
+        self.view(self.other, private.friendly_token)
+        self.assertFalse(MediaAction.objects.filter(media=private, action="watch").exists())
+
     def test_allowed_media_type_flag_is_passed_to_the_template(self):
         self.assertTrue(self.view().context["is_media_allowed_type"])
         with override_settings(ALLOWED_MEDIA_UPLOAD_TYPES=["video"]):

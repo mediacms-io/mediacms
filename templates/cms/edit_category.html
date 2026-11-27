@@ -16,4 +16,201 @@
 		</form>
 	</div>
 </div>
+{% if "rbac_groups" in form.fields %}
+<style>
+	.group-picker-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+	.group-picker-chip { display: inline-flex; align-items: center; gap: 2px; padding: 3px 3px 3px 12px; border-radius: 16px; background: rgba(0, 153, 51, 0.1); border: 1px solid rgba(0, 153, 51, 0.3); color: var(--body-text-color); font-size: 13px; line-height: 20px; }
+	.user-action-form-inner .group-picker-chip button { all: unset; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; font-size: 16px; line-height: 1; cursor: pointer; opacity: 0.6; }
+	.user-action-form-inner .group-picker-chip button:hover, .user-action-form-inner .group-picker-chip button:focus-visible { opacity: 1; background: rgba(0, 153, 51, 0.2); }
+	.user-action-form-inner .group-picker-chip button:focus-visible { outline: 2px solid var(--default-theme-color); }
+	.group-picker-empty { font-size: 13px; color: var(--body-text-color); opacity: 0.6; }
+	.group-picker-search { position: relative; }
+	#id_rbac_groups_helptext { margin-top: 6px; font-size: 13px; color: var(--body-text-color); opacity: 0.65; }
+	.group-picker-search input[type="text"] { width: 100%; }
+	.group-picker-results { position: absolute; z-index: 10; top: 100%; left: 0; right: 0; margin: 4px 0 0; padding: 4px 0; list-style: none; background: var(--popup-bg-color); border: 1px solid var(--input-border-color); border-radius: 4px; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); }
+	.group-picker-results li { padding: 8px 12px; color: var(--body-text-color); font-size: 14px; cursor: pointer; }
+	.group-picker-results li.active { background: rgba(0, 153, 51, 0.1); }
+	.group-picker-results li mark { background: transparent; color: var(--default-theme-color); font-weight: 600; }
+	.group-picker-results li.group-picker-note { cursor: default; font-size: 12px; opacity: 0.65; }
+</style>
+<script>
+	(function () {
+		var select = document.getElementById("id_rbac_groups");
+		var limit = 8;
+		var options = Array.prototype.slice.call(select.options);
+		var matches = [];
+		var active = 0;
+		var open = false;
+
+		function fold(text) {
+			return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[øæœßłđðþı]/g, function (char) {
+				return { ø: "o", æ: "ae", œ: "oe", ß: "ss", ł: "l", đ: "d", ð: "d", þ: "th", ı: "i" }[char];
+			});
+		}
+
+		options.forEach(function (option) {
+			option.foldedChars = Array.from(option.text).map(fold);
+			option.folded = option.foldedChars.join("");
+		});
+
+		var picker = document.createElement("div");
+		var chips = document.createElement("div");
+		var search = document.createElement("div");
+		var input = document.createElement("input");
+		var results = document.createElement("ul");
+		picker.className = "group-picker";
+		chips.className = "group-picker-chips";
+		search.className = "group-picker-search";
+		results.className = "group-picker-results";
+		results.id = "group-picker-results";
+		results.setAttribute("role", "listbox");
+		input.type = "text";
+		input.autocomplete = "off";
+		input.placeholder = "Search groups to add";
+		input.setAttribute("role", "combobox");
+		input.setAttribute("aria-controls", results.id);
+		input.setAttribute("aria-expanded", "false");
+		search.append(input, results);
+		picker.append(chips, search);
+		select.style.display = "none";
+		select.insertAdjacentElement("afterend", picker);
+
+		function words() {
+			return fold(input.value).split(/\s+/).filter(Boolean);
+		}
+
+		function rank(option, terms) {
+			if (option.folded.indexOf(terms[0]) === 0) return 0;
+			return (" " + option.folded).indexOf(" " + terms[0]) !== -1 ? 1 : 2;
+		}
+
+		function highlighted(option, terms) {
+			var marked = option.foldedChars.map(function () { return false; });
+			var starts = [];
+			var position = 0;
+			option.foldedChars.forEach(function (chars, index) {
+				for (var i = 0; i < chars.length; i++) starts[position + i] = index;
+				position += chars.length;
+			});
+			terms.forEach(function (term) {
+				var at = option.folded.indexOf(term);
+				for (var i = at; i < at + term.length; i++) marked[starts[i]] = true;
+			});
+			var fragment = document.createDocumentFragment();
+			Array.from(option.text).forEach(function (char, index) {
+				var last = fragment.lastChild;
+				var isMark = marked[index];
+				if (last && (last.nodeName === "MARK") === isMark) {
+					last.textContent += char;
+				} else {
+					fragment.append(isMark ? Object.assign(document.createElement("mark"), { textContent: char }) : document.createTextNode(char));
+				}
+			});
+			return fragment;
+		}
+
+		function renderChips() {
+			chips.textContent = "";
+			var selected = options.filter(function (option) { return option.selected; });
+			if (!selected.length) {
+				chips.append(Object.assign(document.createElement("span"), { className: "group-picker-empty", textContent: "No groups yet" }));
+			}
+			selected.forEach(function (option) {
+				var chip = document.createElement("span");
+				var remove = document.createElement("button");
+				chip.className = "group-picker-chip";
+				chip.textContent = option.text;
+				remove.type = "button";
+				remove.textContent = "\u00d7";
+				remove.setAttribute("aria-label", "Remove " + option.text);
+				remove.addEventListener("click", function () {
+					option.selected = false;
+					renderChips();
+					renderResults();
+					input.focus();
+				});
+				chip.append(remove);
+				chips.append(chip);
+			});
+		}
+
+		function note(text) {
+			results.append(Object.assign(document.createElement("li"), { className: "group-picker-note", textContent: text }));
+		}
+
+		function renderResults() {
+			var show = open && input.value.trim().length >= 2;
+			results.textContent = "";
+			input.setAttribute("aria-expanded", String(show));
+			results.hidden = !show;
+			matches = [];
+			if (!show) return;
+			var terms = words();
+			matches = options
+				.filter(function (option) {
+					return !option.selected && terms.every(function (term) { return option.folded.indexOf(term) !== -1; });
+				})
+				.sort(function (a, b) {
+					return rank(a, terms) - rank(b, terms) || a.text.localeCompare(b.text);
+				});
+			matches.slice(0, limit).forEach(function (option, index) {
+				var item = document.createElement("li");
+				item.setAttribute("role", "option");
+				item.className = index === active ? "active" : "";
+				item.append(highlighted(option, terms));
+				item.addEventListener("mousedown", function (event) {
+					event.preventDefault();
+					add(option);
+				});
+				item.addEventListener("mousemove", function () {
+					if (active !== index) {
+						active = index;
+						renderResults();
+					}
+				});
+				results.append(item);
+			});
+			if (!matches.length) note("No groups match \u201c" + input.value.trim() + "\u201d");
+			else if (matches.length > limit) note((matches.length - limit) + " more, keep typing to narrow down");
+		}
+
+		function add(option) {
+			option.selected = true;
+			input.value = "";
+			active = 0;
+			renderChips();
+			renderResults();
+		}
+
+		input.addEventListener("focus", function () { open = true; renderResults(); });
+		input.addEventListener("blur", function () { open = false; renderResults(); });
+		input.addEventListener("input", function () { open = true; active = 0; renderResults(); });
+		input.addEventListener("keydown", function (event) {
+			var shown = Math.min(matches.length, limit);
+			if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+				event.preventDefault();
+				open = true;
+				if (shown) active = (active + (event.key === "ArrowDown" ? 1 : shown - 1)) % shown;
+				renderResults();
+			} else if (event.key === "Enter") {
+				event.preventDefault();
+				if (open && matches[active]) add(matches[active]);
+			} else if (event.key === "Escape") {
+				open = false;
+				renderResults();
+			} else if (event.key === "Backspace" && !input.value) {
+				var selected = options.filter(function (option) { return option.selected; });
+				if (selected.length) {
+					selected[selected.length - 1].selected = false;
+					renderChips();
+					renderResults();
+				}
+			}
+		});
+
+		renderChips();
+		renderResults();
+	})();
+</script>
+{% endif %}
 {% endblock innercontent %}

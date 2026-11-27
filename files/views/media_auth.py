@@ -15,6 +15,7 @@ from django.views.decorators.http import require_GET, require_safe
 
 from ..methods import is_mediacms_editor
 from ..models import Category, Media, Subtitle
+from ..models.utils import access_version, media_state_cache_key
 
 UID_RE = re.compile(r"^[0-9a-f]{32}$")
 FILENAME_UID_RE = re.compile(r"^([0-9a-f]{32})(?:[._]|$)")
@@ -134,7 +135,7 @@ def _lookup_state(uid):
     Uses .values() rather than .only() because Media.__init__ touches deferred
     file fields, which would otherwise recurse via refresh_from_db.
     """
-    state_key = f"xaccel:state:{uid}"
+    state_key = media_state_cache_key(uid)
     cached = cache.get(state_key)
     if cached is not None:
         return cached
@@ -145,7 +146,8 @@ def _lookup_state(uid):
 
 
 def _cached_decision(subject, user, decide):
-    cache_key = f"xaccel:auth:{subject}:{user.id if user.is_authenticated else 'anon'}"
+    viewer = user.id if user.is_authenticated else "anon"
+    cache_key = f"xaccel:auth:{subject}:{viewer}:v{access_version()}"
     cached = cache.get(cache_key)
     if cached is not None:
         return cached
@@ -154,25 +156,9 @@ def _cached_decision(subject, user, decide):
     return allowed
 
 
-def _decide(uid, user):
-    state, owner_id = _lookup_state(uid)
-    if state is None:
-        return False
-    if state in ("public", "unlisted"):
-        return True
-    # private
-    if not user.is_authenticated:
-        return False
-    if owner_id == user.id:
-        return True
-    if is_mediacms_editor(user):
-        return True
-    # RBAC / MediaPermission path needs a full Media instance.
-    try:
-        media = Media.objects.get(uid=uid)
-    except Media.DoesNotExist:
-        return False
-    return user.has_member_access_to_media(media)
+def _has_shared_access(uid, user):
+    media = Media.objects.filter(uid=uid).first()
+    return media is not None and user.has_member_access_to_media(media)
 
 
 @csrf_exempt
@@ -208,7 +194,18 @@ def media_auth(request):
     if not uid:
         return HttpResponse(status=403)
 
-    allowed = _cached_decision(uid, user, lambda: _decide(uid, user))
+    state, owner_id = _lookup_state(uid)
+    if state is None:
+        return HttpResponse(status=403)
+    if state in ("public", "unlisted"):
+        return HttpResponse(status=204)
+
+    if not user.is_authenticated:
+        return HttpResponse(status=403)
+    if owner_id == user.id or is_mediacms_editor(user):
+        return HttpResponse(status=204)
+
+    allowed = _cached_decision(uid, user, lambda: _has_shared_access(uid, user))
     return HttpResponse(status=204 if allowed else 403)
 
 
