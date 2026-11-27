@@ -9,7 +9,7 @@ from rest_framework.request import Request
 
 from actions.models import MediaAction
 from cms.custom_pagination import FastPaginationWithoutCount
-from files.models import EncodeProfile, Encoding, Media
+from files.models import EncodeProfile, Encoding, Media, MediaPermission
 from files.tests import create_account, create_media
 from files.views.auth import custom_login_view, saml_metadata
 from identity_providers.models import LoginOption
@@ -104,6 +104,17 @@ class UserActionsTest(TestCase):
     def test_lists_media_the_user_acted_on_most_recent_first(self):
         self.assertEqual(self.titles(logged_in(self.user).get('/api/v1/user/action/like')), ['liked second', 'liked first'])
         self.assertEqual(self.titles(logged_in(self.user).get('/api/v1/user/action/watch')), ['watched only'])
+
+    def test_media_the_user_can_no_longer_see_is_left_out(self):
+        hidden = create_media(self.other, title='made private', state='private')
+        shared = create_media(self.other, title='shared private', state='private')
+        MediaPermission.objects.create(owner_user=self.other, user=self.user, media=shared, permission='viewer')
+        for media in (hidden, shared):
+            MediaAction.objects.create(user=self.user, media=media, action='watch')
+        self.assertEqual(self.titles(logged_in(self.user).get('/api/v1/user/action/watch')), ['shared private', 'watched only'])
+        editor = make_user(is_editor=True)
+        MediaAction.objects.create(user=editor, media=hidden, action='watch')
+        self.assertEqual(self.titles(logged_in(editor).get('/api/v1/user/action/watch')), ['made private'])
 
     def test_unknown_action_returns_nothing(self):
         self.assertEqual(self.titles(logged_in(self.user).get('/api/v1/user/action/steal')), [])

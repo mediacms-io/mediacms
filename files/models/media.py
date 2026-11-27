@@ -9,6 +9,7 @@ import m3u8
 from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.postgres.search import SearchVectorField
+from django.core.cache import cache
 from django.core.files import File
 from django.db import models, transaction
 from django.db.models import Func, Value
@@ -20,10 +21,12 @@ from django.utils.html import strip_tags
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFit
 
+from rbac.models import RBACGroup, RBACMembership
+
 from .. import helpers
 from ..stop_words import STOP_WORDS
 from .encoding import EncodeProfile, Encoding
-from .subtitle import TranscriptionRequest
+from .subtitle import Subtitle, TranscriptionRequest
 from .utils import (
     EDITOR_VIDEO_RESOLUTION,
     ENCODE_RESOLUTIONS_KEYS,
@@ -31,6 +34,8 @@ from .utils import (
     MEDIA_STATES,
     MEDIA_TYPES_SUPPORTED,
     PREVIEW_PROFILE_NAME,
+    bump_access_version,
+    media_state_cache_key,
     original_media_file_path,
     original_thumbnail_file_path,
 )
@@ -119,7 +124,7 @@ class Media(models.Model):
 
     license = models.ForeignKey("License", on_delete=models.CASCADE, db_index=True, blank=True, null=True)
 
-    likes = models.IntegerField(db_index=True, default=1)
+    likes = models.IntegerField(db_index=True, default=0)
 
     listable = models.BooleanField(default=False, help_text="Whether it will appear on listings")
 
@@ -251,6 +256,7 @@ class Media(models.Model):
     __original_uploaded_poster = None
 
     class Meta:
+        verbose_name_plural = "Media"
         ordering = ["-add_date"]
         indexes = [
             # TODO: check with pgdash.io or other tool what index need be
@@ -273,6 +279,8 @@ class Media(models.Model):
         self.__original_uploaded_poster = self.uploaded_poster
         self.__original_allow_whisper_transcribe = self.allow_whisper_transcribe
         self.__original_allow_whisper_transcribe_and_translate = self.allow_whisper_transcribe_and_translate
+        self.__original_state = self.__dict__.get("state")
+        self.__original_user_id = self.__dict__.get("user_id")
 
     def save(self, *args, **kwargs):
         if not self.title:
@@ -340,6 +348,12 @@ class Media(models.Model):
             self.listable = False
 
         super(Media, self).save(*args, **kwargs)
+
+        if self.state != self.__original_state or self.user_id != self.__original_user_id:
+            self.__original_state = self.state
+            self.__original_user_id = self.user_id
+            state_cache_key = media_state_cache_key(self.uid.hex)
+            transaction.on_commit(lambda: cache.delete(state_cache_key))
 
         # produce a thumbnail out of an uploaded poster
         # will run only when a poster is uploaded for the first time
@@ -1115,6 +1129,7 @@ def media_file_delete(sender, instance, **kwargs):
     Deletes file from filesystem
     when corresponding `Media` object is deleted.
     """
+    cache.delete(media_state_cache_key(instance.uid.hex))
     if instance.media_file:
         helpers.rm_file(instance.media_file.path)
     if instance.thumbnail:
@@ -1139,6 +1154,36 @@ def media_file_delete(sender, instance, **kwargs):
         thumbnails = glob.glob(f'{thumbnails_path}/{instance.uid.hex}.*')
         for thumbnail in thumbnails:
             helpers.rm_file(thumbnail)
+
+
+@receiver(post_delete, sender=Subtitle)
+def whisper_subtitle_delete(sender, instance, **kwargs):
+    code = instance.language.code
+    if code == "whisper":
+        translate = False
+    elif code == "whisper-translation":
+        translate = True
+    else:
+        return
+    TranscriptionRequest.objects.filter(media_id=instance.media_id, translate_to_english=translate).delete()
+    flag = "allow_whisper_transcribe_and_translate" if translate else "allow_whisper_transcribe"
+    Media.objects.filter(pk=instance.media_id).update(**{flag: False})
+
+
+@receiver(post_save, sender=MediaPermission)
+@receiver(post_delete, sender=MediaPermission)
+@receiver(post_save, sender=RBACMembership)
+@receiver(post_delete, sender=RBACMembership)
+@receiver(post_delete, sender="files.Category")
+def media_access_changed(sender, **kwargs):
+    bump_access_version()
+
+
+@receiver(m2m_changed, sender=Media.category.through)
+@receiver(m2m_changed, sender=RBACGroup.categories.through)
+def media_access_links_changed(sender, action, **kwargs):
+    if action.startswith("post_"):
+        bump_access_version()
 
 
 @receiver(m2m_changed, sender=Media.category.through)

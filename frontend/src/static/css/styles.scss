@@ -180,6 +180,11 @@ button {
       padding: 1em 2em;
       margin: 1em 0 0.5em;
       cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     }
   }
 

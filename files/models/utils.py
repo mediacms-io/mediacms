@@ -1,5 +1,7 @@
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.utils.crypto import get_random_string
 
 from .. import helpers
@@ -101,3 +103,24 @@ def category_thumb_path(instance, filename):
 def validate_rating(value):
     if -1 >= value or value > 5:
         raise ValidationError("score has to be between 0 and 5")
+
+
+ACCESS_VERSION_CACHE_KEY = "xaccel:access-version"
+
+
+def media_state_cache_key(uid_hex):
+    return f"xaccel:state:{uid_hex}"
+
+
+def access_version():
+    return cache.get(ACCESS_VERSION_CACHE_KEY, 0)
+
+
+def bump_access_version():
+    def bump():
+        try:
+            cache.incr(ACCESS_VERSION_CACHE_KEY)
+        except ValueError:
+            cache.set(ACCESS_VERSION_CACHE_KEY, 1, None)
+
+    transaction.on_commit(bump)

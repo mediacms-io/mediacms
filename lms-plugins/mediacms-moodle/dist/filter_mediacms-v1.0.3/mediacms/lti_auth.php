@@ -123,6 +123,20 @@ if ($ok) {
         $lti       = $DB->get_record('lti', ['id' => $cm->instance], '*', MUST_EXIST);
         $lti->cmid = $cm->id;
         list($endpoint, $params) = lti_get_launch_data($lti, $nonce, $messagetype, $foruserid);
+    } else if ($messagetype === 'ContentItemSelectionRequest') {
+        require_login($course);
+        $context = context_course::instance($courseid);
+        require_capability('moodle/course:manageactivities', $context);
+        require_capability('mod/lti:addcoursetool', $context);
+        $returnurl = new \moodle_url('/mod/lti/contentitem_return.php', [
+            'course' => $courseid,
+            'id' => $typeid,
+            'sesskey' => sesskey(),
+        ]);
+        $request = lti_build_content_item_selection_request($typeid, $course, $returnurl,
+            base64_decode($titleb64), base64_decode($textb64), [], [], false, true, false, false, false, $nonce);
+        $endpoint = $request->url;
+        $params   = $request->params;
     } else {
         // No-activity launch — student-accessible.
         // Custom params (publishdata / redirect_path) were stored in the session

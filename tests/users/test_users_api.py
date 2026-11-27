@@ -137,9 +137,10 @@ class UserCreateApiTest(TestCase):
             self.assertEqual(response.status_code, 400, field)
 
     def test_invalid_username_is_rejected(self):
-        response = self.client.post("/api/v1/users", dict(self.payload, username="bad name!"), format="json")
-        self.assertEqual(response.status_code, 400)
-        self.assertFalse(User.objects.filter(email=self.payload["email"]).exists())
+        for username in ["bad name!", "Jane Doe", "slash/name", "ünïcode"]:
+            response = self.client.post("/api/v1/users", dict(self.payload, username=username), format="json")
+            self.assertEqual(response.status_code, 400, username)
+            self.assertFalse(User.objects.filter(email=self.payload["email"]).exists(), username)
 
     def test_duplicate_username_is_rejected(self):
         response = self.client.post("/api/v1/users", dict(self.payload, username=self.editor.username), format="json")

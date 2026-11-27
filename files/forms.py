@@ -6,7 +6,9 @@ from crispy_forms.layout import HTML, Field, Layout, Submit
 from django import forms
 from django.conf import settings
 
-from .methods import get_next_state, is_mediacms_editor
+from rbac.models import RBACGroup
+
+from .methods import get_next_state, is_mediacms_editor, is_mediacms_manager
 from .models import MEDIA_STATES, Category, Media, MediaPermission, Subtitle
 from .widgets import CategoryModalWidget
 
@@ -289,13 +291,7 @@ class WhisperSubtitlesForm(forms.ModelForm):
             CustomField('allow_whisper_transcribe_and_translate'),
         )
 
-        if not both_readonly:
-            self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction')))
-        else:
-            # Optional: Add a disabled button with explanatory text
-            self.helper.layout.append(
-                FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction', disabled=True), HTML('<small class="text-muted">Cannot submit - both options are already enabled</small>'))
-            )
+        self.helper.layout.append(FormActions(Submit('submit_whisper', 'Submit', css_class='primaryAction', disabled=both_readonly)))
 
     def clean_allow_whisper_transcribe(self):
         # Ensure the field value doesn't change if it was originally True
@@ -360,9 +356,34 @@ class CategoryForm(forms.ModelForm):
     it, and on a migrated category the source portal knows it by that id.
     """
 
+    rbac_groups = forms.ModelMultipleChoiceField(
+        queryset=RBACGroup.objects.none(),
+        required=False,
+        label="Groups",
+        help_text="Members of these groups get access to media in this category.",
+    )
+
     class Meta:
         model = Category
         fields = ("title", "description", "thumbnail")
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if getattr(settings, "USE_RBAC", False) and is_mediacms_manager(user):
+            self.fields["rbac_groups"].queryset = RBACGroup.objects.order_by("name")
+            self.fields["rbac_groups"].initial = self.instance.rbac_groups.all()
+        else:
+            del self.fields["rbac_groups"]
+
+    def save(self, commit=True):
+        category = super().save(commit)
+        if "rbac_groups" in self.fields:
+            groups = self.cleaned_data["rbac_groups"]
+            category.rbac_groups.set(groups)
+            if groups and not category.is_rbac_category:
+                category.is_rbac_category = True
+                category.save(update_fields=["is_rbac_category"])
+        return category
 
     def clean_title(self):
         title = (self.cleaned_data.get("title") or "").strip()

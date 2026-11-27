@@ -7,6 +7,7 @@ from django.core.files.images import ImageFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
+from files.methods import change_media_owner
 from files.models import Category, Language, Media, MediaPermission, Subtitle
 from files.tests import create_account
 from rbac.models import RBACGroup, RBACMembership
@@ -54,6 +55,76 @@ class MediaAuthTest(TestCase):
     def test_private_media_denied_for_anonymous(self):
         uri = f'/media/encoded/23/owner/{self.private_uid}.mp4'
         self.assertEqual(self._auth(uri).status_code, 403)
+
+    def test_a_private_media_made_unlisted_is_served_at_once(self):
+        uri = f'/media/encoded/23/owner/{self.private_uid}.mp4'
+        self.assertEqual(self._auth(uri).status_code, 403)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.private_media.state = 'unlisted'
+            self.private_media.save()
+        self.assertEqual(self._auth(uri).status_code, 204)
+
+    def test_a_public_media_made_private_is_refused_at_once(self):
+        uri = f'/media/encoded/{self.public_uid}/{self.public_uid}.mp4'
+        self.assertEqual(self._auth(uri).status_code, 204)
+        with self.captureOnCommitCallbacks(execute=True):
+            self.public_media.state = 'private'
+            self.public_media.save()
+        self.assertEqual(self._auth(uri).status_code, 403)
+
+    def test_a_deleted_media_is_refused_at_once(self):
+        uri = f'/media/encoded/{self.public_uid}/{self.public_uid}.mp4'
+        self.assertEqual(self._auth(uri).status_code, 204)
+        self.public_media.delete()
+        self.assertEqual(self._auth(uri).status_code, 403)
+
+    def _private_uri_for_other(self):
+        client = Client()
+        client.login(username=self.other.username, password=self.password)
+        uri = f'/media/encoded/23/owner/{self.private_uid}.mp4'
+        self.assertEqual(self._auth(uri, client).status_code, 403)
+        return uri, client
+
+    def test_sharing_a_private_media_lets_the_user_in_at_once(self):
+        uri, client = self._private_uri_for_other()
+        with self.captureOnCommitCallbacks(execute=True):
+            MediaPermission.objects.create(owner_user=self.owner, user=self.other, media=self.private_media, permission='viewer')
+        self.assertEqual(self._auth(uri, client).status_code, 204)
+
+    def test_removing_a_share_refuses_the_user_at_once(self):
+        with self.captureOnCommitCallbacks(execute=True):
+            permission = MediaPermission.objects.create(owner_user=self.owner, user=self.other, media=self.private_media, permission='viewer')
+        client = Client()
+        client.login(username=self.other.username, password=self.password)
+        uri = f'/media/encoded/23/owner/{self.private_uid}.mp4'
+        self.assertEqual(self._auth(uri, client).status_code, 204)
+        with self.captureOnCommitCallbacks(execute=True):
+            permission.delete()
+        self.assertEqual(self._auth(uri, client).status_code, 403)
+
+    @override_settings(USE_RBAC=True)
+    def test_joining_a_group_of_the_media_category_lets_the_user_in_at_once(self):
+        category = Category.objects.create(title='Auth staff only', is_rbac_category=True)
+        group = RBACGroup.objects.create(uid='auth-staff', name='Auth staff')
+        with self.captureOnCommitCallbacks(execute=True):
+            self.private_media.category.add(category)
+            group.categories.add(category)
+        uri, client = self._private_uri_for_other()
+        with self.captureOnCommitCallbacks(execute=True):
+            RBACMembership.objects.create(user=self.other, rbac_group=group, role='member')
+        self.assertEqual(self._auth(uri, client).status_code, 204)
+
+    def test_a_user_made_editor_is_let_in_at_once(self):
+        uri, client = self._private_uri_for_other()
+        self.other.is_editor = True
+        self.other.save(update_fields=['is_editor'])
+        self.assertEqual(self._auth(uri, client).status_code, 204)
+
+    def test_a_new_owner_is_let_in_at_once(self):
+        uri, client = self._private_uri_for_other()
+        with self.captureOnCommitCallbacks(execute=True):
+            change_media_owner(self.private_media.id, self.other)
+        self.assertEqual(self._auth(uri, client).status_code, 204)
 
     def test_private_media_allowed_for_owner(self):
         client = Client()
